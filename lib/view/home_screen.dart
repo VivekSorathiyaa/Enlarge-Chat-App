@@ -28,6 +28,7 @@ String? currentUserId;
   }
 
   Future refreshPage() async {
+    AppPreferences.getFirebaseMessagingToken();
     currentUserId = await AppPreferences.getUiId();
   }
 

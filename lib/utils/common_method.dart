@@ -62,6 +62,10 @@ class CommonMethod {
     if (userModel.profilepic != null) {
       await AppPreferences.setProfilePic(userModel.profilepic!);
     }
+
+    if (userModel.fcmtoken != null) {
+      await AppPreferences.setFcmToken(userModel.fcmtoken!);
+    }
   }
 
   static String formatPhoneNumber(String phoneNumber) {

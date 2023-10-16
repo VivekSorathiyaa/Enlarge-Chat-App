@@ -185,7 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       },
                                       leading: CircleAvatar(
                                         backgroundImage: NetworkImage(
-                                            searchedUser[index].profilepic!),
+                                            searchedUser[index].profilepic ?? ""),
                                         backgroundColor: Colors.grey[500],
                                       ),
                                       title: Text(

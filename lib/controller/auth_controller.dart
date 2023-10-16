@@ -5,6 +5,7 @@ import 'package:chatapp/utils/common_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +19,8 @@ class AuthController extends GetxController {
   TextEditingController phoneTxtController = new TextEditingController();
   TextEditingController otpTxtController = new TextEditingController();
   String _countryCode = '+91';
+
+
 
   onCountryChange(CountryCode value) {
     if (value.code != null) {
@@ -34,7 +37,22 @@ class AuthController extends GetxController {
     phoneTxtController.selection = TextSelection.fromPosition(
         TextPosition(offset: phoneTxtController.text.length));
   }
+  static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
 
+  static Future<void> getFirebaseMessagingToken() async {
+    await fMessaging.requestPermission();
+
+    await fMessaging.getToken().then((t) {
+      if (t != null) {
+
+     //   setFcmToken(t);
+        log('Push Token: $t');
+      }
+    });
+
+
+
+  }
   Future verifyPhoneNumber(BuildContext context) async {
     CustomDialog.showLoadingDialog(context, "OTP Send..");
     try {
@@ -89,7 +107,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> signInWithSmsCode(
-      BuildContext context, String verificationId) async {
+      BuildContext context, String verificationId,) async {
     CustomDialog.showLoadingDialog(context, "Verify SMS Code..");
 
     try {
@@ -107,7 +125,7 @@ class AuthController extends GetxController {
             uid: uid,
             phone: phoneTxtController.text,
             fullname: null,
-            profilepic: null);
+            profilepic: null, fcmtoken:null);
         await CommonMethod.saveUserData(newUser);
 
         await FirebaseFirestore.instance

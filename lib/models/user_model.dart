@@ -3,14 +3,16 @@ class UserModel {
   String? fullname;
   String? phone;
   String? profilepic;
+  String? fcmtoken;
 
-  UserModel({required this.uid,required this.fullname,required this.phone,required this.profilepic});
+  UserModel({required this.uid,required this.fullname,required this.phone,required this.profilepic,required this.fcmtoken});
 
   UserModel.fromMap(Map<String, dynamic> map) {
     uid = map["uid"];
     fullname = map["fullname"];
     phone = map["phone"];
     profilepic = map["profilepic"];
+    fcmtoken=map["fcmtoken"];
   }
 
   Map<String, dynamic> toMap() {
@@ -19,6 +21,7 @@ class UserModel {
       "fullname": fullname,
       "phone": phone,
       "profilepic": profilepic,
+      "fcmtoken":fcmtoken,
     };
   }
 }

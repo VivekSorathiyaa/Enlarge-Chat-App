@@ -7,6 +7,7 @@ import 'package:chatapp/view/home_screen.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -28,9 +29,33 @@ class CompleteProfileScreen extends StatefulWidget {
   _CompleteProfileScreenState createState() => _CompleteProfileScreenState();
 }
 
+FirebaseMessaging fMessaging = FirebaseMessaging.instance;
+String? fcmToken;
+
+Future<void> getFirebaseMessagingToken() async {
+  await fMessaging.requestPermission();
+
+  await fMessaging.getToken().then((t) {
+    if (t != null) {
+//setFcmToken(t);
+    fcmToken=t;
+
+      log('Push Token: $t');
+    }
+  });
+}
+
+
 class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   File? imageFile;
   TextEditingController fullNameController = TextEditingController();
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    getFirebaseMessagingToken();
+  }
 
   void selectImage(ImageSource source) async {
     XFile? pickedFile = await ImagePicker().pickImage(source: source);
@@ -99,6 +124,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Future uploadData() async {
     String? uid = await AppPreferences.getUiId();
     String? phone = await AppPreferences.getPhone();
+    String? fcmToken = await AppPreferences.getFcmToken();
+
     if (uid != null) {
       CustomDialog.showLoadingDialog(context, "Uploading image..");
       UploadTask uploadTask = FirebaseStorage.instance
@@ -111,7 +138,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           uid: uid,
           phone: phone,
           fullname: fullNameController.text.trim(),
-          profilepic: imageUrl);
+          profilepic: imageUrl,
+          fcmtoken: fcmToken);
       await CommonMethod.saveUserData(userModel);
       await FirebaseFirestore.instance
           .collection("users")
