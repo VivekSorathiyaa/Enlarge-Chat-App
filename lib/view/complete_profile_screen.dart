@@ -11,18 +11,16 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../utils/common_method.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
-  // final UserModel userModel;
-  // final User firebaseUser;
 
   const CompleteProfileScreen({
     Key? key,
-    //  required this.userModel, required this.firebaseUser
   }) : super(key: key);
 
   @override
@@ -57,9 +55,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     getFirebaseMessagingToken();
   }
 
+  
   void selectImage(ImageSource source) async {
     XFile? pickedFile = await ImagePicker().pickImage(source: source);
-
     if (pickedFile != null) {
       cropImage(pickedFile);
     }
@@ -71,7 +69,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         sourcePath: file.path,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
         compressQuality: 20);
-
     if (croppedImage != null) {
       setState(() {
         imageFile = File(croppedImage.path);
@@ -80,15 +77,12 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   }
 
   void showPhotoOptions() {
-    showDialog(
+    CustomDialog.showSimpleDialog(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Upload Profile Picture"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
+        title: 'Upload Profile Picture',
+        child: Column(
+          children: [
+            ListTile(
                   onTap: () {
                     Navigator.pop(context);
                     selectImage(ImageSource.gallery);
@@ -104,11 +98,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   leading: Icon(Icons.camera_alt),
                   title: Text("Take a photo"),
                 ),
-              ],
-            ),
-          );
-        });
+          ],
+        ));
+  
   }
+
 
   void checkValues() {
     if (fullNameController.text.isEmpty || imageFile == null) {
@@ -147,13 +141,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           .set(userModel.toMap())
           .then((value) {
         log("Data uploaded!");
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) {
-            return HomeScreen();
-          }),
-        );
+        Get.back();
       });
     }
   }

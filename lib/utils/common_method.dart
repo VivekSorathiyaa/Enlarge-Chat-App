@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:chatapp/componet/custom_dialog.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../main.dart';
@@ -26,6 +28,7 @@ class CommonMethod {
       barBlur: 10,
     );
   }
+
 
   static Future<File?> pickFile() async {
     List<File> files = [];
@@ -68,18 +71,18 @@ class CommonMethod {
     }
   }
 
-  static String formatPhoneNumber(String phoneNumber) {
-    String sanitizedPhoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
-    return '+$sanitizedPhoneNumber';
-  }
+ static Future<bool> isPhoneNumberRegistered(String phoneNumber) async {
+  final QuerySnapshot result = await FirebaseFirestore.instance
+      .collection('users')
+      .where('phone', isEqualTo: phoneNumber)
+      .get();
 
-  static String formateDate(date) {
-    if (date == null || date == '' || date == 'null') {
-      return '';
-    }
-    DateTime isoDate = DateTime.parse(date);
-    DateFormat desiredFormat = DateFormat('dd/MM/yyyy');
-    String formattedDate = desiredFormat.format(isoDate);
-    return formattedDate;
-  }
+  return result.docs.isNotEmpty;
+}
+
+
+  static  String formatDateToTime(DateTime dateTime) {
+  var formatter = DateFormat.jm(); // 'jm' format for 12-hour time with AM/PM
+  return formatter.format(dateTime);
+}
 }
