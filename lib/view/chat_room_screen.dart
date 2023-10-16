@@ -1,7 +1,10 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/custom_dialog.dart';
+import 'package:chatapp/componet/network_image_widget.dart';
+import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/message_model.dart';
@@ -11,6 +14,7 @@ import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../componet/text_form_field_widget.dart';
 import '../utils/app_preferences.dart';
@@ -33,47 +37,7 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  TextEditingController messageController = TextEditingController();
-String? currentUserId;
-  @override
-  void initState() {
-    refreshPage();
-    super.initState();
-  }
-
-  Future refreshPage() async {
-    currentUserId = await AppPreferences.getUiId();
-  }
-
-
- 
-  void sendMessage() async {
-    String msg = messageController.text.trim();
-    messageController.clear();
-
-    if (msg != "") {
-      //TYPE-1-simple message
-      //TYPE-2-media message
-      MessageModel newMessage = MessageModel(
-          messageid: uuid.v1(),
-          sender: currentUserId,
-          createdon: DateTime.now(),
-          text: msg,
-          seen: false);
-      FirebaseFirestore.instance
-          .collection("chatrooms")
-          .doc(widget.chatroom.chatroomid)
-          .collection("messages")
-          .doc(newMessage.messageid)
-          .set(newMessage.toMap());
-      widget.chatroom.lastMessage = msg;
-      FirebaseFirestore.instance
-          .collection("chatrooms")
-          .doc(widget.chatroom.chatroomid)
-          .set(widget.chatroom.toMap());
-      log("Message Sent!");
-    }
-  }
+  var controller = Get.put(ChatController());
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +45,16 @@ String? currentUserId;
       appBar: AppBar(
         title: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: Colors.grey[300],
-              backgroundImage:
-                  NetworkImage(widget.targetUser.profilepic.toString()),
+            // CircleAvatar(
+            //   backgroundColor: Colors.grey[300],
+            //   backgroundImage:
+            //       NetworkImage(widget.targetUser.profilepic.toString()),
+            // ),
+            NetworkImageWidget(
+              width: 42,
+              height: 42,
+              borderRadius: BorderRadius.circular(42),
+              imageUrl: widget.targetUser.profilepic.toString(),
             ),
             SizedBox(
               width: 10,
@@ -116,43 +86,101 @@ String? currentUserId;
 
                           return ListView.builder(
                             reverse: true,
+                            shrinkWrap: true,
                             itemCount: dataSnapshot.docs.length,
                             itemBuilder: (context, index) {
                               MessageModel currentMessage =
                                   MessageModel.fromMap(dataSnapshot.docs[index]
                                       .data() as Map<String, dynamic>);
-
-                              return Row(
-                                mainAxisAlignment:
-                                    (currentMessage.sender == currentUserId)
-                                        ? MainAxisAlignment.end
-                                        : MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                      margin: EdgeInsets.symmetric(
-                                        vertical: 2,
-                                      ),
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 10,
-                                        horizontal: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: (currentMessage.sender ==
-                                                currentUserId)
-                                            ? Colors.grey
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .secondary,
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: Text(
-                                        currentMessage.text.toString(),
-                                        style: TextStyle(
-                                          color: Colors.white,
+                              bool isCurrentUser = (currentMessage.sender ==
+                                  AppPreferences.getUiId());
+                              return Container(
+                                margin: EdgeInsets.symmetric(vertical: 5.0),
+                                alignment: isCurrentUser
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  // padding: EdgeInsets.all(10.0),
+                                  decoration: BoxDecoration(
+                                    color: isCurrentUser
+                                        ? primaryColor
+                                        : greenColor,
+                                    borderRadius: BorderRadius.only(
+                                        topLeft: isCurrentUser
+                                            ? Radius.circular(10)
+                                            : Radius.circular(0),
+                                        bottomLeft: Radius.circular(10),
+                                        topRight: isCurrentUser
+                                            ? Radius.circular(0)
+                                            : Radius.circular(10),
+                                        bottomRight: Radius.circular(10)),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    maxWidth: Get.width * 0.8,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: isCurrentUser
+                                        ? CrossAxisAlignment.end
+                                        : CrossAxisAlignment.start,
+                                    children: [
+                                      if (currentMessage.mediaList != null &&
+                                          currentMessage.mediaList!.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.all(3),
+                                          child: NetworkImageWidget(
+                                            borderRadius: BorderRadius.only(
+                                                topLeft: isCurrentUser
+                                                    ? Radius.circular(10)
+                                                    : Radius.circular(0),
+                                                bottomLeft: Radius.circular(10),
+                                                topRight: isCurrentUser
+                                                    ? Radius.circular(0)
+                                                    : Radius.circular(10),
+                                                bottomRight:
+                                                    Radius.circular(10)),
+                                            imageUrl: widget
+                                                .targetUser.profilepic
+                                                .toString(),
+                                          ),
                                         ),
-                                      )),
-                                ],
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Row(
+                                
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                currentMessage.text.toString(),
+                                                style: AppTextStyle
+                                                    .normalRegular14
+                                                    .copyWith(
+                                                        color: primaryWhite),
+                                              ),
+                                            ),
+                                            // width15,
+                                            // Text(
+                                            //   CommonMethod.formatDateToTime(
+                                            //       currentMessage.createdon ??
+                                            //           DateTime.now()),
+                                            //   style: AppTextStyle
+                                            //       .normalRegular10
+                                            //       .copyWith(
+                                            //           height: 0,
+                                            //           color: primaryWhite
+                                            //               .withOpacity(.7)),
+                                            // ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               );
+                          
                             },
                           );
                         } else if (snapshot.hasError) {
@@ -182,7 +210,7 @@ String? currentUserId;
                   children: [
                     Expanded(
                       child: TextFormFieldWidget(
-                        controller: messageController,
+                        controller: controller.messageController,
                         keyboardType: TextInputType.multiline,
                         maxLines: 5, //
                         hintText: "Enter message",
@@ -192,7 +220,16 @@ String? currentUserId;
                             color: Colors.black,
                           ),
                           onPressed: () async {
+                            controller.selectedFileList.value.clear();
                             File? file = await CommonMethod.pickFile();
+                            if (file != null) {
+                              String? path =
+                                  await controller.uploadFile(context, file);
+                              if (path != null) {
+                                controller.selectedFileList.value.add(path);
+                                controller.sendMessage(widget.chatroom);
+                              }
+                            }
                           },
                         ),
                       ),
@@ -207,7 +244,7 @@ String? currentUserId;
                           color: primaryWhite,
                         ),
                         onPressed: () {
-                          sendMessage();
+                          controller.sendMessage(widget.chatroom);
                         },
                       ),
                     ),

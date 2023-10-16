@@ -2,6 +2,7 @@ class ChatRoomModel {
   String? chatroomid;
   Map<String, dynamic>? participants;
   String? lastMessage;
+  DateTime? lastSeen;
 
   ChatRoomModel({this.chatroomid, this.participants, this.lastMessage});
 

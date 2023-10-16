@@ -39,7 +39,7 @@ class AuthController extends GetxController {
     CustomDialog.showLoadingDialog(context, "OTP Send..");
     try {
       await auth.verifyPhoneNumber(
-        phoneNumber: CommonMethod.formatPhoneNumber(phoneTxtController.text),
+        phoneNumber: phoneTxtController.text,
         verificationCompleted: (PhoneAuthCredential phoneAuthCredential) async {
           UserCredential? credential =
               await auth.signInWithCredential(phoneAuthCredential);

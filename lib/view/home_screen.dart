@@ -1,3 +1,8 @@
+import 'dart:developer';
+
+import 'package:chatapp/componet/app_text_style.dart';
+import 'package:chatapp/componet/network_image_widget.dart';
+import 'package:chatapp/componet/shadow_container_widget.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
@@ -20,20 +25,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-String? currentUserId;
-  @override
-  void initState() {
-    refreshPage();
-    super.initState();
-  }
-
-  Future refreshPage() async {
-    currentUserId = await AppPreferences.getUiId();
-  }
 
 
   @override
   Widget build(BuildContext context) {
+    log('---currentUserId---${AppPreferences.getUiId()}');
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -59,7 +55,11 @@ String? currentUserId;
       body: SafeArea(
         child: Container(
           child: StreamBuilder(
-            stream: FirebaseFirestore.instance.collection("chatrooms").where("participants.${currentUserId}", isEqualTo: true).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection("chatrooms")
+                .where("participants.${AppPreferences.getUiId()}",
+                    isEqualTo: true)
+                .snapshots(),
             builder: (context, snapshot) {
               if(snapshot.connectionState == ConnectionState.active) {
                 if(snapshot.hasData) {
@@ -72,7 +72,7 @@ String? currentUserId;
                       Map<String, dynamic> participants = chatRoomModel.participants!;
                       List<String> participantKeys = participants.keys.toList();
                     
-                      participantKeys.remove(currentUserId);
+                      participantKeys.remove(AppPreferences.getUiId());
 
                       return FutureBuilder(
                         future: CommonMethod.getUserModelById(participantKeys[0]),
@@ -80,26 +80,52 @@ String? currentUserId;
                           if(userData.connectionState == ConnectionState.done) {
                             if(userData.data != null) {
                               UserModel targetUser = userData.data as UserModel;
-
-                              return ListTile(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) {
-                                      return ChatRoomScreen(
-                                        chatroom: chatRoomModel,
-                                        targetUser: targetUser,
-                                      );
-                                    }),
-                                  );
-                                },
-                                leading: CircleAvatar(
-                                  backgroundImage: NetworkImage(targetUser.profilepic.toString()),
+                              return ShadowContainerWidget(
+                                padding: 0,
+                                widget: ListTile(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) {
+                                        return ChatRoomScreen(
+                                          chatroom: chatRoomModel,
+                                          targetUser: targetUser,
+                                        );
+                                      }),
+                                    );
+                                  },
+                                  leading: NetworkImageWidget(
+                                    height: 50,
+                                    width: 50,
+                                    borderRadius: BorderRadius.circular(50),
+                                    imageUrl: targetUser.profilepic.toString(),
+                                  ),
+                                  trailing: Column(children: [
+                                    // Text(
+                                    //   targetUser..toString(),
+                                    //   style: AppTextStyle.normalBold16,
+                                    // ),
+                                  ]),
+                                  title: Text(
+                                    targetUser.fullname.toString(),
+                                    style: AppTextStyle.normalBold16,
+                                  ),
+                                  subtitle: (chatRoomModel.lastMessage
+                                              .toString() !=
+                                          "")
+                                      ? Text(
+                                          chatRoomModel.lastMessage.toString(),
+                                          style: AppTextStyle.normalRegular12,
+                                        )
+                                      : Text(
+                                          "Say hi to your new friend!",
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .secondary,
+                                          ),
+                                        ),
                                 ),
-                                title: Text(targetUser.fullname.toString()),
-                                subtitle: (chatRoomModel.lastMessage.toString() != "") ? Text(chatRoomModel.lastMessage.toString()) : Text("Say hi to your new friend!", style: TextStyle(
-                                  color: Theme.of(context).colorScheme.secondary,
-                                ),),
                               );
                             }
                             else {

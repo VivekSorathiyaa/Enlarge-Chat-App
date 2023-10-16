@@ -20,16 +20,8 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  String? currentUserId;
-  @override
-  void initState() {
-    refreshPage();
-    super.initState();
-  }
 
-  Future refreshPage() async {
-    currentUserId = await AppPreferences.getUiId();
-  }
+
   TextEditingController searchController = TextEditingController();
 
   Future<ChatRoomModel?> getChatroomModel(UserModel targetUser) async {
@@ -37,7 +29,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection("chatrooms")
-        .where("participants.${currentUserId}", isEqualTo: true)
+        .where("participants.${await AppPreferences.getUiId()}", isEqualTo: true)
         .where("participants.${targetUser.uid}", isEqualTo: true)
         .get();
 
@@ -54,7 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
         chatroomid: uuid.v1(),
         lastMessage: "",
         participants: {
-          currentUserId!: true,
+          await AppPreferences.getUiId()!: true,
           targetUser.uid.toString(): true,
         },
       );
@@ -127,7 +119,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         return StreamBuilder<QuerySnapshot>(
                           stream: fullnameQuery,
                           builder: (context, fullnameSnapshot) {
-                            if (phoneSnapshot.hasData ||
+                            if (phoneSnapshot.hasData &&
                                 fullnameSnapshot.hasData) {
                               QuerySnapshot phoneResult = phoneSnapshot.data!;
                               QuerySnapshot fullnameResult =
