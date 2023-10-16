@@ -103,27 +103,34 @@ class AuthController extends GetxController {
       if (credential != null) {
         log('Phone number verified first');
         String uid = credential.user!.uid;
-        UserModel newUser = UserModel(
-            uid: uid,
-            phone: phoneTxtController.text,
-            fullname: null,
-            profilepic: null);
-        await CommonMethod.saveUserData(newUser);
+        bool isRegistered =
+            await CommonMethod.isPhoneNumberRegistered(phoneTxtController.text);
 
-        await FirebaseFirestore.instance
-            .collection("users")
-            .doc(uid)
-            .set(newUser.toMap())
-            .then((value) {
-          print("New User Created!");
-          Navigator.popUntil(context, (route) => route.isFirst);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) {
-              return CompleteProfileScreen();
-            }),
-          );
-        });
+        if (isRegistered) {
+          UserModel? userModel = await CommonMethod.getUserModelById(uid);
+          if (userModel != null) {
+            await CommonMethod.saveUserData(userModel);
+            Get.back();
+            Get.offAll(() => HomeScreen());
+            return;
+          }
+        } else {
+          UserModel newUser = UserModel(
+              uid: uid,
+              phone: phoneTxtController.text,
+              fullname: null,
+              profilepic: null);
+          await CommonMethod.saveUserData(newUser);
+          await FirebaseFirestore.instance
+              .collection("users")
+              .doc(uid)
+              .set(newUser.toMap())
+              .then((value) {
+            print("New User Created!");
+            Get.back();
+            Get.to(() => CompleteProfileScreen());
+          });
+        }
       }
     } on FirebaseAuthException catch (ex) {
       Navigator.pop(context);

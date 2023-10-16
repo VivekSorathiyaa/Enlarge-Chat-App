@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ChatRoomModel {
   String? chatroomid;
   Map<String, dynamic>? participants;
@@ -10,13 +12,18 @@ class ChatRoomModel {
     chatroomid = map["chatroomid"];
     participants = map["participants"];
     lastMessage = map["lastmessage"];
+    lastSeen = map["lastSeen"] == null
+        ? DateTime.now()
+        : (map["lastSeen"] as Timestamp).toDate();    
+
   }
 
   Map<String, dynamic> toMap() {
     return {
       "chatroomid": chatroomid,
       "participants": participants,
-      "lastmessage": lastMessage
+      "lastmessage": lastMessage,
+      "lastSeen": lastSeen
     };
   }
 }

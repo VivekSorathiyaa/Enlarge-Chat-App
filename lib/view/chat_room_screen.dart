@@ -69,66 +69,68 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             children: [
               // This is where the chats will go
               Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection("chatrooms")
-                        .doc(widget.chatroom.chatroomid)
-                        .collection("messages")
-                        .orderBy("createdon", descending: true)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.active) {
-                        if (snapshot.hasData) {
-                          QuerySnapshot dataSnapshot =
-                              snapshot.data as QuerySnapshot;
+                child: StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection("chatrooms")
+                      .doc(widget.chatroom.chatroomid)
+                      .collection("messages")
+                      .orderBy("createdon", descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.active) {
+                      if (snapshot.hasData) {
+                        QuerySnapshot dataSnapshot =
+                            snapshot.data as QuerySnapshot;
 
-                          return ListView.builder(
-                            reverse: true,
-                            shrinkWrap: true,
-                            itemCount: dataSnapshot.docs.length,
-                            itemBuilder: (context, index) {
-                              MessageModel currentMessage =
-                                  MessageModel.fromMap(dataSnapshot.docs[index]
-                                      .data() as Map<String, dynamic>);
-                              bool isCurrentUser = (currentMessage.sender ==
-                                  AppPreferences.getUiId());
-                              return Container(
-                                margin: EdgeInsets.symmetric(vertical: 5.0),
-                                alignment: isCurrentUser
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  // padding: EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                    color: isCurrentUser
-                                        ? primaryColor
-                                        : greenColor,
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: isCurrentUser
-                                            ? Radius.circular(10)
-                                            : Radius.circular(0),
-                                        bottomLeft: Radius.circular(10),
-                                        topRight: isCurrentUser
-                                            ? Radius.circular(0)
-                                            : Radius.circular(10),
-                                        bottomRight: Radius.circular(10)),
-                                  ),
-                                  constraints: BoxConstraints(
-                                    maxWidth: Get.width * 0.8,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment: isCurrentUser
-                                        ? CrossAxisAlignment.end
-                                        : CrossAxisAlignment.start,
-                                    children: [
-                                      if (currentMessage.mediaList != null &&
-                                          currentMessage.mediaList!.isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.all(3),
-                                          child: NetworkImageWidget(
+                        return ListView.builder(
+                          reverse: true,
+                          shrinkWrap: true,
+                          itemCount: dataSnapshot.docs.length,
+                          itemBuilder: (context, index) {
+                            MessageModel currentMessage = MessageModel.fromMap(
+                                dataSnapshot.docs[index].data()
+                                    as Map<String, dynamic>);
+                            bool isCurrentUser = (currentMessage.sender ==
+                                AppPreferences.getUiId());
+                            return Container(
+                              
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 5.0, horizontal: 10),
+                              alignment: isCurrentUser
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(                                  
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: isCurrentUser
+                                          ? primaryColor
+                                          : greenColor),
+                                  color:
+                                      isCurrentUser ? primaryColor : greenColor,
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: isCurrentUser
+                                          ? Radius.circular(10)
+                                          : Radius.circular(0),
+                                      bottomLeft: Radius.circular(10),
+                                      topRight: isCurrentUser
+                                          ? Radius.circular(0)
+                                          : Radius.circular(10),
+                                      bottomRight: Radius.circular(10)),
+                                ),
+                                constraints: BoxConstraints(
+                                  maxWidth: Get.width * 0.8,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: isCurrentUser
+                                      ? CrossAxisAlignment.end
+                                      : CrossAxisAlignment.start,
+                                  children: [
+                                    if (currentMessage.mediaList != null &&
+                                        currentMessage.mediaList!.isNotEmpty)
+                                      Column(
+                                        children: [
+                                          NetworkImageWidget(
                                             borderRadius: BorderRadius.only(
                                                 topLeft: isCurrentUser
                                                     ? Radius.circular(10)
@@ -139,19 +141,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                     : Radius.circular(10),
                                                 bottomRight:
                                                     Radius.circular(10)),
-                                            imageUrl: widget
-                                                .targetUser.profilepic
+                                            imageUrl: currentMessage
+                                                .mediaList!.first
                                                 .toString(),
                                           ),
-                                        ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Row(
-                                
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
+                                        ],
+                                      ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          if (currentMessage.text!.isNotEmpty)
                                             Flexible(
                                               child: Text(
                                                 currentMessage.text.toString(),
@@ -161,45 +166,47 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                         color: primaryWhite),
                                               ),
                                             ),
-                                            // width15,
-                                            // Text(
-                                            //   CommonMethod.formatDateToTime(
-                                            //       currentMessage.createdon ??
-                                            //           DateTime.now()),
-                                            //   style: AppTextStyle
-                                            //       .normalRegular10
-                                            //       .copyWith(
-                                            //           height: 0,
-                                            //           color: primaryWhite
-                                            //               .withOpacity(.7)),
-                                            // ),
-                                          ],
-                                        ),
+                                            
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 15),
+                                            child: Text(
+                                              CommonMethod.formatDateToTime(
+                                                  currentMessage.createdon ??
+                                                      DateTime.now()),
+                                              style: AppTextStyle
+                                                  .normalRegular10
+                                                  .copyWith(
+                                                      height: 0,
+                                                      color: primaryWhite
+                                                          .withOpacity(.7)),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              );
-                          
-                            },
-                          );
-                        } else if (snapshot.hasError) {
-                          return Center(
-                            child: Text(
-                                "An error occured! Please check your internet connection."),
-                          );
-                        } else {
-                          return Center(
-                            child: Text("Say hi to your new friend"),
-                          );
-                        }
+                              ),
+                            );
+                          },
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                              "An error occured! Please check your internet connection."),
+                        );
                       } else {
                         return Center(
-                          child: CircularProgressIndicator(),
+                          child: Text("Say hi to your new friend"),
                         );
                       }
-                    },
-                  ),
+                    } else {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                  },
                 ),
               ),
 

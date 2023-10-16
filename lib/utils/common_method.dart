@@ -81,4 +81,15 @@ class CommonMethod {
   var formatter = DateFormat.jm(); // 'jm' format for 12-hour time with AM/PM
   return formatter.format(dateTime);
 }
+static String formatDateTime(DateTime dateTime) {
+  DateTime now = DateTime.now();
+
+  if (dateTime.year == now.year && dateTime.month == now.month && dateTime.day == now.day) {
+    return DateFormat.jm().format(dateTime); // Format time as "10:30 AM/PM"
+  } else if (dateTime.year == now.year && dateTime.month == now.month && dateTime.day == now.day - 1) {
+    return "Yesterday";
+  } else {
+    return DateFormat('dd/MM/yyyy').format(dateTime); // Format date as "14/10/2023"
+  }
+}
 }

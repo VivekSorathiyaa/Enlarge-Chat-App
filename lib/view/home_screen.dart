@@ -5,6 +5,7 @@ import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/shadow_container_widget.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/user_model.dart';
+import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
 import 'package:chatapp/view/search_screen.dart';
 import 'package:chatapp/view/login_screen.dart';
@@ -98,13 +99,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                     height: 50,
                                     width: 50,
                                     borderRadius: BorderRadius.circular(50),
-                                    imageUrl: targetUser.profilepic.toString(),
+                                    imageUrl: targetUser.profilepic 
                                   ),
                                   trailing: Column(children: [
-                                    // Text(
-                                    //   targetUser..toString(),
-                                    //   style: AppTextStyle.normalBold16,
-                                    // ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                        CommonMethod.formatDateTime(
+                                            chatRoomModel.lastSeen ??
+                                                DateTime.now()),
+                                        style: AppTextStyle.normalRegular12
+                                            .copyWith(color: greyColor),
+                                      ),
+                                    ),
                                   ]),
                                   title: Text(
                                     targetUser.fullname.toString(),
@@ -115,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           "")
                                       ? Text(
                                           chatRoomModel.lastMessage.toString(),
-                                          style: AppTextStyle.normalRegular12,
+                                          style: AppTextStyle.normalRegular12
+                                              .copyWith(color: greyColor),
                                         )
                                       : Text(
                                           "Say hi to your new friend!",

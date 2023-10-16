@@ -24,7 +24,7 @@ class ChatController extends GetxController {
   Future sendMessage(ChatRoomModel chatRoomModel) async {
     String msg = messageController.text.trim();
     messageController.clear();
-    if (msg != "") {
+    if (msg != "" || selectedFileList.value.isNotEmpty) {
       MessageModel newMessage = MessageModel(
           messageid: uuid.v1(),
           sender: await AppPreferences.getUiId(),
@@ -38,7 +38,8 @@ class ChatController extends GetxController {
           .collection("messages")
           .doc(newMessage.messageid)
           .set(newMessage.toMap());
-      chatRoomModel.lastMessage = msg;
+      chatRoomModel.lastMessage = msg.isEmpty ? 'media' : msg;
+      chatRoomModel.lastSeen = DateTime.now();
       FirebaseFirestore.instance
           .collection("chatrooms")
           .doc(chatRoomModel.chatroomid)
@@ -55,7 +56,7 @@ class ChatController extends GetxController {
         FirebaseStorage.instance.ref("media").child(uuid.v1()).putFile(file);
     TaskSnapshot snapshot = await uploadTask;
     imageUrl = await snapshot.ref.getDownloadURL();
-    Navigator.popUntil(context, (route) => route.isFirst);
+Get.back();
     return imageUrl;
    
   }

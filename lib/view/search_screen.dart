@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../componet/network_image_widget.dart';
 import '../utils/app_preferences.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -69,12 +70,14 @@ class _SearchScreenState extends State<SearchScreen> {
     Stream<QuerySnapshot> phoneQuery = FirebaseFirestore.instance
         .collection("users")
         .where("phone", isGreaterThanOrEqualTo: searchController.text)
+        .where("phone", isNotEqualTo: AppPreferences.getPhone())
         .where("phone", isLessThanOrEqualTo: searchController.text + '\uf8ff')
         .snapshots();
 
     Stream<QuerySnapshot> fullnameQuery = FirebaseFirestore.instance
         .collection("users")
         .where("fullname", isGreaterThanOrEqualTo: searchController.text)
+        .where("fullname", isNotEqualTo: AppPreferences.getFullName())
         .where("fullname",
             isLessThanOrEqualTo: searchController.text + '\uf8ff')
         .snapshots();
@@ -175,15 +178,27 @@ class _SearchScreenState extends State<SearchScreen> {
                                           }));
                                         }
                                       },
-                                      leading: CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                            searchedUser[index].profilepic!),
-                                        backgroundColor: Colors.grey[500],
+                                      leading: NetworkImageWidget(
+                                        height: 50,
+                                        width: 50,
+                                        borderRadius: BorderRadius.circular(50),
+                                        imageUrl: searchedUser[index]
+                                            .profilepic
+                                            .toString(),
                                       ),
+                                      // CircleAvatar(
+                                      //   backgroundImage: NetworkImage(
+                                      // searchedUser[index].profilepic ??
+                                      //     ""),
+                                      //   backgroundColor: Colors.grey[500],
+                                      // ),
                                       title: Text(
-                                          searchedUser[index].fullname ?? ''),
+                                          searchedUser[index]
+                                          .fullname
+                                          .toString()),
                                       subtitle:
-                                          Text(searchedUser[index].phone ?? ''),
+                                          Text(
+                                          searchedUser[index].phone.toString()),
                                       trailing:
                                           Icon(Icons.keyboard_arrow_right),
                                     );
