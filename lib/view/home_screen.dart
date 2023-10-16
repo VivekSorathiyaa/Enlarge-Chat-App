@@ -26,6 +26,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+String? currentUserId;
+  @override
+  void initState() {
+    refreshPage();
+    super.initState();
+  }
+
+  Future refreshPage() async {
+    AppPreferences.getFirebaseMessagingToken();
+    currentUserId = await AppPreferences.getUiId();
+  }
 
 
   @override

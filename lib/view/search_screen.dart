@@ -184,8 +184,12 @@ class _SearchScreenState extends State<SearchScreen> {
                                         borderRadius: BorderRadius.circular(50),
                                         imageUrl: searchedUser[index]
                                             .profilepic
-                                            .toString(),
-                                      ),
+                                            .toString()),
+                                      // leading: CircleAvatar(
+                                      //   backgroundImage: NetworkImage(
+                                      //       searchedUser[index].profilepic ?? ""),
+                                      //   backgroundColor: Colors.grey[500],
+                                      // ),
                                       // CircleAvatar(
                                       //   backgroundImage: NetworkImage(
                                       // searchedUser[index].profilepic ??
