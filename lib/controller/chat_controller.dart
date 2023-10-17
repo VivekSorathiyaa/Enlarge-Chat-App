@@ -14,23 +14,34 @@ import '../utils/app_preferences.dart';
 
 class ChatController extends GetxController {
   TextEditingController messageController = TextEditingController();
-  RxList<String> selectedFileList = <String>[].obs;
+  File? selectedFile;
+  String? mediaUrl;
 
   Future clearForm() async {
     messageController.clear();
-    selectedFileList.clear();
+    mediaUrl = null;
+    selectedFile = null;
   }
 
   Future sendMessage(ChatRoomModel chatRoomModel) async {
     String msg = messageController.text.trim();
     messageController.clear();
-    if (msg != "" || selectedFileList.value.isNotEmpty) {
+    if (msg != "" || mediaUrl != null) {
       MessageModel newMessage = MessageModel(
           messageid: uuid.v1(),
           sender: await AppPreferences.getUiId(),
           createdon: DateTime.now(),
           text: msg,
-          mediaList: selectedFileList.value,
+          messageType: selectedFile != null
+              ? GetUtils.isImage(selectedFile!.path)
+                  ? 1
+                  : GetUtils.isVideo(selectedFile!.path)
+                      ? 2
+                      : GetUtils.isAudio(selectedFile!.path)
+                          ? 3
+                          : 0
+              : 0,
+          media: mediaUrl,
           seen: false);
       FirebaseFirestore.instance
           .collection("chatrooms")
@@ -49,11 +60,14 @@ class ChatController extends GetxController {
     }
   }
 
-  Future<String?> uploadFile(BuildContext context, File file) async {
+  Future<String?> uploadFile(BuildContext context) async {
     String? imageUrl;
-    CustomDialog.showLoadingDialog(context, "Uploading image..");
+    CustomDialog.showLoadingDialog(context, "Uploading...");
     UploadTask uploadTask =
-        FirebaseStorage.instance.ref("media").child(uuid.v1()).putFile(file);
+        FirebaseStorage.instance
+        .ref("media")
+        .child(uuid.v1())
+        .putFile(selectedFile!);
     TaskSnapshot snapshot = await uploadTask;
     imageUrl = await snapshot.ref.getDownloadURL();
 Get.back();

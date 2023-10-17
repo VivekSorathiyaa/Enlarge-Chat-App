@@ -4,8 +4,9 @@ class MessageModel {
   String? messageid;
   String? sender;
   String? text;
-  List<dynamic>? mediaList; // Change the type to List<dynamic>
+ String? media; // Change the type to List<dynamic>
   bool? seen;
+  int? messageType;
   DateTime? createdon;
 
   MessageModel({
@@ -14,17 +15,17 @@ class MessageModel {
     this.text,
     this.seen,
     this.createdon,
-    this.mediaList,
+    this.messageType,
+    this.media,
   });
 
   MessageModel.fromMap(Map<String, dynamic> map) {
     messageid = map["messageid"];
     sender = map["sender"];
     text = map["text"];
-    mediaList = map["mediaList"] == null
-        ? []
-        : List<String>.from(map["mediaList"]); // Convert to List<dynamic>
+    media = map["media"] ; // Convert to List<dynamic>
     seen = map["seen"];
+    messageType = map["messageType"] ?? 0;
     createdon = (map["createdon"] as Timestamp).toDate();    
   }
 
@@ -33,7 +34,8 @@ class MessageModel {
       "messageid": messageid,
       "sender": sender,
       "text": text,
-      "mediaList": mediaList,
+      "media": media,
+      "messageType": messageType,
       "seen": seen,
       "createdon": createdon,
     };

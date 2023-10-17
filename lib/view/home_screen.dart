@@ -109,8 +109,9 @@ String? currentUserId;
                                   leading: NetworkImageWidget(
                                     height: 50,
                                     width: 50,
+                                    isProfile: true,
                                     borderRadius: BorderRadius.circular(50),
-                                    imageUrl: targetUser.profilepic 
+                                      imageUrl: targetUser.profilepic ?? ''
                                   ),
                                   trailing: Column(children: [
                                     Padding(
