@@ -12,7 +12,7 @@ class NetworkImageWidget extends StatelessWidget {
   final bool? isVideoFeed;
   final Color? color;
   final BoxFit? fit;
-  final BorderRadius? borderRadius;
+  final BorderRadius borderRadius;
   const NetworkImageWidget({
     this.isProfile = false,
     Key? key,

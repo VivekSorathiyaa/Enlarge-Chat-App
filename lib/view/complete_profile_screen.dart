@@ -141,7 +141,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           .set(userModel.toMap())
           .then((value) {
         log("Data uploaded!");
-        Get.back();
+      //  Get.back();
+        Get.to(()=>HomeScreen());
       });
     }
   }

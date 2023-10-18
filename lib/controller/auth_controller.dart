@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/complete_profile_screen.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,6 +20,7 @@ class AuthController extends GetxController {
   TextEditingController phoneTxtController = new TextEditingController();
   TextEditingController otpTxtController = new TextEditingController();
   String _countryCode = '+91';
+  String? fcmtoken;
 
 
 
@@ -39,14 +41,15 @@ class AuthController extends GetxController {
   }
   static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
 
-  static Future<void> getFirebaseMessagingToken() async {
+   Future<void> getFirebaseMessagingToken() async {
     await fMessaging.requestPermission();
 
     await fMessaging.getToken().then((t) {
       if (t != null) {
 
-     //   setFcmToken(t);
+      //  setFcmToken(t);
         log('Push Token: $t');
+        fcmtoken=t;
       }
     });
 
@@ -70,13 +73,15 @@ class AuthController extends GetxController {
                 .get();
             UserModel userModel =
                 UserModel.fromMap(userData.data() as Map<String, dynamic>);
+
             await CommonMethod.saveUserData(userModel);
             log("Log In Successful!");
             Navigator.popUntil(context, (route) => route.isFirst);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) {
-                return HomeScreen();
+                 return HomeScreen();
+
               }),
             );
           }
@@ -110,7 +115,9 @@ class AuthController extends GetxController {
       BuildContext context, String verificationId,) async {
     CustomDialog.showLoadingDialog(context, "Verify SMS Code..");
 
+
     try {
+
       PhoneAuthCredential phoneAuthCredential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: otpTxtController.text,
@@ -127,7 +134,7 @@ class AuthController extends GetxController {
             uid: uid,
             phone: phoneTxtController.text,
             fullname: null,
-            profilepic: null, fcmtoken:null);
+            profilepic: null, fcmtoken:fcmtoken);
         await CommonMethod.saveUserData(newUser);
 
         if (isRegistered) {
@@ -152,7 +159,7 @@ class AuthController extends GetxController {
               .set(newUser.toMap())
               .then((value) {
             print("New User Created!");
-            Get.back();
+            // Get.back();
             Get.to(() => CompleteProfileScreen());
           });
         }

@@ -12,7 +12,8 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -37,10 +38,42 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  AppPreferences preferences=AppPreferences();
   var controller = Get.put(ChatController());
+
 
   @override
   Widget build(BuildContext context) {
+
+
+
+
+
+
+
+    final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+    Future<void> sendPushNotificationToTargetDevice(String title, String body, String targetDeviceToken) async {
+      try {
+        // Define the notification payload
+        final message = {
+          'to': targetDeviceToken, // Use the target device's FCM token
+          'notification': {
+            'title': title,
+            'body': body,
+          },
+        };
+
+        // Send the message to a specific topic (target device)
+      // final response = await _firebaseMessaging.send(message);
+        print('Notification sent: success');
+      } catch (e) {
+        print('Error sending notification: $e');
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -251,7 +284,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           color: primaryWhite,
                         ),
                         onPressed: () {
+                      var  msg=   controller.sendMessage(widget.chatroom);
                           controller.sendMessage(widget.chatroom);
+                        //  sendPushNotificationToTargetDevice(widget.targetUser.fullname.toString(), msg);
+                          sendPushNotificationToTargetDevice(widget.targetUser.fullname.toString(), 'hjhhj', widget.targetUser.fcmtoken.toString());
                         },
                       ),
                     ),

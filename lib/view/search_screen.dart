@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/user_model.dart';
+import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -218,7 +219,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               return Text(
                                   'Error: ${phoneSnapshot.error ?? fullnameSnapshot.error}');
                             } else {
-                              return CircularProgressIndicator();
+                              return Center(child: CircularProgressIndicator(color: primaryBlack,strokeWidth: 0.5,));
                             }
                           },
                         );

@@ -32,7 +32,10 @@ dependencies:
   cloud_firestore:
   firebase_storage:
   firebase_core:
-  firebase_messaging: 
+  firebase_messaging:
+  app_settings: ^5.1.1
+  permission_handler: ^11.0.1
+  flutter_local_notifications: ^16.1.0
   image_picker: 
   image_cropper: 
   uuid: 

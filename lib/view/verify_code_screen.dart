@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,6 +20,7 @@ String verificationId;
 
 class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   var controller = Get.put(AuthController());
+
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
               PrimaryTextButton(
                 onPressed: () {
                   controller.signInWithSmsCode(context,widget.verificationId);
+
                 },
                 title: 'Verify Code',
               ),

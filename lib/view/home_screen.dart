@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/shadow_container_widget.dart';
@@ -27,14 +28,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 String? currentUserId;
+
   @override
   void initState() {
     refreshPage();
     super.initState();
+
+
   }
 
   Future refreshPage() async {
-    AppPreferences.getFirebaseMessagingToken();
+   await AppPreferences.getFirebaseMessagingToken();
+   await AppPreferences.uploadData();
+
     currentUserId = await AppPreferences.getUiId();
   }
 
@@ -86,12 +92,94 @@ String? currentUserId;
                     
                       participantKeys.remove(AppPreferences.getUiId());
 
-                      return FutureBuilder(
+                      // return FutureBuilder(
+                      //   future: CommonMethod.getUserModelById(participantKeys[0]),
+                      //   builder: (context, userData) {
+                      //     if(userData.connectionState == ConnectionState.done) {
+                      //       if(userData.data != null) {
+                      //         UserModel targetUser = userData.data as UserModel;
+                      //         return ShadowContainerWidget(
+                      //           padding: 0,
+                      //           widget: ListTile(
+                      //             onTap: () {
+                      //               Navigator.push(
+                      //                 context,
+                      //                 MaterialPageRoute(builder: (context) {
+                      //                   return ChatRoomScreen(
+                      //                     chatroom: chatRoomModel,
+                      //                     targetUser: targetUser,
+                      //                   );
+                      //                 }),
+                      //               );
+                      //             },
+                      //             leading: NetworkImageWidget(
+                      //               height: 50,
+                      //               width: 50,
+                      //               borderRadius: BorderRadius.circular(50),
+                      //               imageUrl: targetUser.profilepic
+                      //             ),
+                      //             trailing: Column(children: [
+                      //               Padding(
+                      //                 padding: const EdgeInsets.only(top: 8.0),
+                      //                 child: Text(
+                      //                   CommonMethod.formatDateTime(
+                      //                       chatRoomModel.lastSeen ??
+                      //                           DateTime.now()),
+                      //                   style: AppTextStyle.normalRegular12
+                      //                       .copyWith(color: greyColor),
+                      //                 ),
+                      //               ),
+                      //             ]),
+                      //             title: Text(
+                      //               targetUser.fullname.toString(),
+                      //               style: AppTextStyle.normalBold16,
+                      //             ),
+                      //             subtitle: (chatRoomModel.lastMessage
+                      //                         .toString() !=
+                      //                     "")
+                      //                 ? Text(
+                      //                     chatRoomModel.lastMessage.toString(),
+                      //                     style: AppTextStyle.normalRegular12
+                      //                         .copyWith(color: greyColor),
+                      //                   )
+                      //                 : Text(
+                      //                     "Say hi to your new friend!",
+                      //                     style: TextStyle(
+                      //                       color: Theme.of(context)
+                      //                           .colorScheme
+                      //                           .secondary,
+                      //                     ),
+                      //                   ),
+                      //           ),
+                      //         );
+                      //       }
+                      //       else {
+                      //         return Container();
+                      //       }
+                      //     }
+                      //     else {
+                      //       return Container();
+                      //     }
+                      //   },
+                      // );
+
+                      FutureBuilder(
                         future: CommonMethod.getUserModelById(participantKeys[0]),
                         builder: (context, userData) {
-                          if(userData.connectionState == ConnectionState.done) {
-                            if(userData.data != null) {
+                          if (userData.connectionState == ConnectionState.waiting) {
+                            // Handle loading state
+                            return Container();
+                          } else if (userData.connectionState == ConnectionState.done) {
+                            if (userData.hasError) {
+                              // Handle error state
+                              return Text("Error: ${userData.error}");
+                            }
+                            if (userData.data != null) {
+                              // Handle data available state
                               UserModel targetUser = userData.data as UserModel;
+                              // return ShadowContainerWidget(
+                              //   // ...
+                              // );
                               return ShadowContainerWidget(
                                 padding: 0,
                                 widget: ListTile(
@@ -107,10 +195,10 @@ String? currentUserId;
                                     );
                                   },
                                   leading: NetworkImageWidget(
-                                    height: 50,
-                                    width: 50,
-                                    borderRadius: BorderRadius.circular(50),
-                                    imageUrl: targetUser.profilepic 
+                                      height: 50,
+                                      width: 50,
+                                      borderRadius: BorderRadius.circular(50),
+                                      imageUrl: targetUser.profilepic
                                   ),
                                   trailing: Column(children: [
                                     Padding(
@@ -129,33 +217,33 @@ String? currentUserId;
                                     style: AppTextStyle.normalBold16,
                                   ),
                                   subtitle: (chatRoomModel.lastMessage
-                                              .toString() !=
-                                          "")
+                                      .toString() !=
+                                      "")
                                       ? Text(
-                                          chatRoomModel.lastMessage.toString(),
-                                          style: AppTextStyle.normalRegular12
-                                              .copyWith(color: greyColor),
-                                        )
+                                    chatRoomModel.lastMessage.toString(),
+                                    style: AppTextStyle.normalRegular12
+                                        .copyWith(color: greyColor),
+                                  )
                                       : Text(
-                                          "Say hi to your new friend!",
-                                          style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .secondary,
-                                          ),
-                                        ),
+                                    "Say hi to your new friend!",
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .secondary,
+                                    ),
+                                  ),
                                 ),
                               );
-                            }
-                            else {
+                            } else {
+                              // Handle data is null state
                               return Container();
                             }
                           }
-                          else {
-                            return Container();
-                          }
+                          // Handle other connection states (e.g., none)
+                          return Container();
                         },
                       );
+
                     },
                   );
                 }
@@ -172,7 +260,7 @@ String? currentUserId;
               }
               else {
                 return Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(strokeWidth: 2,color: Colors.black87,),
                 );
               }
             },
