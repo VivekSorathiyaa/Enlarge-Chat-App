@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/custom_dialog.dart';
 import 'package:chatapp/componet/network_image_widget.dart';
+import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
@@ -16,7 +17,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:path_provider/path_provider.dart';
+import '../componet/image_view_widget.dart';
 import '../componet/text_form_field_widget.dart';
 import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
@@ -83,6 +85,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             //   backgroundImage:
             //       NetworkImage(widget.targetUser.profilepic.toString()),
             // ),
+
+            
             NetworkImageWidget(
               width: 42,
               height: 42,
@@ -126,13 +130,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             bool isCurrentUser = (currentMessage.sender ==
                                 AppPreferences.getUiId());
                             return Container(
-                              
                               margin: EdgeInsets.symmetric(
                                   vertical: 5.0, horizontal: 10),
                               alignment: isCurrentUser
                                   ? Alignment.centerRight
                                   : Alignment.centerLeft,
-                              child: Container(                                  
+                              child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                       color: isCurrentUser
@@ -151,7 +154,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                       bottomRight: Radius.circular(10)),
                                 ),
                                 constraints: BoxConstraints(
-                                  maxWidth: Get.width * 0.8,
+                                  maxWidth: Get.width * 0.7,
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.end,
@@ -159,25 +162,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                       ? CrossAxisAlignment.end
                                       : CrossAxisAlignment.start,
                                   children: [
-                                    if (currentMessage.mediaList != null &&
-                                        currentMessage.mediaList!.isNotEmpty)
+                                    if (currentMessage.media != null)
                                       Column(
                                         children: [
-                                          NetworkImageWidget(
-                                            borderRadius: BorderRadius.only(
-                                                topLeft: isCurrentUser
-                                                    ? Radius.circular(10)
-                                                    : Radius.circular(0),
-                                                bottomLeft: Radius.circular(10),
-                                                topRight: isCurrentUser
-                                                    ? Radius.circular(0)
-                                                    : Radius.circular(10),
-                                                bottomRight:
-                                                    Radius.circular(10)),
-                                            imageUrl: currentMessage
-                                                .mediaList!.first
-                                                .toString(),
-                                          ),
+                                          if (currentMessage.messageType == 3)
+                                            audioTypeMessageWidget(
+                                                currentMessage, isCurrentUser),
+                                          if (currentMessage.messageType == 2)
+                                            videoTypeMessageWidget(
+                                                currentMessage, isCurrentUser),
+                                          if (currentMessage.messageType == 1)
+                                            imageTypeMessageWidget(
+                                                currentMessage, isCurrentUser)
                                         ],
                                       ),
                                     Padding(
@@ -190,31 +186,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             CrossAxisAlignment.end,
                                         children: [
                                           if (currentMessage.text!.isNotEmpty)
-                                            Flexible(
-                                              child: Text(
-                                                currentMessage.text.toString(),
-                                                style: AppTextStyle
-                                                    .normalRegular14
-                                                    .copyWith(
-                                                        color: primaryWhite),
-                                              ),
-                                            ),
-                                            
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 15),
-                                            child: Text(
-                                              CommonMethod.formatDateToTime(
-                                                  currentMessage.createdon ??
-                                                      DateTime.now()),
-                                              style: AppTextStyle
-                                                  .normalRegular10
-                                                  .copyWith(
-                                                      height: 0,
-                                                      color: primaryWhite
-                                                          .withOpacity(.7)),
-                                            ),
-                                          ),
+                                            textTypeMessageWidget(
+                                                currentMessage),
+                                          messageTimeWidget(currentMessage)
                                         ],
                                       ),
                                     ),
@@ -260,13 +234,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             color: Colors.black,
                           ),
                           onPressed: () async {
-                            controller.selectedFileList.value.clear();
-                            File? file = await CommonMethod.pickFile();
-                            if (file != null) {
+                            controller.selectedFile =
+                                await CommonMethod.pickFile();
+                            if (controller.selectedFile != null) {
                               String? path =
-                                  await controller.uploadFile(context, file);
+                                  await controller.uploadFile(context);
                               if (path != null) {
-                                controller.selectedFileList.value.add(path);
+                                controller.mediaUrl = path;
                                 controller.sendMessage(widget.chatroom);
                               }
                             }
@@ -294,77 +268,123 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ],
                 ),
               ),
-
-              // Container(
-              //   color: Colors.grey[200],
-              //   padding: EdgeInsets.symmetric(
-              //     horizontal: 15,
-              //     vertical: 5
-              //   ),
-              //   child: Row(
-              //     children: [
-
-              //       Flexible(
-              //         child: TextField(
-              //           controller: messageController,
-              //           maxLines: null,
-              //           decoration: InputDecoration(
-              //             border: InputBorder.none,
-              //             hintText: "Enter message"
-              //           ),
-              //         ),
-              //       ),
-
-              //       Row(
-              //         children: [
-              //           IconButton(
-              //             onPressed: () {
-              //               // sendMessage();
-              //               // CustomDialog.showSimpleDialog(
-              //               //     child: Row(
-              //               //       children: [
-              //               //         IconButton(
-              //               //           onPressed: () {},
-              //               //           icon: Icon(Icons.image),
-              //               //         ),
-              //               //       ],
-              //               //     ),
-              //               //     context: context);
-              //             },
-              //             icon: Icon(
-              //               Icons.attach_file,
-              //               color: Colors.black,
-              //             ),
-              //           ),
-              //           IconButton(
-              //             onPressed: () {
-              //               // sendMessage();
-              //               // CustomDialog.showSimpleDialog(
-              //               //     child: Row(
-              //               //       children: [
-              //               //         IconButton(
-              //               //           onPressed: () {},
-              //               //           icon: Icon(Icons.image),
-              //               //         ),
-              //               //       ],
-              //               //     ),
-              //               //     context: context);
-              //             },
-              //             icon: Icon(
-              //               Icons.attach_file,
-              //               color: Colors.black,
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-
-              //     ],
-              //   ),
-              // ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget messageTimeWidget(MessageModel currentMessage) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 15),
+      child: Text(
+        CommonMethod.formatDateToTime(
+            currentMessage.createdon ?? DateTime.now()),
+        style: AppTextStyle.normalRegular10
+            .copyWith(height: 0, color: primaryWhite.withOpacity(.7)),
+      ),
+    );
+  }
+
+  Widget textTypeMessageWidget(MessageModel currentMessage) {
+    return Flexible(
+      child: Text(
+        currentMessage.text.toString(),
+        style: AppTextStyle.normalRegular14.copyWith(color: primaryWhite),
+      ),
+    );
+  }
+
+  Widget imageTypeMessageWidget(
+      MessageModel currentMessage, bool isCurrentUser) {
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => ImageViewWidget(
+              imageUrl: currentMessage.media!,
+              isFile: false,
+            ));
+      },
+      child: NetworkImageWidget(
+        width: (Get.width / 2),
+        height: (Get.width / 2),
+        borderRadius: BorderRadius.only(
+            topLeft: isCurrentUser ? Radius.circular(10) : Radius.circular(0),
+            bottomLeft: Radius.circular(10),
+            topRight: isCurrentUser ? Radius.circular(0) : Radius.circular(10),
+            bottomRight: Radius.circular(10)),
+        imageUrl: currentMessage.media,
+      ),
+    );
+  }
+
+  Widget audioTypeMessageWidget(
+      MessageModel currentMessage, bool isCurrentUser) {
+    return GestureDetector(
+        onTap: () {
+          log("---currentMessage.media---${currentMessage.media}");
+        },
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                Icons.audio_file_rounded,
+                color: primaryWhite,
+              ),
+            ),
+            Flexible(
+              child: Text(
+                "Audio file",
+                style: AppTextStyle.normalBold14.copyWith(color: primaryWhite),
+              ),
+            )
+          ],
+        ));
+  }
+
+  Widget videoTypeMessageWidget(
+      MessageModel currentMessage, bool isCurrentUser) {
+    return FutureBuilder<String>(
+      future: CommonMethod.generateThumbnail(currentMessage.media!),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return GestureDetector(
+            onTap: () async {
+              Get.to(() =>
+                  VideoViewWidget(url: currentMessage.media!, isFile: false));
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      File(snapshot.data!),
+                      width: (Get.width / 2),
+                      height: (Get.width / 2),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.play_circle_fill_rounded,
+                  size: 50,
+                  color: primaryWhite.withOpacity(.8),
+                )
+              ],
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return const SizedBox();
+        }
+        return const SizedBox();
+      },
     );
   }
 }
