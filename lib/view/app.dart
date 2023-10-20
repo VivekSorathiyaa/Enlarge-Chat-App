@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:chatapp/Change%20languige/local_string.dart';
 import 'package:chatapp/view/splash_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
 import '../componet/app_text_style.dart';
+import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
 import '../utils/firebase_notification_handler.dart';
 
@@ -155,7 +157,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+        final savedLocale = AppPreferences().getLocaleFromPreferences();
+
     return GetMaterialApp(
+       translations: LocaleString(),
+      locale:  savedLocale ?? Locale('en', 'US'),
       title: 'Chat App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

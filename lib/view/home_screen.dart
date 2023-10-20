@@ -274,6 +274,7 @@ import '../utils/static_decoration.dart';
 import 'chat_room_screen.dart';
 import 'login_screen.dart';
 import 'search_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     Key? key,
@@ -285,13 +286,112 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   HomeController controller = Get.put(HomeController());
+  Locale? selectedLocale;
+  String? fullname = AppPreferences.getFullName();
+  String? phone = AppPreferences.getPhone();
+  String? profilePic = AppPreferences.getProfilePic();
+  Locale? savedLocale = AppPreferences().getLocaleFromPreferences();
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    super.initState();
     initPlatformState();
+    selectedLocale = savedLocale;
+    super.initState();
+  }
+  // void initState() {
+  //   WidgetsBinding.instance.addObserver(this);
+  //   super.initState();
+  //   initPlatformState();
 
+  //                 onTap: () {
+  //                   print(locale[index]['name']);
+  //                   updateLanguage(locale[index]['locale']);
+  //                   Navigator.of(context).pop(); // Close the dialog after selection
+  //                 },
+  //               );
+  //             }),
+  //           ),
+  //         );
+  //       }
+  //   );
+  // }
+
+  final List locale = [
+    {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
+    {'name': 'ગુજરાતી', 'locale': Locale('gu', 'IN')},
+    {'name': 'हिंदी', 'locale': Locale('hi', 'IN')},
+  ];
+  updateLanguage(Locale locale) {
+    Get.back();
+    Get.updateLocale(locale);
+    AppPreferences.setLocal(locale);
+  }
+
+  buildLanguageDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (builder) {
+          return AlertDialog(
+            actionsAlignment: MainAxisAlignment.start,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                  10.0), // Adjust the border radius as needed
+            ),
+            elevation: 15,
+            title: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        primaryBlack.withOpacity(0.9),
+                        greyColor.withOpacity(0.7)
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10)),
+                //  color: primaryBlack.withOpacity(0.1),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'chooseLang'.tr,
+                    style: TextStyle(color: primaryWhite),
+                  ),
+                )),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List<Widget>.generate(locale.length, (index) {
+                return ListTile(
+                  title: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(locale[index]['name']),
+                  ),
+                  leading: Radio<Locale>(
+                    value: locale[index]['locale'],
+                    groupValue: selectedLocale,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedLocale = value as Locale?;
+                      });
+                      print(locale[index]['name']);
+                      updateLanguage(value!);
+                      Navigator.of(context)
+                          .pop(); // Close the dialog after selection
+                    },
+                  ),
+                  splashColor: Colors.grey,
+                  onTap: () {
+                    print(locale[index]['name']);
+                    updateLanguage(locale[index]['locale']);
+                    Navigator.of(context)
+                        .pop(); // Close the dialog after selection
+                  },
+                );
+              }),
+            ),
+          );
+        });
   }
 
   Future<void> initPlatformState() async {
@@ -344,10 +444,135 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    log('---currentUserId---${AppPreferences.getUiId()}');
+    showAlertDialog(BuildContext context) {
+      // set up the buttons
+      Widget cancelButton = ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.8)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'cancel'.tr,
+            style: TextStyle(color: greyColor, fontWeight: FontWeight.w500),
+          ),
+        ),
+        onPressed: () {
+          Get.back();
+        },
+      );
+
+      Widget continueButton = ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor:
+              MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
+        ),
+        onPressed: () async {
+          await FirebaseAuth.instance.signOut();
+          Navigator.popUntil(context, (route) => route.isFirst);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) {
+              return LoginScreen();
+            }),
+          );
+        },
+        child: Text(
+          'continue'.tr,
+          style: TextStyle(color: primaryWhite, fontWeight: FontWeight.w500),
+        ),
+      );
+      AlertDialog alert = AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(8.0), // Adjust the border radius as needed
+        ),
+
+        alignment: Alignment.center,
+        // title: Text("Would you like to continue to logout?"),
+        content: Text("logout_desc".tr),
+        actions: [
+          cancelButton,
+          continueButton,
+        ],
+      );
+      // show the dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        },
+      );
+    }
+
     return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          children: [
+            Container(
+              decoration:
+                  BoxDecoration(color: Color(0xFF737373).withOpacity(0.9)),
+              //   color: primaryColor.withOpacity(0.5),
+              height: 30,
+            ),
+
+            UserAccountsDrawerHeader(
+              decoration:
+                  BoxDecoration(color: Color(0xFF454545).withOpacity(0.5)),
+              accountName: Text(
+                fullname!,
+                style: TextStyle(fontSize: 18, color: primaryWhite),
+              ),
+              accountEmail: Text(
+                phone!,
+                style: TextStyle(fontSize: 13, color: primaryWhite),
+              ),
+              currentAccountPicture: Container(
+                // Adjust the size as needed
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white, // Background color of the circle
+                ),
+                child: CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  backgroundImage: NetworkImage(profilePic!),
+                ),
+              ),
+            ),
+
+            ListTile(
+                leading: Icon(Icons.info),
+                title: Text('aboutUs'.tr),
+                onTap: () {}),
+            ListTile(
+              leading: Icon(Icons.light_mode),
+              title: Text('theme'.tr),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.language),
+              title: Text('changeLang'.tr),
+              onTap: () {
+                buildLanguageDialog(context);
+                // var locale = Locale('gu', 'IN');
+                // Get.updateLocale(locale);
+              },
+            ),
+            ListTile(
+                leading: Icon(Icons.logout),
+                title: Text('logOut'.tr),
+                onTap: () {
+                  showAlertDialog(context);
+                }),
+            // Add more list items as needed
+          ],
+        ),
+      ),
       appBar: AppBar(
         centerTitle: true,
-        title: Text("Chat App - ${AppPreferences.getFullName()}"),
+        title: Text("head".tr),
         actions: [
           IconButton(
             onPressed: () async {
@@ -377,9 +602,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           }
                           return targetUser == null
                               ? SizedBox()
-                              :
-                              
-                               StreamBuilder<DocumentSnapshot>(
+                              : StreamBuilder<DocumentSnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('users')
                                       .doc(targetUser.uid)
@@ -397,11 +620,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     final userData = UserModel.fromMap(
                                         snapshot.data!.data()
                                             as Map<String, dynamic>);
-    
+
                                     // Use userData to display user details
-                              return ShadowContainerWidget(
-                                padding: 0,
-                                widget: ListTile(
+                                    return ShadowContainerWidget(
+                                      padding: 0,
+                                      widget: ListTile(
                                           onTap: () {
                                             Navigator.push(
                                               context,
@@ -475,11 +698,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     );
                                   },
                                 );
-
-                        
-                      
-                        }
-                  );
+                        });
               },
             );
           },
@@ -494,9 +713,5 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: Icon(Icons.search),
       ),
     );
-  
-        
-      
-    
   }
 }

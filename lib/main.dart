@@ -1,5 +1,3 @@
-import 'package:background_fetch/background_fetch.dart';
-import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/app.dart';
 
 import 'package:chatapp/utils/app_preferences.dart';
@@ -10,20 +8,21 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
-var uuid = Uuid();
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+var uuid = Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
   await requestNotificationPermission();
-
   await AppPreferences.init();
-  runApp(MyApp());
-}
+  runApp(
+     MyApp(),
 
+  );
+}
 
 Future<void> requestNotificationPermission() async {
   Permission.notification.isDenied.then((value) {
@@ -31,5 +30,4 @@ Future<void> requestNotificationPermission() async {
       Permission.notification.request();
     }
   });
-
 }

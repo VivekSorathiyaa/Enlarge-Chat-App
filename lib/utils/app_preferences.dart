@@ -1,14 +1,7 @@
-import 'dart:convert';
-import 'dart:developer';
 
-import 'package:chatapp/models/user_model.dart';
-import 'package:chatapp/view/complete_profile_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'common_method.dart';
 
 class AppPreferences {
   static final String _keyUid = '_keyUid';
@@ -16,7 +9,9 @@ class AppPreferences {
   static final String _keyPhone = '_keyPhone';
   static final String _keyProfilePic = '_keyProfilePic';
   static final String _keyFcmToken = '_keyFcmToken';
-
+  static final String _keyLocal = '_keyLocal';
+  static final String _languageKey = '_languageKey';
+  static final String _countryCodeKey = '_countryCodeKey';
   static SharedPreferences? _prefs;
 
   static Future<void> init() async {
@@ -43,6 +38,21 @@ class AppPreferences {
     return _prefs!.getString(_keyFcmToken);
   }
 
+  Locale? getLocaleFromPreferences() {
+    final languageCode = _prefs!.getString(_languageKey);
+    final countryCode = _prefs!.getString(_countryCodeKey);
+    if (languageCode != null && countryCode != null) {
+      return Locale(languageCode, countryCode);
+    } else {
+      return Locale('en', 'US');
+    }
+  }
+
+  static Future<void> setLocal(Locale locale) async {
+    await _prefs!.setString(_languageKey, locale.languageCode);
+    await _prefs!.setString(_countryCodeKey, locale.countryCode!);
+  }
+
   static Future<void> setUid(String uId) async {
     await _prefs!.setString(_keyUid, uId);
   }
@@ -66,28 +76,4 @@ class AppPreferences {
   static Future<void> clear() async {
     await _prefs!.clear();
   }
-
-  // static Future uploadData() async {
-  //   String? uid = await AppPreferences.getUiId();
-  //   String? phone = await AppPreferences.getPhone();
-  //   String? fullname = await AppPreferences.getFullName();
-  //   String? profilepic = await AppPreferences.getProfilePic();
-  //   String? fcmtoken = await AppPreferences.getFcmToken();
-  //   if (uid != null) {
-  //     UserModel userModel = UserModel(
-  //         uid: uid,
-  //         phone: phone,
-  //         fullname: fullname,
-  //         profilepic: profilepic,
-  //         fcmtoken: fcmtoken);
-  //     await CommonMethod.saveUserData(userModel);
-      // await FirebaseFirestore.instance
-      //     .collection("users")
-      //     .doc(userModel.uid)
-      //     .set(userModel.toMap())
-      //     .then((value) {
-      //   log("Fcm updated!");
-      // });
-  //   }
-  // }
 }
