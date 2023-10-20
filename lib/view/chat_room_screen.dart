@@ -251,9 +251,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   () {
                     final messages = controller.messages;
                     if (messages.isEmpty) {
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return SizedBox();
                     } else {
                       return ListView.builder(
                         reverse: true,

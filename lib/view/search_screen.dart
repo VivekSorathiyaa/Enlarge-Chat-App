@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:chatapp/componet/text_form_field_widget.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/user_model.dart';
@@ -95,7 +96,12 @@ class _SearchScreenState extends State<SearchScreen> {
         .snapshots();
     return Scaffold(
       appBar: AppBar(
-        title: Text("search".tr),
+          title: TextFormFieldWidget(
+        controller: null,
+        hintText: "search".tr,
+      )
+
+          // Text("search".tr),
       ),
       body: SafeArea(
         child: Container(
