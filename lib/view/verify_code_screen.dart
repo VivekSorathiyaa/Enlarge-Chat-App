@@ -40,7 +40,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 controller: controller.otpTxtController,
                 prefixIcon: Icon(Icons.password),
                 keyboardType: TextInputType.number,
-                hintText: 'Phone Number',
+                hintText: 'OTP',
               ),
               height20,
               PrimaryTextButton(

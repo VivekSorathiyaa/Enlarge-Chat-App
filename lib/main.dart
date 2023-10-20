@@ -1,35 +1,22 @@
-import 'dart:developer';
+import 'package:chatapp/view/app.dart';
 
-import 'package:chatapp/Change%20languige/local_string.dart';
-import 'package:chatapp/models/user_model.dart';
-import 'package:chatapp/utils/common_method.dart';
-import 'package:chatapp/view/complete_profile_screen.dart';
-import 'package:chatapp/view/home_screen.dart';
-
-import 'package:chatapp/view/login_screen.dart';
-import 'package:chatapp/view/splash_screen.dart';
 import 'package:chatapp/utils/app_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
-import 'componet/app_text_style.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'utils/colors.dart';
 
-
+final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 var uuid = Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
-
-//await notificationService.requestNotificationPermission();
-
+  await requestNotificationPermission();
   await AppPreferences.init();
   runApp(
      MyApp(),
@@ -37,27 +24,10 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final savedLocale = AppPreferences().getLocaleFromPreferences();
-
-    return GetMaterialApp(
-       translations: LocaleString(),
-      locale:  savedLocale ?? Locale('en', 'US'),
-      title: 'Chat App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: appBackgroundColor,
-        fontFamily: AppTextStyle.fontFamilyInter,
-        hintColor: primaryBlack,
-        appBarTheme: AppBarTheme(backgroundColor: primaryColor),
-        iconTheme: IconThemeData(color: primaryBlack),
-        colorScheme: ColorScheme.fromSwatch().copyWith(secondary: primaryColor),
-      ),
-      home: SplashScreen(),
-    );
-  }
+Future<void> requestNotificationPermission() async {
+  Permission.notification.isDenied.then((value) {
+    if (value) {
+      Permission.notification.request();
+    }
+  });
 }

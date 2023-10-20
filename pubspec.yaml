@@ -41,7 +41,7 @@ dependencies:
   uuid: 
   # rxdart: ^0.27.7
   get: ^4.6.5
-  intl: ^0.18.1
+  intl: 
   country_code_picker: ^3.0.0
   file_picker: ^5.5.0
   shared_preferences: ^2.2.2
@@ -51,8 +51,11 @@ dependencies:
   video_thumbnail: ^0.5.3
   photo_view: ^0.14.0
   chewie: ^1.7.1
+  cloud_functions: ^4.5.0
+  background_fetch: 
+  loading_animation_widget: ^1.2.0+4
   speech_to_text: ^6.3.0
-  flutter_localization: ^0.1.14
+  flutter_localization: 
   translator:
 
  # flutter_translate: ^4.0.4
@@ -80,6 +83,10 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/json/
+    - assets/fonts/
+    - assets/images/
   # assets:
 
   #   - images/a_dot_burr.jpeg

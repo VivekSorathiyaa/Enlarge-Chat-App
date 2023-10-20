@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_null_comparison
+
 import 'dart:developer';
 import 'dart:io';
 
@@ -19,6 +21,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -31,15 +35,13 @@ import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 
 class ChatRoomScreen extends StatefulWidget {
+  final String chatRoomId;
   final UserModel targetUser;
-  final ChatRoomModel chatroom;
-  // final UserModel userModel;
 
   const ChatRoomScreen({
     Key? key,
+    required this.chatRoomId,
     required this.targetUser,
-    required this.chatroom,
-    // required this.userModel,
   }) : super(key: key);
 
   @override
@@ -52,18 +54,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   String msg = '';
   String? localeId;
   final RxBool isMenuVisible = RxBool(false);
-  Locale? locale=AppPreferences().getLocaleFromPreferences();
+  Locale? locale = AppPreferences().getLocaleFromPreferences();
 
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
-    // TODO: implement initState
-    super.initState();
-
+    CommonMethod.updateChatActiveStatus([widget.targetUser.uid!]);
+    CommonMethod.setOnlineStatus();
     _requestMicrophonePermission();
     _initializeSpeechToText();
+    super.initState();
   }
 
   void _requestMicrophonePermission() async {
@@ -96,7 +99,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       print('Speech recognition not available');
     }
   }
-
 
   void listen(Locale savedLocale) async {
     var microphoneStatus = await Permission.microphone.status;
@@ -139,10 +141,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-
-
-
-
   Future<void> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
 
@@ -159,219 +157,285 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    CommonMethod.updateChatActiveStatus(null);
+    CommonMethod.setOnlineStatus();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final Rx<UserModel> targetUser = widget.targetUser.obs;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.targetUser.uid)
+        .snapshots()
+        .listen((querySnapshot) {
+      if (querySnapshot.exists) {
+        final user =
+            UserModel.fromMap(querySnapshot.data() as Map<String, dynamic>);
+        targetUser.value = user;
+      } else {
+        targetUser.value = widget.targetUser;
+      }
+    });
+    FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(widget.chatRoomId)
+        .collection("messages")
+        .orderBy("createdAt", descending: true)
+        .snapshots()
+        .listen((querySnapshot) {
+      final messages = querySnapshot.docs.map((doc) {
+        return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
+      controller.updateMessages(messages);
+    });
+
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: primaryWhite,
+          ),
+          onPressed: () {
+            Get.back();
+          },
+        ),
         title: Row(
           children: [
-            // CircleAvatar(
-            //   backgroundColor: Colors.grey[300],
-            //   backgroundImage:
-            //       NetworkImage(widget.targetUser.profilepic.toString()),
-            // ),
-
-            NetworkImageWidget(
-              width: 42,
-              height: 42,
-              borderRadius: BorderRadius.circular(42),
-              imageUrl: widget.targetUser.profilepic.toString(),
+            Obx(
+              () => NetworkImageWidget(
+                width: 42,
+                height: 42,
+                borderRadius: BorderRadius.circular(42),
+                imageUrl: targetUser.value.profilepic.toString(),
+              ),
             ),
-            SizedBox(
-              width: 10,
+            width15,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(
+                  () => Text(
+                    targetUser.value.fullname.toString(),
+                    style: AppTextStyle.regularBold.copyWith(
+                        color: primaryWhite, fontSize: 16, height: 1.5),
+                  ),
+                ),
+                Obx(
+                  () => Text(
+                    targetUser.value.status.toString(),
+                    style: AppTextStyle.normalRegular14.copyWith(
+                      color: primaryWhite.withOpacity(.7),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Text(widget.targetUser.fullname.toString()),
           ],
         ),
       ),
-      body: SafeArea(
-        child: Container(
-          child: Column(
-            children: [
-              // This is where the chats will go
-              Expanded(
-                child: StreamBuilder(
-                  stream: FirebaseFirestore.instance
-                      .collection("chatrooms")
-                      .doc(widget.chatroom.chatroomid)
-                      .collection("messages")
-                      .orderBy("createdon", descending: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.active) {
-                      if (snapshot.hasData) {
-                        QuerySnapshot dataSnapshot =
-                            snapshot.data as QuerySnapshot;
-
-                        return ListView.builder(
-                          reverse: true,
-                          shrinkWrap: true,
-                          itemCount: dataSnapshot.docs.length,
-                          itemBuilder: (context, index) {
-                            MessageModel currentMessage = MessageModel.fromMap(
-                                dataSnapshot.docs[index].data()
-                                    as Map<String, dynamic>);
-                            bool isCurrentUser = (currentMessage.sender ==
-                                AppPreferences.getUiId());
-                            return Container(
-                              margin: EdgeInsets.symmetric(
-                                  vertical: 5.0, horizontal: 10),
-                              alignment: isCurrentUser
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: isCurrentUser
-                                          ? primaryColor
-                                          : greenColor),
-                                  color:
-                                      isCurrentUser ? primaryColor : greenColor,
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: isCurrentUser
-                                          ? Radius.circular(10)
-                                          : Radius.circular(0),
-                                      bottomLeft: Radius.circular(10),
-                                      topRight: isCurrentUser
-                                          ? Radius.circular(0)
-                                          : Radius.circular(10),
-                                      bottomRight: Radius.circular(10)),
-                                ),
-                                constraints: BoxConstraints(
-                                  maxWidth: Get.width * 0.7,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: isCurrentUser
-                                      ? CrossAxisAlignment.end
-                                      : CrossAxisAlignment.start,
-                                  children: [
-                                    if (currentMessage.media != null)
-                                      Column(
-                                        children: [
-                                          if (currentMessage.messageType == 3)
-                                            audioTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 2)
-                                            videoTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 1)
-                                            imageTypeMessageWidget(
-                                                currentMessage, isCurrentUser)
-                                        ],
-                                      ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          if (currentMessage.text!.isNotEmpty)
-                                            textTypeMessageWidget(
-                                                currentMessage),
-                                          messageTimeWidget(currentMessage)
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                              "An error occured! Please check your internet connection."),
-                        );
-                      } else {
-                        return Center(
-                          child: Text("Say hi to your new friend"),
-                        );
-                      }
-                    } else {
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              controller: _scrollController,
+              reverse: true,
+              children: [
+                Obx(
+                  () {
+                    final messages = controller.messages;
+                    if (messages.isEmpty) {
                       return Center(
                         child: CircularProgressIndicator(),
+                      );
+                    } else {
+                      return ListView.builder(
+                        reverse: true,
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final currentMessage = messages[index];
+                          final isCurrentUser =
+                              currentMessage.sender == AppPreferences.getUiId();
+
+                          return Container(
+                            margin: EdgeInsets.symmetric(
+                                vertical: 5.0, horizontal: 10),
+                            alignment: isCurrentUser
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isCurrentUser
+                                        ? primaryColor
+                                        : greenColor),
+                                color:
+                                    isCurrentUser ? primaryColor : greenColor,
+                                borderRadius: BorderRadius.only(
+                                    topLeft: isCurrentUser
+                                        ? Radius.circular(10)
+                                        : Radius.circular(0),
+                                    bottomLeft: Radius.circular(10),
+                                    topRight: isCurrentUser
+                                        ? Radius.circular(0)
+                                        : Radius.circular(10),
+                                    bottomRight: Radius.circular(10)),
+                              ),
+                              constraints: BoxConstraints(
+                                maxWidth: Get.width * 0.7,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: isCurrentUser
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  if (currentMessage.media != null)
+                                    Column(
+                                      children: [
+                                        if (currentMessage.messageType == 3)
+                                          audioTypeMessageWidget(
+                                              currentMessage, isCurrentUser),
+                                        if (currentMessage.messageType == 2)
+                                          videoTypeMessageWidget(
+                                              currentMessage, isCurrentUser),
+                                        if (currentMessage.messageType == 1)
+                                          imageTypeMessageWidget(
+                                              currentMessage, isCurrentUser)
+                                      ],
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        if (currentMessage.text!.isNotEmpty)
+                                          textTypeMessageWidget(currentMessage),
+                                        messageTimeWidget(currentMessage)
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       );
                     }
                   },
                 ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: TextFormFieldWidget(
-                        controller: controller.messageController,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 5, //
-                        hintText: "Enter message",
-                        suffixIcon: Stack(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 28.0),
-                              child: IconButton(
-                                  onPressed: () {
-                                    //listenAndTranslate();
-                                     listen(locale!);
-
-                                  },
-                                  icon: Icon(
-                                    Icons.mic_none,
-                                    color: primaryBlack,
-                                  )),
-                            ),
-                            Positioned(
-                              right: -10,
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.attach_file,
-                                  color: Colors.black,
-                                ),
-                                onPressed: () async {
-                                  controller.selectedFile =
-                                      await CommonMethod.pickFile();
-                                  if (controller.selectedFile != null) {
-                                    String? path =
-                                        await controller.uploadFile(context);
-                                    if (path != null) {
-                                      controller.mediaUrl = path;
-                                      controller.sendMessage(widget.chatroom);
-                                    }
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    width10,
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: primaryColor,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.send,
-                          color: primaryWhite,
-                        ),
-                        onPressed: () {
-                          var msg = controller.sendMessage(widget.chatroom);
-                          controller.sendMessage(widget.chatroom);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          Obx(
+            () => targetUser.value.status == 'typing'
+                ? Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        width12,
+                        Text(
+                          'Typing ',
+                          style: AppTextStyle.normalBold14
+                              .copyWith(color: greenColor),
+                        ),
+                        LoadingAnimationWidget.waveDots(
+                          color: greenColor,
+                          size: 30,
+                        ),
+                      ],
+                    ),
+                  )
+                : SizedBox(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextFormFieldWidget(
+                    controller: controller.messageController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 5,
+                    onChanged: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        CommonMethod.setTypingStatus();
+                      } else {
+                        CommonMethod.setOnlineStatus();
+                      }
+                    },
+                    hintText: "Enter message",
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                            onPressed: () {
+                              //listenAndTranslate();
+                              listen(locale!);
+                            },
+                            icon: Icon(
+                              Icons.mic_none,
+                              color: primaryBlack,
+                            )),
+                        IconButton(
+                          icon: Icon(
+                            Icons.attach_file,
+                            color: Colors.black,
+                          ),
+                          onPressed: () async {
+                            controller.selectedFile =
+                                await CommonMethod.pickFile();
+                            if (controller.selectedFile != null) {
+                              String? path =
+                                  await controller.uploadFile(context);
+                              if (path != null) {
+                                controller.mediaUrl = path;
+                                controller.sendMessage(
+                                    chatRoomId: widget.chatRoomId,
+                                    targetUser: widget.targetUser);
+                              }
+                            }
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                width10,
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: primaryColor,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: primaryWhite,
+                    ),
+                    onPressed: () {
+                      controller.sendMessage(
+                          chatRoomId: widget.chatRoomId,
+                          targetUser: widget.targetUser);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          height12,
+        ],
       ),
     );
   }
@@ -381,7 +445,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       padding: const EdgeInsets.only(left: 15),
       child: Text(
         CommonMethod.formatDateToTime(
-            currentMessage.createdon ?? DateTime.now()),
+            currentMessage.createdAt ?? DateTime.now()),
         style: AppTextStyle.normalRegular10
             .copyWith(height: 0, color: primaryWhite.withOpacity(.7)),
       ),

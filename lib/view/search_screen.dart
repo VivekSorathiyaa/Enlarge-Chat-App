@@ -4,6 +4,7 @@ import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
+import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,45 +28,54 @@ class _SearchScreenState extends State<SearchScreen> {
 
   TextEditingController searchController = TextEditingController();
 
-  Future<ChatRoomModel?> getChatroomModel(UserModel targetUser) async {
-    ChatRoomModel? chatRoom;
 
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection("chatrooms")
-        .where("participants.${await AppPreferences.getUiId()}", isEqualTo: true)
-        .where("participants.${targetUser.uid}", isEqualTo: true)
-        .get();
+  Future<ChatRoomModel?> getChatroomModel(List<String> targetUserIds) async {
+    final List<QuerySnapshot> userSnapshots =
+        await Future.wait(targetUserIds.map((userId) {
+      return FirebaseFirestore.instance
+          .collection("users")
+          .where("uid", isEqualTo: userId)
+          .get();
+    }));
 
-    if (snapshot.docs.length > 0) {
-      // Fetch the existing one
-      var docData = snapshot.docs[0].data();
-      ChatRoomModel existingChatroom =
-          ChatRoomModel.fromMap(docData as Map<String, dynamic>);
-
-      chatRoom = existingChatroom;
-    } else {
-      // Create a new one
-      ChatRoomModel newChatroom = ChatRoomModel(
-        chatroomid: uuid.v1(),
-        lastMessage: "",
-        participants: {
-          await AppPreferences.getUiId()!: true,
-          targetUser.uid.toString(): true,
-        },
-      );
-
-      await FirebaseFirestore.instance
+    if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
+      // All target users exist
+      final userMap = userSnapshots
+          .map((snapshot) => UserModel.fromMap(
+              snapshot.docs.first.data() as Map<String, dynamic>))
+          .toList();
+      final chatRoomSnapshot = await FirebaseFirestore.instance
           .collection("chatrooms")
-          .doc(newChatroom.chatroomid)
+          .where('users',
+              isEqualTo: userMap.map((user) => user.toMap()).toList())
+          .get();
+
+      if (chatRoomSnapshot.docs.isNotEmpty) {
+        // Chat room already exists
+        final chatRoomData =
+            chatRoomSnapshot.docs.first.data() as Map<String, dynamic>;
+        return ChatRoomModel.fromMap(chatRoomData);
+      } else {
+        // Create a new chat room
+        final newChatroom = ChatRoomModel(
+          chatRoomId: uuid.v1(),
+          lastMessage: null,
+          lastSeen: null,
+          users: userMap,
+        );
+
+        await FirebaseFirestore.instance
+            .collection("chatrooms")
+            .doc(newChatroom.chatRoomId!)
           .set(newChatroom.toMap());
 
-      chatRoom = newChatroom;
-
-      log("New Chatroom Created!");
+        return newChatroom;
+      }
+    } else {
+      return null; // Some of the target users do not exist
     }
-
-    return chatRoom;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -128,10 +138,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 fullnameSnapshot.hasData) {
                               QuerySnapshot phoneResult = phoneSnapshot.data!;
                               QuerySnapshot fullnameResult =
-                                  fullnameSnapshot.data!;
-              
-                              // QuerySnapshot dataSnapshot = snapshot.data as QuerySnapshot;
-              
+                                  fullnameSnapshot.data!;              
                               if (phoneResult.docs.length > 0 ||
                                   fullnameResult.docs.length > 0) {
                                 List<Map<String, dynamic>> userMap = [];
@@ -164,18 +171,21 @@ class _SearchScreenState extends State<SearchScreen> {
                                     var index = searchedUser.indexOf(e);
                                     return ListTile(
                                       onTap: () async {
-                                        ChatRoomModel? chatroomModel =
-                                            await getChatroomModel(
-                                                searchedUser[index]);
+                                        ChatRoomModel? chatRoomModel =
+                                            await getChatroomModel([
+                                          searchedUser[index].uid!,
+                                          AppPreferences.getUiId()!
+                                        ]);
               
-                                        if (chatroomModel != null) {
+                                        if (chatRoomModel != null) {
                                           Navigator.pop(context);
                                           Navigator.push(context,
                                               MaterialPageRoute(
                                                   builder: (context) {
                                             return ChatRoomScreen(
+                                              chatRoomId:
+                                                  chatRoomModel.chatRoomId!,
                                               targetUser: searchedUser[index],
-                                              chatroom: chatroomModel,
                                             );
                                           }));
                                         }
