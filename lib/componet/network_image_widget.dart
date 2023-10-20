@@ -30,12 +30,12 @@ class NetworkImageWidget extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
       child: CachedNetworkImage(
-        key: ValueKey(imageUrl),
+        key: ValueKey(imageUrl.toString()),
         fit: fit ?? BoxFit.cover,
         height: height,
         maxWidthDiskCache: 350,
         memCacheWidth: 350,
-        cacheKey: imageUrl,
+        cacheKey: imageUrl.toString(),
         width: width,
         filterQuality: FilterQuality.low,
         color: color,
@@ -44,7 +44,7 @@ class NetworkImageWidget extends StatelessWidget {
         fadeOutCurve: Curves.easeInOut,
         fadeInDuration: const Duration(microseconds: 0),
         fadeInCurve: Curves.easeIn,
-        imageUrl: imageUrl!,
+        imageUrl: imageUrl.toString(),
         progressIndicatorBuilder: (context, url, downloadProgress) {
           return Shimmer.fromColors(
               baseColor: isVideoFeed != null && isVideoFeed!

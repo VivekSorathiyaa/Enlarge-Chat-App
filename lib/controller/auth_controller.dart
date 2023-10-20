@@ -41,21 +41,8 @@ class AuthController extends GetxController {
   }
   static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
 
-   Future<void> getFirebaseMessagingToken() async {
-    await fMessaging.requestPermission();
 
-    await fMessaging.getToken().then((t) {
-      if (t != null) {
-
-      //  setFcmToken(t);
-        log('Push Token: $t');
-        fcmtoken=t;
-      }
-    });
-
-
-
-  }
+  
   Future verifyPhoneNumber(BuildContext context) async {
     CustomDialog.showLoadingDialog(context, "OTP Send..");
     try {
@@ -134,7 +121,7 @@ class AuthController extends GetxController {
             uid: uid,
             phone: phoneTxtController.text,
             fullname: null,
-            profilepic: null, fcmtoken:fcmtoken);
+            profilepic: null, fcmtoken:fcmtoken, active: []);
         await CommonMethod.saveUserData(newUser);
 
         if (isRegistered) {
@@ -151,7 +138,7 @@ class AuthController extends GetxController {
               fcmtoken:null,
               phone: phoneTxtController.text,
               fullname: null,
-              profilepic: null);
+              profilepic: null, active: []);
           await CommonMethod.saveUserData(newUser);
           await FirebaseFirestore.instance
               .collection("users")

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
+import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import '../main.dart';
 import 'colors.dart';
 
 class CommonMethod {
@@ -38,6 +41,121 @@ class CommonMethod {
     }
   }
 
+  
+
+  static Future refreshToken() async {
+    firebaseMessaging.getToken().then((token) async {
+      if (token != null) {
+        await AppPreferences.setFcmToken(token);
+        String? currentUserId = await AppPreferences.getUiId();
+        if (currentUserId != null) {
+          await FirebaseFirestore.instance
+              .collection("users")
+              .doc(currentUserId)
+              .update({'fcmtoken': token}).then((value) {
+            log("Fcm updated!");
+          });
+        }
+      }
+      log('FCM Token: $token');
+    });
+  }
+
+  static Future updateUserOnlineStatus(bool status) async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(AppPreferences.getUiId())
+        .update({'online': status}).then((value) {
+      log("Fcm updated!");
+    });
+  }
+
+  static Future updateChatActiveStatus(List<String>? userId) async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(AppPreferences.getUiId())
+        .update({'active': userId}).then((value) {
+      log("Fcm updated!");
+    });
+  }
+
+  static Future setOnlineStatus() async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(AppPreferences.getUiId())
+        .update({'status': 'online'}).then((value) {
+      log("Set Status Online!");
+    });
+  }
+
+  static Future setOfflineStatus() async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(AppPreferences.getUiId())
+        .update({'status': 'offline'}).then((value) {
+      log("Set Status Offline!");
+    });
+  }
+
+  static Future setTypingStatus() async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(AppPreferences.getUiId())
+        .update({'status': 'typing'}).then((value) {
+      log("Set Status Typing!");
+    });
+  }
+
+  static Future<void> updateLastMessage({
+    required String chatRoomId,
+    required String lastMessage,
+  }) async {
+    final userDocReference =
+        FirebaseFirestore.instance.collection("chatrooms").doc(chatRoomId);
+    await userDocReference.get().then((docSnapshot) {
+      if (docSnapshot.exists) {
+        // Document exists, update the fields
+        userDocReference.update({
+          'lastMessage': lastMessage,
+          'lastSeen': DateTime.now(),
+        }).then((_) {
+          log("LastMessage updated! $lastMessage");
+        }).catchError((error) {
+          log("Error updating lastMessage: $error");
+        });
+      } else {
+        log("User document does not exist.");
+      }
+    }).catchError((error) {
+      log("Error fetching user document: $error");
+    });
+  }
+
+  static Future<String> getLastMessage(int messageType, String msg) async {
+    var message = messageType == 3
+        ? ': 🔊 audio'
+        : messageType == 2
+            ? ' 🎥 video'
+            : messageType == 1
+                ? "📷 image"
+                : messageType == 0
+                    ? msg
+                    : '*';
+    log('--message---$message');
+    return message;
+  }
+
+  static Future addMessage(MessageModel newMessage) async {
+    await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(newMessage.chatRoomId)
+        .collection("messages")
+        .doc(newMessage.messageId)
+        .set(newMessage.toMap())
+        .then((value) => log("Send Message"));
+  }
+
+
   static Future<UserModel?> getUserModelById(String uid) async {
     UserModel? userModel;
 
@@ -50,6 +168,17 @@ class CommonMethod {
 
     return userModel;
   }
+
+  static Future<UserModel?> getTargetUserModel(List<UserModel> users) async {
+    for (var data in users) {
+      if (data.uid != AppPreferences.getUiId()!) {
+        log("==getUserModelById==");
+        return await getUserModelById(data.uid!);
+      }
+    }
+    return null;
+  }
+
 
   static Future saveUserData(UserModel userModel) async {
     if (userModel.uid != null) {
@@ -139,5 +268,6 @@ class CommonMethod {
     );
     return fileName!;
   }
+
 
 }

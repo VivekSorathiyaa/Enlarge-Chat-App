@@ -27,33 +27,10 @@ class CompleteProfileScreen extends StatefulWidget {
   _CompleteProfileScreenState createState() => _CompleteProfileScreenState();
 }
 
-FirebaseMessaging fMessaging = FirebaseMessaging.instance;
-String? fcmToken;
-
-Future<void> getFirebaseMessagingToken() async {
-  await fMessaging.requestPermission();
-
-  await fMessaging.getToken().then((t) {
-    if (t != null) {
-//setFcmToken(t);
-    fcmToken=t;
-
-      log('Push Token: $t');
-    }
-  });
-}
-
-
 class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   File? imageFile;
   TextEditingController fullNameController = TextEditingController();
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
 
-    getFirebaseMessagingToken();
-  }
 
   
   void selectImage(ImageSource source) async {
@@ -133,7 +110,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           phone: phone,
           fullname: fullNameController.text.trim(),
           profilepic: imageUrl,
-          fcmtoken: fcmToken);
+          fcmtoken: fcmToken, active: []);
       await CommonMethod.saveUserData(userModel);
       await FirebaseFirestore.instance
           .collection("users")
