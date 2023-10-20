@@ -210,31 +210,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
       drawer:Drawer(
 
-        child: Column(
+
+
+        child: ListView(
+
+          padding: EdgeInsets.zero,
           children: [
             Container(
+
+              padding: EdgeInsets.zero,
               decoration: BoxDecoration(
-                  color: Color(0xFF737373).withOpacity(0.9)
+ color: primaryBlack
               ),
               //   color: primaryColor.withOpacity(0.5),
               height: 30,
             ),
 
             UserAccountsDrawerHeader(
+
+
+              currentAccountPictureSize: Size.square(70),
+
               decoration: BoxDecoration(
-                  color: Color(0xFF454545).withOpacity(0.5)
+                  color: primaryBlack,
+
               ),
+
               accountName: Text(fullname!,style: TextStyle(fontSize: 18,color: primaryWhite),),
               accountEmail: Text(phone!,style: TextStyle(fontSize: 13,color: primaryWhite),),
               currentAccountPicture:Container(
                 // Adjust the size as needed
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white, // Background color of the circle
+                  color: Colors.white,
+                  border: Border.all(color: primaryWhite,style: BorderStyle.solid)// Background color of the circle
                 ),
-                child: CircleAvatar(
-                  backgroundColor: Colors.transparent,
-                  backgroundImage: NetworkImage(profilePic!),
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: NetworkImage(profilePic!),
+                  ),
                 ),
               ),
             ),
