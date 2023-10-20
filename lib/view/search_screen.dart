@@ -8,6 +8,7 @@ import 'package:chatapp/view/chat_room_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../componet/network_image_widget.dart';
 import '../utils/app_preferences.dart';
@@ -84,7 +85,7 @@ class _SearchScreenState extends State<SearchScreen> {
         .snapshots();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Search"),
+        title: Text("search".tr),
       ),
       body: SafeArea(
         child: Container(
@@ -96,7 +97,7 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               TextField(
                 controller: searchController,
-                decoration: InputDecoration(labelText: "Phone Number"),
+                decoration: InputDecoration(labelText: "phone".tr),
                 onChanged: (value) {
                   setState(() {});
                 },
@@ -109,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   setState(() {});
                 },
                 color: Theme.of(context).colorScheme.secondary,
-                child: Text("Search"),
+                child: Text("search".tr),
               ),
               SizedBox(
                 height: 20,

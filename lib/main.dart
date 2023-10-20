@@ -1,6 +1,6 @@
-
 import 'dart:developer';
 
+import 'package:chatapp/Change%20languige/local_string.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/complete_profile_screen.dart';
@@ -18,10 +18,11 @@ import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 
 import 'componet/app_text_style.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'utils/colors.dart';
 
-var uuid = Uuid();
 
+var uuid = Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,19 +30,23 @@ void main() async {
 
 //await notificationService.requestNotificationPermission();
 
-
   await AppPreferences.init();
-  runApp(MyApp());
+  runApp(
+     MyApp(),
+
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({ Key? key }) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
-
   Widget build(BuildContext context) {
+    final savedLocale = AppPreferences().getLocaleFromPreferences();
 
     return GetMaterialApp(
+       translations: LocaleString(),
+      locale:  savedLocale ?? Locale('en', 'US'),
       title: 'Chat App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -54,7 +59,5 @@ class MyApp extends StatelessWidget {
       ),
       home: SplashScreen(),
     );
-
   }
 }
-

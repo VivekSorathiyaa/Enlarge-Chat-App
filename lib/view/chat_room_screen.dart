@@ -2,12 +2,13 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:chatapp/componet/app_text_style.dart';
-import 'package:chatapp/componet/custom_dialog.dart';
+
 import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
-import 'package:chatapp/main.dart';
+
 import 'package:chatapp/models/chat_room_model.dart';
+
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
@@ -15,9 +16,15 @@ import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:translator/translator.dart';
+
 import '../componet/image_view_widget.dart';
 import '../componet/text_form_field_widget.dart';
 import '../utils/app_preferences.dart';
@@ -40,42 +47,119 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  String _text = '';
+  String msg = '';
+  String? localeId;
+  final RxBool isMenuVisible = RxBool(false);
+  Locale? locale=AppPreferences().getLocaleFromPreferences();
 
-  AppPreferences preferences=AppPreferences();
+  AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
 
-
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    // TODO: implement initState
+    super.initState();
 
+    _requestMicrophonePermission();
+    _initializeSpeechToText();
+  }
 
+  void _requestMicrophonePermission() async {
+    var status = await Permission.microphone.request();
 
-
-
-
-
-    final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-
-    Future<void> sendPushNotificationToTargetDevice(String title, String body, String targetDeviceToken) async {
-      try {
-        // Define the notification payload
-        final message = {
-          'to': targetDeviceToken, // Use the target device's FCM token
-          'notification': {
-            'title': title,
-            'body': body,
-          },
-        };
-
-        // Send the message to a specific topic (target device)
-      // final response = await _firebaseMessaging.send(message);
-        print('Notification sent: success');
-      } catch (e) {
-        print('Error sending notification: $e');
-      }
+    if (status.isGranted) {
+      // Microphone permission granted, you can now start speech recognition
+      // _listen('gu');
+      // listenAndTranslate();
+    } else if (status.isPermanentlyDenied) {
+      // Permission is permanently denied, ask the user to go to app settings
+      openAppSettings();
+    } else {
+      // Permission is denied, handle accordingly (e.g., show a message to the user)
     }
+  }
 
+  void _initializeSpeechToText() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        print('Speech Recognition Status: $status');
+      },
+      onError: (errorNotification) {
+        print('Speech Recognition Error: $errorNotification');
+      },
+    );
+
+    if (!available) {
+      // Handle the case where speech recognition is not available
+      print('Speech recognition not available');
+    }
+  }
+
+
+  void listen(Locale savedLocale) async {
+    var microphoneStatus = await Permission.microphone.status;
+
+    if (microphoneStatus.isGranted) {
+      if (!_speech.isListening) {
+        bool available = await _speech.initialize(
+          onStatus: (status) {
+            print('Speech Recognition Status: $status');
+          },
+          onError: (errorNotification) {
+            print('Speech Recognition Error: $errorNotification');
+          },
+          // localeId: selectedLanguage, // Set the selected language for recognition
+        );
+
+        if (available) {
+          setState(() {
+            _text = '';
+          });
+
+          _speech.listen(
+            onResult: (result) {
+              setState(() async {
+                _text = result.recognizedWords;
+                log('Speech Recognition : $_text');
+                log('Languagjehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh============${savedLocale.languageCode}');
+                translateTo(_text, savedLocale.languageCode);
+                //    controller.messageController.text = msg1;
+              });
+            },
+          );
+        }
+      }
+    } else if (microphoneStatus.isPermanentlyDenied) {
+      // Handle permanently denied permission (e.g., show a message to the user)
+      openAppSettings();
+    } else {
+      // Handle other permission states (e.g., show a message to the user)
+    }
+  }
+
+
+
+
+
+  Future<void> translateTo(String text, String local) async {
+    final translator = GoogleTranslator();
+
+    Translation translation = await translator.translate(text, to: local);
+
+    // Set the translated text to the messageController
+    controller.messageController.text = translation.text;
+    log('Languagjehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh============${controller.messageController.text}');
+  }
+
+  void _stopListening() {
+    if (_speech.isListening) {
+      _speech.stop();
+    }
+  }
+
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -86,7 +170,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             //       NetworkImage(widget.targetUser.profilepic.toString()),
             // ),
 
-            
             NetworkImageWidget(
               width: 42,
               height: 42,
@@ -228,23 +311,43 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         keyboardType: TextInputType.multiline,
                         maxLines: 5, //
                         hintText: "Enter message",
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            Icons.attach_file,
-                            color: Colors.black,
-                          ),
-                          onPressed: () async {
-                            controller.selectedFile =
-                                await CommonMethod.pickFile();
-                            if (controller.selectedFile != null) {
-                              String? path =
-                                  await controller.uploadFile(context);
-                              if (path != null) {
-                                controller.mediaUrl = path;
-                                controller.sendMessage(widget.chatroom);
-                              }
-                            }
-                          },
+                        suffixIcon: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 28.0),
+                              child: IconButton(
+                                  onPressed: () {
+                                    //listenAndTranslate();
+                                     listen(locale!);
+
+                                  },
+                                  icon: Icon(
+                                    Icons.mic_none,
+                                    color: primaryBlack,
+                                  )),
+                            ),
+                            Positioned(
+                              right: -10,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.attach_file,
+                                  color: Colors.black,
+                                ),
+                                onPressed: () async {
+                                  controller.selectedFile =
+                                      await CommonMethod.pickFile();
+                                  if (controller.selectedFile != null) {
+                                    String? path =
+                                        await controller.uploadFile(context);
+                                    if (path != null) {
+                                      controller.mediaUrl = path;
+                                      controller.sendMessage(widget.chatroom);
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -258,10 +361,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           color: primaryWhite,
                         ),
                         onPressed: () {
-                      var  msg=   controller.sendMessage(widget.chatroom);
+                          var msg = controller.sendMessage(widget.chatroom);
                           controller.sendMessage(widget.chatroom);
-                        //  sendPushNotificationToTargetDevice(widget.targetUser.fullname.toString(), msg);
-                          sendPushNotificationToTargetDevice(widget.targetUser.fullname.toString(), 'hjhhj', widget.targetUser.fcmtoken.toString());
                         },
                       ),
                     ),

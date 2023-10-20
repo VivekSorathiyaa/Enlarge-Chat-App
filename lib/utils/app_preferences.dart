@@ -6,6 +6,7 @@ import 'package:chatapp/view/complete_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'common_method.dart';
@@ -16,7 +17,9 @@ class AppPreferences {
   static final String _keyPhone = '_keyPhone';  
   static final String _keyProfilePic = '_keyProfilePic';
  static final String _keyFcmToken = '_keyFcmToken';
-
+  static final String _keyLocal = '_keyLocal';
+  static final String _languageKey = '_languageKey';
+  static final String _countryCodeKey = '_countryCodeKey';
   static SharedPreferences? _prefs;
  static String? fcmtoken;
 
@@ -46,9 +49,28 @@ class AppPreferences {
     return _prefs!.getString(_keyFcmToken);
   }
 
+  Locale? getLocaleFromPreferences() {
+    final languageCode = _prefs!.getString(_languageKey);
+    final countryCode = _prefs!.getString(_countryCodeKey);
+
+    if (languageCode != null && countryCode != null) {
+      return Locale(languageCode, countryCode);
+    }else{      return Locale('en', 'US');
+    }
+
+    return null; // Return null if no locale is saved
+  }
 
 
-    static Future<void> setUid(String uId) async {
+  static Future<void> setLocal(Locale locale) async {
+    await _prefs!.setString(_languageKey, locale.languageCode);
+    await _prefs!.setString(_countryCodeKey, locale.countryCode!);
+  }
+
+
+
+
+  static Future<void> setUid(String uId) async {
     await _prefs!.setString(_keyUid, uId);
   }
   static Future<void> setFullName(String fullname) async {
@@ -112,4 +134,6 @@ class AppPreferences {
       });
     }
   }
+
+
 }
