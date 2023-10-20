@@ -1,3 +1,5 @@
+
+
 import 'dart:developer';
 
 import 'package:background_fetch/background_fetch.dart';
@@ -252,6 +254,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
 
     return Scaffold(
+
+   
       drawer: Drawer(
         child: Column(
           children: [
@@ -263,25 +267,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
 
             UserAccountsDrawerHeader(
-              decoration:
-                  BoxDecoration(color: Color(0xFF454545).withOpacity(0.5)),
-              accountName: Text(
-                fullname!,
-                style: TextStyle(fontSize: 18, color: primaryWhite),
+
+
+              currentAccountPictureSize: Size.square(70),
+
+              decoration: BoxDecoration(
+                  color: primaryBlack,
+
               ),
-              accountEmail: Text(
-                phone!,
-                style: TextStyle(fontSize: 13, color: primaryWhite),
-              ),
-              currentAccountPicture: Container(
+
+              accountName: Text(fullname!,style: TextStyle(fontSize: 18,color: primaryWhite),),
+              accountEmail: Text(phone!,style: TextStyle(fontSize: 13,color: primaryWhite),),
+              currentAccountPicture:Container(
+         
+
                 // Adjust the size as needed
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white, // Background color of the circle
+                  color: Colors.white,
+                  border: Border.all(color: primaryWhite,style: BorderStyle.solid)// Background color of the circle
                 ),
-                child: CircleAvatar(
-                  backgroundColor: Colors.transparent,
-                  backgroundImage: NetworkImage(profilePic!),
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: NetworkImage(profilePic!),
+                  ),
                 ),
               ),
             ),
