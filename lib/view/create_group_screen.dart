@@ -7,7 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../componet/image_picker_service.dart';
+// import '../componet/image_picker_service.dart';
 import '../controller/group_controller.dart';
 import '../utils/colors.dart';
 import '../utils/common_method.dart';
@@ -34,13 +34,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           children: [
             CupertinoButton(
               onPressed: () async {
-                File? file =
-                    await ImagePickerService().showPhotoOptions(context);
-                if (file != null) {
-                  selectedFile.value = file;
-                  log("---file----$file");
-                }
-                log("---file-filefilefile---$file");
+                // File? file =
+                //     await ImagePickerService().showPhotoOptions(context);
+                // if (file != null) {
+                //   selectedFile.value = file;
+                //   log("---file----$file");
+                // }
+                // log("---file-filefilefile---$file");
               },
               child: Obx(
                 () => CircleAvatar(

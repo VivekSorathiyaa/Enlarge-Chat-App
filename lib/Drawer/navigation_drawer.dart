@@ -30,13 +30,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
    String? phone=AppPreferences.getPhone();
 
-
-
-
-
-
   @override
-  
   Widget build(BuildContext context) {
     final modelTheme = Provider.of<ModelTheme>(context);
     return Consumer<ModelTheme>(
