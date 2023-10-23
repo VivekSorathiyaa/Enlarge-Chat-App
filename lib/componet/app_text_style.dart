@@ -92,6 +92,12 @@ class AppTextStyle {
     color: primaryBlack,
     fontFamily: fontFamilyInter,
   );
+  static final normalBold16 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    color: primaryBlack,
+    fontFamily: fontFamilyInter,
+  );
 
   static final normalRegular15 = TextStyle(
     fontSize: 15,
