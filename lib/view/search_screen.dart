@@ -11,7 +11,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
+import '../Change Theme/model_theme.dart';
 import '../componet/network_image_widget.dart';
 import '../utils/app_preferences.dart';
 
@@ -94,161 +96,189 @@ class _SearchScreenState extends State<SearchScreen> {
         .where("fullname",
             isLessThanOrEqualTo: searchController.text + '\uf8ff')
         .snapshots();
-    return Scaffold(
-      appBar: AppBar(
-          title: TextFormFieldWidget(
-        controller: null,
-        hintText: "search".tr,
-      )
+    return Consumer<ModelTheme>(
+        builder: (context, ModelTheme themeNotifier, child) {
+          return  Scaffold(
+        appBar: AppBar(
+            title: TextFormFieldWidget(
+              change: true ,
 
-          // Text("search".tr),
-      ),
-      body: SafeArea(
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 10,
-          ),
-          child: Column(
-            children: [
-              TextField(
-                controller: searchController,
-                decoration: InputDecoration(labelText: "phone".tr),
-                onChanged: (value) {
-                  setState(() {});
-                },
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              CupertinoButton(
-                onPressed: () {
-                  setState(() {});
-                },
-                color: Theme.of(context).colorScheme.secondary,
-                child: Text("search".tr),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Expanded(
-                child: ListView(
-                  children: [
-                    StreamBuilder<QuerySnapshot>(
-                      stream: phoneQuery,
-                      builder: (context, phoneSnapshot) {
-                        return StreamBuilder<QuerySnapshot>(
-                          stream: fullnameQuery,
-                          builder: (context, fullnameSnapshot) {
-                            if (phoneSnapshot.hasData &&
-                                fullnameSnapshot.hasData) {
-                              QuerySnapshot phoneResult = phoneSnapshot.data!;
-                              QuerySnapshot fullnameResult =
-                                  fullnameSnapshot.data!;              
-                              if (phoneResult.docs.length > 0 ||
-                                  fullnameResult.docs.length > 0) {
-                                List<Map<String, dynamic>> userMap = [];
+            //  filledColor:  themeNotifier.isDark ? Colors.yellow:primaryBlack,
+          controller: null,
 
-                                if (phoneResult.docs.length > 0) {
-                                  for (var data in phoneResult.docs) {
-                                    userMap.add(
-                                        data.data() as Map<String, dynamic>);
-                                  }
-                                } else {
-                                  for (var data in fullnameResult.docs) {
-                                    userMap.add(
-                                        data.data() as Map<String, dynamic>);
-                                  }
-                                }
-                                // phoneResult.docs.length > 0
-                                //     ? phoneResult.docs[0].data()
-                                //         as Map<String, dynamic>
-                                //     : fullnameResult.docs[0].data()
-                                //         as Map<String, dynamic>;
-              
-                                List<UserModel> searchedUser = [];
-                                for (var data in userMap) {
-                                  searchedUser.add(UserModel.fromMap(data));
-                                }
-                                
-              
-                                return Column(
-                                  children: searchedUser.map((e) {
-                                    var index = searchedUser.indexOf(e);
-                                    return ListTile(
-                                      onTap: () async {
-                                        ChatRoomModel? chatRoomModel =
-                                            await getChatroomModel([
-                                          searchedUser[index].uid!,
-                                          AppPreferences.getUiId()!
-                                        ]);
-              
-                                        if (chatRoomModel != null) {
-                                          Navigator.pop(context);
-                                          Navigator.push(context,
-                                              MaterialPageRoute(
-                                                  builder: (context) {
-                                            return ChatRoomScreen(
-                                              chatRoomId:
-                                                  chatRoomModel.chatRoomId!,
-                                              targetUser: searchedUser[index],
-                                            );
-                                          }));
-                                        }
-                                      },
-                                      leading: NetworkImageWidget(
-                                        height: 50,
-                                        width: 50,
-                                        borderRadius: BorderRadius.circular(50),
-                                        imageUrl: searchedUser[index]
-                                            .profilepic
-                                            .toString()),
-                                      // leading: CircleAvatar(
-                                      //   backgroundImage: NetworkImage(
-                                      //       searchedUser[index].profilepic ?? ""),
-                                      //   backgroundColor: Colors.grey[500],
-                                      // ),
-                                      // CircleAvatar(
-                                      //   backgroundImage: NetworkImage(
-                                      // searchedUser[index].profilepic ??
-                                      //     ""),
-                                      //   backgroundColor: Colors.grey[500],
-                                      // ),
-                                      title: Text(
-                                          searchedUser[index]
-                                          .fullname
-                                          .toString()),
-                                      subtitle:
-                                          Text(
-                                          searchedUser[index].phone.toString()),
-                                      trailing:
-                                          Icon(Icons.keyboard_arrow_right),
-                                    );
-                              
-                                  }).toList(),
-                                );
-                                
-                              } else {
-                                return Text("No results found!");
-                              }
-                            } else if (phoneSnapshot.hasError ||
-                                fullnameSnapshot.hasError) {
-                              return Text(
-                                  'Error: ${phoneSnapshot.error ?? fullnameSnapshot.error}');
-                            } else {
-                              return Center(child: CircularProgressIndicator(color: primaryBlack,strokeWidth: 0.5,));
-                            }
-                          },
-                        );
-                      },
+            hintText: "search".tr,
+
+
+        )
+
+            // Text("search".tr),
+        ),
+        body: SafeArea(
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 10,
+            ),
+            child: Column(
+              children: [
+                TextField(
+
+                  cursorColor: themeNotifier.isDark? primaryWhite:Colors.grey,
+                  controller: searchController,
+                  decoration: InputDecoration(
+
+                    focusedBorder: UnderlineInputBorder(
+
+                      borderSide: BorderSide(color:  themeNotifier.isDark ?primaryWhite:Colors.black26), // Change the color or set to InputBorder.none to remove it
                     ),
-                  ],
+                    labelStyle: TextStyle(
+                      color: themeNotifier.isDark ? primaryWhite : primaryBlack, // Change label text color based on the theme
+                    ),
+
+                    hintStyle: themeNotifier.isDark
+                        ? TextStyle(color: primaryWhite)
+                        : TextStyle(color: primaryBlack) ,
+                    labelText: "phone".tr,),
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+
+                  style: themeNotifier.isDark
+                      ? TextStyle(color: primaryWhite)
+                      : TextStyle(color: primaryBlack),
                 ),
-              )
-            ],
+                SizedBox(
+                  height: 20,
+                ),
+                CupertinoButton(
+                  onPressed: () {
+                    setState(() {});
+                  },
+                  color: Theme.of(context).colorScheme.secondary,
+                  child: Text("search".tr),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      StreamBuilder<QuerySnapshot>(
+                        stream: phoneQuery,
+                        builder: (context, phoneSnapshot) {
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: fullnameQuery,
+                            builder: (context, fullnameSnapshot) {
+                              if (phoneSnapshot.hasData &&
+                                  fullnameSnapshot.hasData) {
+                                QuerySnapshot phoneResult = phoneSnapshot.data!;
+                                QuerySnapshot fullnameResult =
+                                    fullnameSnapshot.data!;              
+                                if (phoneResult.docs.length > 0 ||
+                                    fullnameResult.docs.length > 0) {
+                                  List<Map<String, dynamic>> userMap = [];
+
+                                  if (phoneResult.docs.length > 0) {
+                                    for (var data in phoneResult.docs) {
+                                      userMap.add(
+                                          data.data() as Map<String, dynamic>);
+                                    }
+                                  } else {
+                                    for (var data in fullnameResult.docs) {
+                                      userMap.add(
+                                          data.data() as Map<String, dynamic>);
+                                    }
+                                  }
+                                  // phoneResult.docs.length > 0
+                                  //     ? phoneResult.docs[0].data()
+                                  //         as Map<String, dynamic>
+                                  //     : fullnameResult.docs[0].data()
+                                  //         as Map<String, dynamic>;
+                
+                                  List<UserModel> searchedUser = [];
+                                  for (var data in userMap) {
+                                    searchedUser.add(UserModel.fromMap(data));
+                                  }
+                                  
+                
+                                  return Column(
+                                    children: searchedUser.map((e) {
+                                      var index = searchedUser.indexOf(e);
+                                      return ListTile(
+                                        onTap: () async {
+                                          ChatRoomModel? chatRoomModel =
+                                              await getChatroomModel([
+                                            searchedUser[index].uid!,
+                                            AppPreferences.getUiId()!
+                                          ]);
+                
+                                          if (chatRoomModel != null) {
+                                            Navigator.pop(context);
+                                            Navigator.push(context,
+                                                MaterialPageRoute(
+                                                    builder: (context) {
+                                              return ChatRoomScreen(
+                                                chatRoomId:
+                                                    chatRoomModel.chatRoomId!,
+                                                targetUser: searchedUser[index],
+                                              );
+                                            }));
+                                          }
+                                        },
+                                        leading: NetworkImageWidget(
+                                          height: 50,
+                                          width: 50,
+                                          borderRadius: BorderRadius.circular(50),
+                                          imageUrl: searchedUser[index]
+                                              .profilepic
+                                              .toString()),
+                                        // leading: CircleAvatar(
+                                        //   backgroundImage: NetworkImage(
+                                        //       searchedUser[index].profilepic ?? ""),
+                                        //   backgroundColor: Colors.grey[500],
+                                        // ),
+                                        // CircleAvatar(
+                                        //   backgroundImage: NetworkImage(
+                                        // searchedUser[index].profilepic ??
+                                        //     ""),
+                                        //   backgroundColor: Colors.grey[500],
+                                        // ),
+                                        title: Text(
+                                            searchedUser[index]
+                                            .fullname
+                                            .toString(),style: TextStyle(color: themeNotifier.isDark?primaryWhite:primaryBlack),),
+                                        subtitle:
+                                            Text(
+                                            searchedUser[index].phone.toString(),style: TextStyle(color: greyColor),),
+                                        trailing:
+                                            Icon(Icons.keyboard_arrow_right,color: themeNotifier.isDark ?primaryWhite.withOpacity(0.8):primaryBlack.withOpacity(0.7),),
+                                      );
+                                
+                                    }).toList(),
+                                  );
+                                  
+                                } else {
+                                  return Text("No results found!");
+                                }
+                              } else if (phoneSnapshot.hasError ||
+                                  fullnameSnapshot.hasError) {
+                                return Text(
+                                    'Error: ${phoneSnapshot.error ?? fullnameSnapshot.error}');
+                              } else {
+                                return Center(child: CircularProgressIndicator(color: primaryBlack,strokeWidth: 0.5,));
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
-      ),
+      );}
     );
   }
 }

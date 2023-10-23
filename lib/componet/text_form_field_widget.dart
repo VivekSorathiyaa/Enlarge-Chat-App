@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../Change Theme/model_theme.dart';
 import '../utils/colors.dart';
 import '../utils/validators.dart';
 import 'app_text_style.dart';
 
 class TextFormFieldWidget extends StatelessWidget {
-  const TextFormFieldWidget({
+
+   TextFormFieldWidget({
     Key? key,
     this.fieldKey,
     this.hintText,
@@ -33,6 +36,7 @@ class TextFormFieldWidget extends StatelessWidget {
     this.scropadding,
     this.textAlign = TextAlign.left,
     this.contentPadding,
+    this.cursorColor, this.change,
   }) : super(key: key);
   final EdgeInsets? scropadding;
   final Key? fieldKey;
@@ -43,6 +47,7 @@ class TextFormFieldWidget extends StatelessWidget {
   final TextStyle? hintStyle;
   final Color? borderColor;
   final Color? filledColor;
+  final Color?cursorColor;
   final FormFieldValidator<String?>? validator;
   final ValueChanged<String?>? onFieldSubmitted;
   final ValueChanged<String?>? onChanged;
@@ -59,49 +64,63 @@ class TextFormFieldWidget extends StatelessWidget {
   final bool? enabled;
   final bool? filled;
   final EdgeInsetsGeometry? contentPadding;
+  final bool? change;
 
   @override
+  bool isAnotherPage = true;
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (labelText != null)
-          Padding(
-            padding: EdgeInsets.only(top: 18, bottom: 10),
-            child: Text(
-              labelText ?? "",
-              style: AppTextStyle.normalRegular14
-                  .copyWith(fontWeight: FontWeight.w500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Consumer<ModelTheme>(
+        builder: (context, ModelTheme themeNotifier, child)
+    {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (labelText != null)
+            Padding(
+              padding: EdgeInsets.only(top: 18, bottom: 10),
+              child: Text(
+                labelText ?? "",
+                style: AppTextStyle.normalRegular14
+                    .copyWith(fontWeight: FontWeight.w500),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+          textFormField(
+            fieldKey: fieldKey,
+            focusNode: focusNode,
+            hintText: hintText,
+            scropadding: scropadding,
+            filled: filled,
+            controller: controller,
+            keyboardType: keyboardType ?? TextInputType.text,
+            validator: validator,
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
+            maxLength: maxLength,
+            maxLines: maxLines,
+            enabled: enabled ?? true,
+            readonly: readonly,
+            textInputAction: textInputAction,
+            textAlign: textAlign,
+            onTap: onTap,
+            onFieldSubmitted: onFieldSubmitted,
+            onChanged: onChanged,
+            textStyle: themeNotifier.isDark?  TextStyle(color: primaryWhite):TextStyle(color: primaryBlack),
+            borderColor:themeNotifier.isDark? blackThemeColor:Colors.grey,
+            filledColor: change! ?primaryBlack:
+                 themeNotifier.isDark?  blackThemeColor:primaryWhite,
+            // hintStyle: hintStyle ?? TextStyle(color: primaryBlack),
+            hintStyle: themeNotifier.isDark
+                ? TextStyle(color: primaryWhite)
+                : TextStyle(color: primaryBlack),
+            cursorColor: themeNotifier.isDark? primaryWhite:Colors.grey,
+
+
           ),
-        textFormField(
-          fieldKey: fieldKey,
-          focusNode: focusNode,
-          hintText: hintText,
-          scropadding: scropadding,
-          filled: filled,
-          controller: controller,
-          keyboardType: keyboardType ?? TextInputType.text,
-          validator: validator,
-          prefixIcon: prefixIcon,
-          suffixIcon: suffixIcon,
-          maxLength: maxLength,
-          maxLines: maxLines,
-          enabled: enabled ?? true,
-          readonly: readonly,
-          textInputAction: textInputAction,
-          textAlign: textAlign,
-          onTap: onTap,
-          onFieldSubmitted: onFieldSubmitted,
-          onChanged: onChanged,
-          textStyle: textStyle,
-          borderColor: borderColor,
-          filledColor: filledColor,
-        ),
-      ],
-    );
+        ],
+      );
+    },);
   }
 }
 

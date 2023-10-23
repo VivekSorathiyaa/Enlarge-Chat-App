@@ -52,7 +52,7 @@ class PrimaryTextButton extends StatelessWidget {
                 Text(
                   title ?? "Done",
                   style: textStyle ??
-                      AppTextStyle.normalBold16.copyWith(color: primaryWhite),
+                      AppTextStyle.lightNormalBold16.copyWith(color: primaryWhite),
                 ),
                 if (trailingIcon != null)
                   Padding(

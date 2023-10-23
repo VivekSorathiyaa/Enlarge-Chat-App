@@ -23,3 +23,19 @@ const Color lightNeonColor = Color(0xff08cad1);
 const Color lightBlueColor = Color(0xff59adf6);
 const Color lightPurpleColor = Color(0xff9d94ff);
 const Color lightPinkColor = Color(0xffc780e8);
+const blackThemeColor=Color(0xFF2E2E2E);
+
+
+
+MaterialColor createMaterialColor(Color color) {
+  List<int> strengths = <int>[50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+  Map<int, Color> swatch = <int, Color>{};
+  final int primary = color.value;
+  for (int index = 0; index < strengths.length; index++) {
+    final int weight = strengths[index];
+    final double blend = 1 - (index / 10);
+    final int finalColor = primary;
+    swatch[weight] = Color(finalColor);
+  }
+  return MaterialColor(color.value, swatch);
+}
