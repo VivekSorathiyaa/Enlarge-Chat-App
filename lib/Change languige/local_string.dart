@@ -7,7 +7,9 @@ class LocaleString extends Translations{
     //ENGLISH LANGUAGE
     'en_US':{
       'head':'Chat App',
-      'aboutUs':'About US',
+      'people':'People',
+      'myProfile':'My Account',
+      'chats':'Chats',
       'theme':'Theme',
       'changeLang':'Change Language',
       'logOut':'Log Out',
@@ -21,7 +23,9 @@ class LocaleString extends Translations{
     //HINDI LANGUAGE
     'hi_IN':{
       'head': 'चैट ऐप',
-      'aboutUs':'हमारे बारे में',
+      'people':'लोग',
+      'myProfile':'मेरा खाता',
+      'chats':'चैट',
       'theme':'विषय',
       'changeLang':'भाषा बदलो',
       'logOut':'लॉग आउट',
@@ -36,7 +40,9 @@ class LocaleString extends Translations{
     //KANNADA LANGUAGE
     'gu_IN':{
       'head': 'ચેટ એપ્લિકેશન',
-      'aboutUs':'અમારા વિશે',
+      'people':'લોકો',
+      'myProfile':'મારું ખાતું',
+      'chats':'ચેટ્સ',
       'theme':'થીમ',
       'changeLang':'ભાષા બદલો',
       'logOut':'લોગ આઉટ',

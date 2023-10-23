@@ -1,18 +1,14 @@
 import 'dart:async';
 
 import 'package:chatapp/componet/app_text_style.dart';
-import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/text_form_field_widget.dart';
 import 'package:chatapp/componet/user_widget.dart';
-import 'package:chatapp/utils/app_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../componet/network_image_widget.dart';
 import '../controller/search_user_controller.dart';
 import '../utils/colors.dart';
-import 'chat_room_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -119,9 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 }
               }),
             ),
-          ],
-        ),
-      ),
-    );
+          ],),),);
+
   }
 }

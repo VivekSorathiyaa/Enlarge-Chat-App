@@ -141,10 +141,16 @@ class AppTextStyle {
     color: primaryBlack,
     fontFamily: fontFamilyInter,
   );
-  static final normalBold16 = TextStyle(
+  static final lightNormalBold16 = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
     color: primaryBlack,
+    fontFamily: fontFamilyInter,
+  );
+  static final darkNormalBold16 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: primaryWhite,
     fontFamily: fontFamilyInter,
   );
   static final normalSemiBold17 = TextStyle(

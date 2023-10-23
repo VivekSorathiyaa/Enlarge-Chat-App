@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../Change Theme/model_theme.dart';
 import '../utils/colors.dart';
 import '../utils/validators.dart';
 import 'app_text_style.dart';
 
 class TextFormFieldWidget extends StatelessWidget {
-  const TextFormFieldWidget({
+
+   TextFormFieldWidget({
     Key? key,
     this.fieldKey,
     this.hintText,
@@ -35,6 +38,7 @@ class TextFormFieldWidget extends StatelessWidget {
     this.scropadding,
     this.textAlign = TextAlign.left,
     this.contentPadding,
+this.change,
   }) : super(key: key);
   final EdgeInsets? scropadding;
   final Key? fieldKey;
@@ -63,64 +67,105 @@ class TextFormFieldWidget extends StatelessWidget {
   final bool? filled;
   final bool? autofocus;
   final EdgeInsetsGeometry? contentPadding;
+  final bool? change;
 
   @override
+  bool isAnotherPage = true;
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (labelText != null)
-          Padding(
-            padding: EdgeInsets.only(top: 18, bottom: 10),
-            child: Text(
-              labelText ?? "",
-              style: AppTextStyle.normalRegular14
-                  .copyWith(fontWeight: FontWeight.w500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Consumer<ModelTheme>(
+        builder: (context, ModelTheme themeNotifier, child)
+    {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (labelText != null)
+            Padding(
+              padding: EdgeInsets.only(top: 18, bottom: 10),
+              child: Text(
+                labelText ?? "",
+                style: AppTextStyle.normalRegular14
+                    .copyWith(fontWeight: FontWeight.w500),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+          textFormField(
+            fieldKey: fieldKey,
+            focusNode: focusNode,
+            hintText: hintText,
+            scropadding: scropadding,
+            filled: filled,
+            controller: controller,
+            keyboardType: keyboardType ?? TextInputType.text,
+            validator: validator,
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
+            maxLength: maxLength,
+            maxLines: maxLines,
+            enabled: enabled ?? true,
+            readonly: readonly,
+            textInputAction: textInputAction,
+            textAlign: textAlign,
+            onTap: onTap,
+            onFieldSubmitted: onFieldSubmitted,
+            onChanged: onChanged,
+            textStyle: themeNotifier.isDark?  TextStyle(color: primaryWhite):TextStyle(color: primaryBlack),
+            borderColor:themeNotifier.isDark? blackThemeColor:Colors.grey,
+            filledColor: change! ?primaryBlack:
+                 themeNotifier.isDark?  blackThemeColor:primaryWhite,
+            // hintStyle: hintStyle ?? TextStyle(color: primaryBlack),
+            hintStyle: themeNotifier.isDark
+                ? TextStyle(color: primaryWhite)
+                : TextStyle(color: primaryBlack),
+            cursorColor: themeNotifier.isDark? primaryWhite:Colors.grey,
+
+
           ),
-        textFormField(
-          fieldKey: fieldKey,
-          focusNode: focusNode,
-          cursorColor: cursorColor,
-          hintText: hintText,
-          autofocus: autofocus ?? false,
-          scropadding: scropadding,
-          filled: filled,
-          controller: controller,
-          keyboardType: keyboardType ?? TextInputType.text,
-          validator: validator,
-          prefixIcon: prefixIcon,
-          suffixIcon: suffixIcon,
-          maxLength: maxLength,
-          maxLines: maxLines,
-          enabled: enabled ?? true,
-          readonly: readonly,
-          textInputAction: textInputAction,
-          textAlign: textAlign,
-          onTap: onTap,
-          onFieldSubmitted: onFieldSubmitted,
-          onChanged: onChanged,
-          textStyle: textStyle,
-          borderColor: borderColor,
-          filledColor: filledColor,
-        ),
-      ],
-    );
+// <<<<<<< HEAD
+//         textFormField(
+//           fieldKey: fieldKey,
+//           focusNode: focusNode,
+//           hintText: hintText,
+//           autofocus: autofocus ?? false,
+//           scropadding: scropadding,
+//           filled: filled,
+//           controller: controller,
+//           keyboardType: keyboardType ?? TextInputType.text,
+//           validator: validator,
+//           prefixIcon: prefixIcon,
+//           suffixIcon: suffixIcon,
+//           maxLength: maxLength,
+//           maxLines: maxLines,
+//           enabled: enabled ?? true,
+//           readonly: readonly,
+//           textInputAction: textInputAction,
+//           textAlign: textAlign,
+//           onTap: onTap,
+//           onFieldSubmitted: onFieldSubmitted,
+//           onChanged: onChanged,
+//           textStyle: textStyle,
+//           borderColor: borderColor,
+//           filledColor: filledColor,
+//         ),
+//       ],
+//     );
+// =======
+        ],
+      );
+    },);
   }
 }
+
 
 class PasswordWidget extends StatefulWidget {
   final Key? fieldKey;
   final int? maxLength;
   final String? hintText;
   final String? labelText;
-
+  final bool? autofocus;
   final FormFieldValidator<String?>? validator;
   final TextEditingController? controller;
   final FocusNode? focusNode;
-  final bool? autofocus;
   final TextInputAction? textInputAction;
 
   const PasswordWidget({
@@ -129,8 +174,8 @@ class PasswordWidget extends StatefulWidget {
     this.fieldKey,
     this.maxLength,
     this.hintText,
-    this.validator,
     this.autofocus,
+    this.validator,
     this.focusNode,
     this.labelText,
     this.textInputAction,
@@ -139,6 +184,7 @@ class PasswordWidget extends StatefulWidget {
   @override
   _PasswordWidgetState createState() => _PasswordWidgetState();
 }
+
 
 class _PasswordWidgetState extends State<PasswordWidget> {
   bool _obscureText = true;

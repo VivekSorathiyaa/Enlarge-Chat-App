@@ -54,7 +54,7 @@ class CustomDialog {
                 child: Text(
                   message ?? "Are you sure ?",
                   style: messageTextStyle ??
-                      AppTextStyle.normalBold16
+                      AppTextStyle.lightNormalBold16
                           .copyWith(color: primaryColor, height: 1.5),
                   textAlign: TextAlign.center,
                 ),
@@ -201,7 +201,7 @@ class CustomDialog {
               children: [
                 Text(
                   'Loading...',
-                  style: AppTextStyle.normalBold16,
+                  style: AppTextStyle.lightNormalBold16,
                 ),
                 height30,
                 CircularProgressIndicator(
@@ -243,7 +243,7 @@ class CustomDialog {
               children: [
                 Text(
                   title,
-                  style: AppTextStyle.normalBold16,
+                  style: AppTextStyle.lightNormalBold16,
                 ),
                 height10,
                 Text(

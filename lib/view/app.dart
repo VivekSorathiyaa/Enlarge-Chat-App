@@ -8,7 +8,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
+import '../Change Theme/model_theme.dart';
 import '../componet/app_text_style.dart';
 import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
@@ -157,22 +159,47 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-        final savedLocale = AppPreferences().getLocaleFromPreferences();
+    final savedLocale = AppPreferences().getLocaleFromPreferences();
 
-    return GetMaterialApp(
-       translations: LocaleString(),
-      locale:  savedLocale ?? Locale('en', 'US'),
-      title: 'Chat App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: appBackgroundColor,
-        fontFamily: AppTextStyle.fontFamilyInter,
-        hintColor: primaryBlack,
-        appBarTheme: AppBarTheme(backgroundColor: primaryColor),
-        iconTheme: IconThemeData(color: primaryBlack),
-        colorScheme: ColorScheme.fromSwatch().copyWith(secondary: primaryColor),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ModelTheme(),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          final themeNotifier = Provider.of<ModelTheme>(context);
+          return GetMaterialApp(
+            translations: LocaleString(),
+            locale: savedLocale ?? Locale('en', 'US'),
+            title: 'Chat App',
+            themeMode: themeNotifier.isDark ? ThemeMode.dark : ThemeMode.light,
+            theme: themeNotifier.isDark
+                ? ThemeData(
+                    scaffoldBackgroundColor: primaryBlack,
+                    fontFamily: AppTextStyle.fontFamilyInter,
+                    appBarTheme: AppBarTheme(backgroundColor: blackThemeColor),
+                    primarySwatch: createMaterialColor(Colors.white),
+              hintColor: primaryWhite,
+                    colorScheme: ColorScheme.fromSwatch()
+                        .copyWith(secondary: blackThemeColor),
+                   iconTheme: IconThemeData(color: primaryWhite),
+                  )
+                : ThemeData(
+                    scaffoldBackgroundColor: appBackgroundColor,
+                    fontFamily: AppTextStyle.fontFamilyInter,
+                    hintColor: primaryBlack,
+                    appBarTheme: AppBarTheme(backgroundColor: primaryColor),
+                    iconTheme: IconThemeData(color: primaryBlack),
+                    colorScheme: ColorScheme.fromSwatch()
+                        .copyWith(secondary: primaryColor),
+                  ),
+            debugShowCheckedModeBanner: false,
+            home: SplashScreen(),
+          );
+        },
       ),
-      home: SplashScreen(),
     );
   }
 }

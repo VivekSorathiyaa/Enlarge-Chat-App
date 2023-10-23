@@ -37,7 +37,8 @@ dependencies:
   permission_handler: ^11.0.1
   flutter_local_notifications: ^16.1.0
   image_picker: 
-  image_cropper: 
+  image_cropper:
+  provider: ^6.0.5
   uuid: 
   # rxdart: ^0.27.7
   get: ^4.6.5
