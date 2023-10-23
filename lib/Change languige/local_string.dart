@@ -14,7 +14,7 @@ class LocaleString extends Translations{
       'logout_desc':'Would you like to continue to logout?',
       'continue':'Continue',
       'cancel':'Cancel',
-      'search':'Search',
+          'search': 'Search name or number...',
       'phone':'Phone Number',
       'chooseLang':'Choose Your Language'
     },

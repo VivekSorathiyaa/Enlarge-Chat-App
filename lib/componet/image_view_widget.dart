@@ -31,7 +31,6 @@ class ImageViewWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
 IconButton(onPressed: (){Get.back();}, icon: Icon(Icons.arrow_back_ios_new_rounded,color: primaryWhite),),
-
       
               ],
             ),

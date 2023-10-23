@@ -28,6 +28,8 @@ class TextFormFieldWidget extends StatelessWidget {
     this.borderColor,
     this.filledColor,
     this.enabled,
+    this.autofocus,
+    this.cursorColor,
     this.readonly,
     this.filled,
     this.scropadding,
@@ -43,6 +45,7 @@ class TextFormFieldWidget extends StatelessWidget {
   final TextStyle? hintStyle;
   final Color? borderColor;
   final Color? filledColor;
+  final Color? cursorColor;
   final FormFieldValidator<String?>? validator;
   final ValueChanged<String?>? onFieldSubmitted;
   final ValueChanged<String?>? onChanged;
@@ -58,6 +61,7 @@ class TextFormFieldWidget extends StatelessWidget {
   final TextAlign textAlign;
   final bool? enabled;
   final bool? filled;
+  final bool? autofocus;
   final EdgeInsetsGeometry? contentPadding;
 
   @override
@@ -79,7 +83,9 @@ class TextFormFieldWidget extends StatelessWidget {
         textFormField(
           fieldKey: fieldKey,
           focusNode: focusNode,
+          cursorColor: cursorColor,
           hintText: hintText,
+          autofocus: autofocus ?? false,
           scropadding: scropadding,
           filled: filled,
           controller: controller,
@@ -114,6 +120,7 @@ class PasswordWidget extends StatefulWidget {
   final FormFieldValidator<String?>? validator;
   final TextEditingController? controller;
   final FocusNode? focusNode;
+  final bool? autofocus;
   final TextInputAction? textInputAction;
 
   const PasswordWidget({
@@ -123,6 +130,7 @@ class PasswordWidget extends StatefulWidget {
     this.maxLength,
     this.hintText,
     this.validator,
+    this.autofocus,
     this.focusNode,
     this.labelText,
     this.textInputAction,
@@ -152,6 +160,7 @@ class _PasswordWidgetState extends State<PasswordWidget> {
             fieldKey: widget.fieldKey,
             hintText: widget.hintText,
             obscureText: _obscureText,
+            autofocus: widget.autofocus ?? false,
             focusNode: widget.focusNode,
             controller: widget.controller,
             textInputAction: widget.textInputAction,
@@ -190,7 +199,7 @@ TextFormField textFormField({
   final double? borderRaduis = 8,
   final bool? enabled,
   final bool? filled,
-  final bool autofocus = false,
+  final bool? autofocus,
   final bool obscureText = false,
   final Color? filledColor,
   final Color? cursorColor,
@@ -240,9 +249,9 @@ TextFormField textFormField({
     onChanged: onChanged,
     onFieldSubmitted: onFieldSubmitted,
     autocorrect: true,
-    autofocus: autofocus,
+    autofocus: autofocus ?? false,
     textAlign: textAlign,
-    cursorColor: primaryBlack,
+    cursorColor: cursorColor ?? primaryBlack,
     cursorHeight: 20,
     style:
         textStyle ?? AppTextStyle.normalRegular14.copyWith(color: primaryBlack),

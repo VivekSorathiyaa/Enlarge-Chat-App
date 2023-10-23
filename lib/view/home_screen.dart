@@ -1,5 +1,3 @@
-
-
 import 'dart:developer';
 
 import 'package:background_fetch/background_fetch.dart';
@@ -18,6 +16,7 @@ import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
 import '../utils/static_decoration.dart';
 import 'chat_room_screen.dart';
+import 'create_group_screen.dart';
 import 'login_screen.dart';
 import 'search_screen.dart';
 
@@ -192,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
     showAlertDialog(BuildContext context) {
-      // set up the buttons
       Widget cancelButton = ElevatedButton(
         style: ButtonStyle(
           backgroundColor:
@@ -237,7 +235,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
 
         alignment: Alignment.center,
-        // title: Text("Would you like to continue to logout?"),
         content: Text("logout_desc".tr),
         actions: [
           cancelButton,
@@ -254,39 +251,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
 
     return Scaffold(
-
-   
       drawer: Drawer(
         child: Column(
           children: [
             Container(
               decoration:
                   BoxDecoration(color: Color(0xFF737373).withOpacity(0.9)),
-              //   color: primaryColor.withOpacity(0.5),
               height: 30,
             ),
 
             UserAccountsDrawerHeader(
-
-
               currentAccountPictureSize: Size.square(70),
-
               decoration: BoxDecoration(
-                  color: primaryBlack,
-
+                color: primaryBlack,
               ),
-
-              accountName: Text(fullname!,style: TextStyle(fontSize: 18,color: primaryWhite),),
-              accountEmail: Text(phone!,style: TextStyle(fontSize: 13,color: primaryWhite),),
-              currentAccountPicture:Container(
-         
-
+              accountName: Text(
+                fullname!,
+                style: TextStyle(fontSize: 18, color: primaryWhite),
+              ),
+              accountEmail: Text(
+                phone!,
+                style: TextStyle(fontSize: 13, color: primaryWhite),
+              ),
+              currentAccountPicture: Container(
                 // Adjust the size as needed
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  border: Border.all(color: primaryWhite,style: BorderStyle.solid)// Background color of the circle
-                ),
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(
+                        color: primaryWhite,
+                        style:
+                            BorderStyle.solid) // Background color of the circle
+                    ),
                 child: Padding(
                   padding: const EdgeInsets.all(3.0),
                   child: CircleAvatar(
@@ -331,10 +327,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         actions: [
           IconButton(
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Get.offAll(() => LoginScreen());
+              Get.to(() => CreateGroupScreen());
             },
-            icon: Icon(Icons.exit_to_app),
+            icon: Icon(Icons.group),
           ),
         ],
       ),

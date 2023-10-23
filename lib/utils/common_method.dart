@@ -8,11 +8,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import '../componet/custom_dialog.dart';
 import '../main.dart';
+import '../models/chat_room_model.dart';
 import 'colors.dart';
 
 class CommonMethod {
@@ -168,6 +172,54 @@ class CommonMethod {
 
     return userModel;
   }
+
+static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
+  final List<QuerySnapshot> userSnapshots =
+      await Future.wait(targetUserIds.map((userId) {
+    return FirebaseFirestore.instance
+        .collection("users")
+        .where("uid", isEqualTo: userId)
+        .get();
+  }));
+
+  if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
+    // All target users exist
+    final userMap = userSnapshots
+        .map((snapshot) => UserModel.fromMap(
+            snapshot.docs.first.data() as Map<String, dynamic>))
+        .toList();
+
+    // Query chat rooms with the same set of users
+    final chatRoomSnapshot = await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .where('users', isEqualTo: userMap.map((user) => user.toMap()).toList())
+        .get();
+
+    if (chatRoomSnapshot.docs.isNotEmpty) {
+      // Chat room already exists, return the first one found
+      final chatRoomData =
+          chatRoomSnapshot.docs.first.data() as Map<String, dynamic>;
+      return ChatRoomModel.fromMap(chatRoomData);
+    } else {
+      // Create a new chat room
+      final newChatroom = ChatRoomModel(
+        chatRoomId: uuid.v1(),
+        lastMessage: null,
+        lastSeen: null,
+        users: userMap,
+      );
+
+      await FirebaseFirestore.instance
+          .collection("chatrooms")
+          .doc(newChatroom.chatRoomId!)
+          .set(newChatroom.toMap());
+
+      return newChatroom;
+    }
+  } else {
+    return null; // Some of the target users do not exist
+  }
+}
 
   static Future<UserModel?> getTargetUserModel(List<UserModel> users) async {
     for (var data in users) {
