@@ -179,6 +179,7 @@ class CustomDialog {
     );
   }
 
+
   static Future<void> showLoadingDialog(BuildContext context, String title) {
     return showDialog(
       barrierDismissible: false,

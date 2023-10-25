@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/common_method.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,7 +10,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../componet/custom_dialog.dart';
 import '../main.dart';
-import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 import '../utils/app_preferences.dart';
 

@@ -9,7 +9,6 @@ import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
 
-import 'package:chatapp/models/chat_room_model.dart';
 
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
@@ -17,20 +16,17 @@ import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:intl/intl.dart';
+
 
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:translator/translator.dart';
 
-import '../Change Theme/model_theme.dart';
+import '../controller/theme_controller.dart';
 import '../componet/image_view_widget.dart';
 import '../componet/text_form_field_widget.dart';
 import '../utils/app_preferences.dart';
@@ -174,7 +170,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     super.dispose();
   }
-
+  final ThemeController themeController = Get.put(ThemeController());
   @override
   Widget build(BuildContext context) {
     final Rx<UserModel> targetUser = widget.targetUser.obs;
@@ -204,252 +200,260 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       controller.updateMessages(messages);
     });
 
-    return Consumer<ModelTheme>(
-        builder: (context, ModelTheme themeNotifier, child) {
-      return Scaffold(
-        appBar: AppBar(
-          titleSpacing: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: primaryWhite,
+return Obx(() {
+  return  Scaffold(
+    backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
+    appBar: AppBar(
+      backgroundColor: themeController.isDark.value?blackThemeColor:primaryBlack,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: primaryWhite,
+        ),
+        onPressed: () {
+          Get.back();
+        },
+      ),
+      title: Row(
+        children: [
+          Obx(
+                () => NetworkImageWidget(
+              width: 42,
+              height: 42,
+              borderRadius: BorderRadius.circular(42),
+              imageUrl: targetUser.value.profilepic.toString(),
             ),
-            onPressed: () {
-              Get.back();
-            },
           ),
-          title: Row(
+          width15,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Obx(
-                () => NetworkImageWidget(
-                  width: 42,
-                  height: 42,
-                  borderRadius: BorderRadius.circular(42),
-                  imageUrl: targetUser.value.profilepic.toString(),
+                    () => Text(
+                  targetUser.value.fullname.toString(),
+                  style: AppTextStyle.regularBold.copyWith(
+                      color: primaryWhite, fontSize: 16, height: 1.5),
                 ),
               ),
-              width15,
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(
+              Obx(
                     () => Text(
-                      targetUser.value.fullname.toString(),
-                      style: AppTextStyle.regularBold.copyWith(
-                          color: primaryWhite, fontSize: 16, height: 1.5),
-                    ),
+                  targetUser.value.status.toString(),
+                  style: AppTextStyle.normalRegular14.copyWith(
+                    color: primaryWhite.withOpacity(.7),
                   ),
-                  Obx(
-                    () => Text(
-                      targetUser.value.status.toString(),
-                      style: AppTextStyle.normalRegular14.copyWith(
-                        color: primaryWhite.withOpacity(.7),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: ListView(
+            controller: _scrollController,
+            reverse: true,
+            children: [
+              Obx(
+                    () {
+                  final messages = controller.messages;
+                  if (messages.isEmpty) {
+                    return SizedBox();
+                  } else {
+                    return ListView.builder(
+                      reverse: true,
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final currentMessage = messages[index];
+                        final isCurrentUser =
+                            currentMessage.sender == AppPreferences.getUiId();
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(
+                              vertical: 5.0, horizontal: 10),
+                          alignment: isCurrentUser
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: isCurrentUser
+                                      ? primaryColor
+                                      : greenColor),
+                              color:
+                              isCurrentUser ? primaryColor : greenColor,
+                              borderRadius: BorderRadius.only(
+                                  topLeft: isCurrentUser
+                                      ? Radius.circular(10)
+                                      : Radius.circular(0),
+                                  bottomLeft: Radius.circular(10),
+                                  topRight: isCurrentUser
+                                      ? Radius.circular(0)
+                                      : Radius.circular(10),
+                                  bottomRight: Radius.circular(10)),
+                            ),
+                            constraints: BoxConstraints(
+                              maxWidth: Get.width * 0.7,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: isCurrentUser
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                if (currentMessage.media != null)
+                                  Column(
+                                    children: [
+                                      if (currentMessage.messageType == 3)
+                                        audioTypeMessageWidget(
+                                            currentMessage, isCurrentUser),
+                                      if (currentMessage.messageType == 2)
+                                        videoTypeMessageWidget(
+                                            currentMessage, isCurrentUser),
+                                      if (currentMessage.messageType == 1)
+                                        imageTypeMessageWidget(
+                                            currentMessage, isCurrentUser)
+                                    ],
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.end,
+                                    children: [
+                                      if (currentMessage.text!.isNotEmpty)
+                                        textTypeMessageWidget(currentMessage),
+                                      messageTimeWidget(currentMessage)
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                },
               ),
             ],
           ),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                controller: _scrollController,
-                reverse: true,
-                children: [
-                  Obx(
-                    () {
-                      final messages = controller.messages;
-                      if (messages.isEmpty) {
-                        return SizedBox();
-                      } else {
-                        return ListView.builder(
-                          reverse: true,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            final currentMessage = messages[index];
-                            final isCurrentUser =
-                                currentMessage.sender == AppPreferences.getUiId();
+        Obx(
+              () => targetUser.value.status == 'typing'
+              ? Align(
+            alignment: Alignment.bottomLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                width12,
+                Text(
+                  'Typing ',
+                  style: AppTextStyle.normalBold14
+                      .copyWith(color: greenColor),
+                ),
+                LoadingAnimationWidget.waveDots(
+                  color: greenColor,
+                  size: 30,
+                ),
+              ],
+            ),
+          )
+              : SizedBox(),
+        ),
+        Obx(() {
+          return  Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextFormFieldWidget(
 
-                            return Container(
-                              margin: EdgeInsets.symmetric(
-                                  vertical: 5.0, horizontal: 10),
-                              alignment: isCurrentUser
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: isCurrentUser
-                                          ? primaryColor
-                                          : greenColor),
-                                  color:
-                                      isCurrentUser ? primaryColor : greenColor,
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: isCurrentUser
-                                          ? Radius.circular(10)
-                                          : Radius.circular(0),
-                                      bottomLeft: Radius.circular(10),
-                                      topRight: isCurrentUser
-                                          ? Radius.circular(0)
-                                          : Radius.circular(10),
-                                      bottomRight: Radius.circular(10)),
-                                ),
-                                constraints: BoxConstraints(
-                                  maxWidth: Get.width * 0.7,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: isCurrentUser
-                                      ? CrossAxisAlignment.end
-                                      : CrossAxisAlignment.start,
-                                  children: [
-                                    if (currentMessage.media != null)
-                                      Column(
-                                        children: [
-                                          if (currentMessage.messageType == 3)
-                                            audioTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 2)
-                                            videoTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 1)
-                                            imageTypeMessageWidget(
-                                                currentMessage, isCurrentUser)
-                                        ],
-                                      ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          if (currentMessage.text!.isNotEmpty)
-                                            textTypeMessageWidget(currentMessage),
-                                          messageTimeWidget(currentMessage)
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
+
+                    controller: controller.messageController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 5,
+                    onChanged: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        CommonMethod.setTypingStatus();
+                      } else {
+                        CommonMethod.setOnlineStatus();
                       }
                     },
-                  ),
-                ],
-              ),
-            ),
-            Obx(
-              () => targetUser.value.status == 'typing'
-                  ? Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          width12,
-                          Text(
-                            'Typing ',
-                            style: AppTextStyle.normalBold14
-                                .copyWith(color: greenColor),
-                          ),
-                          LoadingAnimationWidget.waveDots(
-                            color: greenColor,
-                            size: 30,
-                          ),
-                        ],
-                      ),
-                    )
-                  : SizedBox(),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: TextFormFieldWidget(
-                     change: false,
-                      controller: controller.messageController,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 5,
-                      onChanged: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          CommonMethod.setTypingStatus();
-                        } else {
-                          CommonMethod.setOnlineStatus();
-                        }
-                      },
-                      hintText: "Enter message",
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                              onPressed: () {
-                                //listenAndTranslate();
-                                listen(locale!);
-                              },
-                              icon: Icon(
-                                Icons.mic_none,
-                                color: themeNotifier.isDark ? primaryWhite:primaryBlack,
-                              )),
-                          IconButton(
-                            icon: Icon(
-                              Icons.attach_file,
-                              color: themeNotifier.isDark ? primaryWhite:primaryBlack,
-                            ),
-                            onPressed: () async {
-                              controller.selectedFile =
-                                  await CommonMethod.pickFile();
-                              if (controller.selectedFile != null) {
-                                String? path =
-                                    await controller.uploadFile(context);
-                                if (path != null) {
-                                  controller.mediaUrl = path;
-                                  controller.sendMessage(
-                                      chatRoomId: widget.chatRoomId,
-                                      targetUser: widget.targetUser);
-                                }
-                              }
+                    hintText: "Enter message",
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                            onPressed: () {
+                              //listenAndTranslate();
+                              listen(locale!);
                             },
-                          )
-                        ],
-                      ),
+                            icon: Icon(
+                              Icons.mic_none,
+                              color: themeController.isDark.value ? primaryWhite:primaryBlack,
+                            )),
+                        IconButton(
+                          icon: Icon(
+                            Icons.attach_file,
+                            color: themeController.isDark.value ? primaryWhite:primaryBlack,
+                          ),
+                          onPressed: () async {
+                            controller.selectedFile =
+                            await CommonMethod.pickFile();
+                            if (controller.selectedFile != null) {
+                              String? path =
+                              await controller.uploadFile(context);
+                              if (path != null) {
+                                controller.mediaUrl = path;
+                                controller.sendMessage(
+                                    chatRoomId: widget.chatRoomId,
+                                    targetUser: widget.targetUser);
+                              }
+                            }
+                          },
+                        )
+                      ],
                     ),
                   ),
-                  width10,
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: themeNotifier.isDark ? blackThemeColor:primaryBlack,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        color: primaryWhite,
-                      ),
-                      onPressed: () {
-                        controller.sendMessage(
-                            chatRoomId: widget.chatRoomId,
-                            targetUser: widget.targetUser);
-                      },
+                ),
+                width10,
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: themeController.isDark.value ? blackThemeColor:primaryBlack,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: primaryWhite,
                     ),
+                    onPressed: () {
+                      controller.sendMessage(
+                          chatRoomId: widget.chatRoomId,
+                          targetUser: widget.targetUser);
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            height12,
-          ],
-        ),
-      );}
-    );
+          );
+        }),
+
+        height12,
+      ],
+    ),
+  );
+});
+
+     }
+
   }
 
   Widget messageTimeWidget(MessageModel currentMessage) {
@@ -564,4 +568,4 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       },
     );
   }
-}
+

@@ -8,13 +8,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import '../componet/custom_dialog.dart';
 import '../main.dart';
 import '../models/chat_room_model.dart';
 import 'colors.dart';

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../componet/app_text_style.dart';
 
 
 // Padding

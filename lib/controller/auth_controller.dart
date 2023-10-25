@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/complete_profile_screen.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

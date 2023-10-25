@@ -2,18 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:chatapp/Change%20languige/local_string.dart';
 import 'package:chatapp/view/splash_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../Change Theme/model_theme.dart';
-import '../componet/app_text_style.dart';
+import '../Change Language/local_string.dart';
+import '../controller/theme_controller.dart';
 import '../utils/app_preferences.dart';
-import '../utils/colors.dart';
 import '../utils/firebase_notification_handler.dart';
 
 final StreamController<String?> selectNotificationStream =
@@ -56,6 +53,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+
   final FirebaseNotificationHandler notificationHandler =
       FirebaseNotificationHandler();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -74,6 +72,13 @@ class _MyAppState extends State<MyApp> {
     init();
     super.initState();
     _configureSelectNotificationSubject();
+    // Listen to theme changes and update the theme in the initState
+    ever<bool>(themeController.isDark, (isDark) {
+      final newTheme = isDark ? themeController.darkTheme : themeController.lightTheme;
+      Get.changeTheme(newTheme);
+      // If the theme affects the app bar color, set it here too
+      // AppBar().copyWith(backgroundColor: newTheme.appBarTheme.backgroundColor);
+    });
   }
 
   Future init() async {
@@ -156,50 +161,26 @@ class _MyAppState extends State<MyApp> {
       log("===payLoadData===   $payLoadData");
     });
   }
+  final ThemeController themeController = Get.put(ThemeController());
+
 
   @override
   Widget build(BuildContext context) {
-    final savedLocale = AppPreferences().getLocaleFromPreferences();
+    final ThemeController themeController = Get.put(ThemeController());
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => ModelTheme(),
-        ),
-      ],
-      child: Builder(
-        builder: (context) {
-          final themeNotifier = Provider.of<ModelTheme>(context);
-          return GetMaterialApp(
-            translations: LocaleString(),
-            locale: savedLocale ?? Locale('en', 'US'),
-            title: 'Chat App',
-            themeMode: themeNotifier.isDark ? ThemeMode.dark : ThemeMode.light,
-            theme: themeNotifier.isDark
-                ? ThemeData(
-                    scaffoldBackgroundColor: primaryBlack,
-                    fontFamily: AppTextStyle.fontFamilyInter,
-                    appBarTheme: AppBarTheme(backgroundColor: blackThemeColor),
-                    primarySwatch: createMaterialColor(Colors.white),
-              hintColor: primaryWhite,
-                    colorScheme: ColorScheme.fromSwatch()
-                        .copyWith(secondary: blackThemeColor),
-                   iconTheme: IconThemeData(color: primaryWhite),
-                  )
-                : ThemeData(
-                    scaffoldBackgroundColor: appBackgroundColor,
-                    fontFamily: AppTextStyle.fontFamilyInter,
-                    hintColor: primaryBlack,
-                    appBarTheme: AppBarTheme(backgroundColor: primaryColor),
-                    iconTheme: IconThemeData(color: primaryBlack),
-                    colorScheme: ColorScheme.fromSwatch()
-                        .copyWith(secondary: primaryColor),
-                  ),
-            debugShowCheckedModeBanner: false,
-            home: SplashScreen(),
-          );
-        },
-      ),
+    final savedLocale = AppPreferences().getLocaleFromPreferences();
+    themeController.getPreferences();
+
+    return GetMaterialApp(
+      translations: LocaleString(),
+      locale: AppPreferences().getLocaleFromPreferences() ?? Locale('en', 'US'),
+      title: 'Chat App',
+      themeMode: themeController.isDark.value ? ThemeMode.dark
+          : ThemeMode.light,
+
+      theme:themeController.isDark.value ? themeController.darkTheme : themeController.lightTheme,
+      debugShowCheckedModeBanner: false,
+      home: SplashScreen(),
     );
   }
 }

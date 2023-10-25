@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 
-import '../Change Theme/model_theme.dart';
+
+import '../controller/theme_controller.dart';
 import '../utils/colors.dart';
 import '../utils/validators.dart';
 import 'app_text_style.dart';
@@ -72,9 +73,8 @@ this.change,
   @override
   bool isAnotherPage = true;
   Widget build(BuildContext context) {
-    return Consumer<ModelTheme>(
-        builder: (context, ModelTheme themeNotifier, child)
-    {
+    final ThemeController themeController =Get.put(ThemeController());
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -109,15 +109,14 @@ this.change,
             onTap: onTap,
             onFieldSubmitted: onFieldSubmitted,
             onChanged: onChanged,
-            textStyle: themeNotifier.isDark?  TextStyle(color: primaryWhite):TextStyle(color: primaryBlack),
-            borderColor:themeNotifier.isDark? blackThemeColor:Colors.grey,
-            filledColor: change! ?primaryBlack:
-                 themeNotifier.isDark?  blackThemeColor:primaryWhite,
+            textStyle:themeController.isDark.value? TextStyle(color: primaryWhite):
+            TextStyle(color: primaryBlack),
+            borderColor:themeController.isDark.value?blackThemeColor:Colors.grey,
+            filledColor: themeController.isDark.value ?blackThemeColor:primaryWhite,
             // hintStyle: hintStyle ?? TextStyle(color: primaryBlack),
-            hintStyle: themeNotifier.isDark
-                ? TextStyle(color: primaryWhite)
-                : TextStyle(color: primaryBlack),
-            cursorColor: themeNotifier.isDark? primaryWhite:Colors.grey,
+            hintStyle:themeController.isDark.value? TextStyle(color: primaryWhite.withOpacity(0.8)):
+                TextStyle(color: greyColor),
+            cursorColor: Colors.grey,
 
 
           ),
@@ -152,7 +151,7 @@ this.change,
 // =======
         ],
       );
-    },);
+
   }
 }
 

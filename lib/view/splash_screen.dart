@@ -6,8 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../main.dart';
-import '../models/user_model.dart';
+
 import '../utils/colors.dart';
 import 'home_screen.dart';
 

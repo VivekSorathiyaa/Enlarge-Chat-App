@@ -14,6 +14,7 @@ class AppPreferences {
   static final String _countryCodeKey = '_countryCodeKey';
   static SharedPreferences? _prefs;
 
+
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }

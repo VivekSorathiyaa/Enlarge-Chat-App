@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:chatapp/componet/common_app_bar.dart';
@@ -7,10 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-// import '../componet/image_picker_service.dart';
 import '../controller/group_controller.dart';
 import '../utils/colors.dart';
-import '../utils/common_method.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({Key? key}) : super(key: key);

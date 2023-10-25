@@ -3,14 +3,13 @@ import 'dart:developer';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/utils/common_method.dart';
+import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../Change Theme/model_theme.dart';
-import '../Drawer/drawer_item.dart';
+import '../componet/common_showAlert.dart';
+import '../controller/theme_controller.dart';
 import '../componet/app_text_style.dart';
 import '../componet/network_image_widget.dart';
 import '../componet/shadow_container_widget.dart';
@@ -21,7 +20,7 @@ import '../utils/colors.dart';
 import '../utils/static_decoration.dart';
 import 'chat_room_screen.dart';
 import 'create_group_screen.dart';
-import 'login_screen.dart';
+
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -66,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   //   );
   // }
 
-  final List locale = [
+  final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
     {'name': 'ગુજરાતી', 'locale': Locale('gu', 'IN')},
     {'name': 'हिंदी', 'locale': Locale('hi', 'IN')},
@@ -130,153 +129,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  final ThemeController themeController = Get.put(ThemeController());
   @override
   Widget build(BuildContext context) {
-    final modelTheme = Provider.of<ModelTheme>(context);
     log('---currentUserId---${AppPreferences.getUiId()}');
 
-    buildLanguageDialog(BuildContext context) {
-      showDialog(
-          context: context,
-          builder: (builder) {
-            return AlertDialog(
-              actionsAlignment: MainAxisAlignment.start,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                    10.0), // Adjust the border radius as needed
-              ),
-              elevation: 15,
-              title: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          primaryBlack.withOpacity(0.9),
-                          greyColor.withOpacity(0.7)
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(10)),
-                  //  color: primaryBlack.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'chooseLang'.tr,
-                      style: TextStyle(color: primaryWhite),
-                    ),
-                  )),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: List<Widget>.generate(locale.length, (index) {
-                  return ListTile(
-                    title: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(locale[index]['name']),
-                    ),
-                    leading: Radio<Locale>(
-                      value: locale[index]['locale'],
-                      groupValue: selectedLocale,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedLocale = value as Locale?;
-                        });
-                        print(locale[index]['name']);
-                        updateLanguage(value!);
-                        Navigator.of(context)
-                            .pop(); // Close the dialog after selection
-                      },
-                    ),
-                    splashColor: Colors.grey,
-                    onTap: () {
-                      print(locale[index]['name']);
-                      updateLanguage(locale[index]['locale']);
-                      Navigator.of(context)
-                          .pop(); // Close the dialog after selection
-                    },
-                  );
-                }),
-              ),
-            );
-          });
-    }
-
-    showAlertDialog(BuildContext context) {
-      Widget cancelButton = ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.8)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            'cancel'.tr,
-            style: TextStyle(color: greyColor, fontWeight: FontWeight.w500),
-          ),
-        ),
-        onPressed: () {
-          Get.back();
-        },
-      );
-
-      Widget continueButton = ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor:
-              MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
-        ),
-        onPressed: () async {
-          await FirebaseAuth.instance.signOut();
-          Navigator.popUntil(context, (route) => route.isFirst);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) {
-              return LoginScreen();
-            }),
-          );
-        },
-        child: Text(
-          'continue'.tr,
-          style: TextStyle(color: primaryWhite, fontWeight: FontWeight.w500),
-        ),
-      );
-      AlertDialog alert = AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(8.0), // Adjust the border radius as needed
-        ),
-        alignment: Alignment.center,
-        content: Text("logout_desc".tr),
-        actions: [
-          cancelButton,
-          continueButton,
-        ],
-      );
-      // show the dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return alert;
-        },
-      );
-    }
-
-    return Consumer<ModelTheme>(
-        builder: (context, ModelTheme themeNotifier, child) {
+    return Obx(() {
       return Scaffold(
+        backgroundColor:
+            themeController.isDark.value ? primaryBlack : primaryWhite,
         drawer: CustomDrawer(
-            logout: () => showAlertDialog(context),
-            changeLang: () => buildLanguageDialog(context),
-            theme: () {
-              themeNotifier.isDark
-                  ? themeNotifier.isDark = false
-                  : themeNotifier.isDark = true;
+            logout: () {
+              MyAlertDialog.showLogoutDialog(context);
+            },
+            changeLang: () {
+              MyAlertDialog.showLanguageDialog(
+                context,
+                locale,
+                selectedLocale!,
+                (Locale newLocale) {
+                  updateLanguage(newLocale);
+                },
+              );
             },
             people: () => Get.to(() => SearchScreen()),
-            myAccount: () {},
+            myAccount: () {
+              Get.to(()=>EditProfile());
+            },
             chats: () {}),
         appBar: AppBar(
           centerTitle: true,
           title: Text("head".tr),
+          backgroundColor:
+              themeController.isDark.value ? blackThemeColor : primaryBlack,
           actions: [
             IconButton(
               onPressed: () async {
@@ -287,140 +172,139 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ],
         ),
         body: SafeArea(
-          child: Obx(
-            () {
-              return ListView.builder(
-                itemCount: controller.chatRooms.length,
-                itemBuilder: (context, index) {
-                  final chatRoomModel = controller.chatRooms[index];
-                  return chatRoomModel.users == null
-                      ? SizedBox()
-                      : FutureBuilder(
-                          future: CommonMethod.getTargetUserModel(
-                              chatRoomModel.users!),
-                          builder: (context, snapshots) {
-                            UserModel? targetUser;
-                            if (snapshots.data != null) {
-                              targetUser = snapshots.data as UserModel;
-                            }
-                            return targetUser == null
-                                ? SizedBox()
-                                : StreamBuilder<DocumentSnapshot>(
-                                    stream: FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(targetUser.uid)
-                                        .snapshots(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.hasError) {
-                                        return Text('Error: ${snapshot.error}');
-                                      }
+          child: ListView.builder(
+            itemCount: controller.chatRooms.length,
+            itemBuilder: (context, index) {
+              final chatRoomModel = controller.chatRooms[index];
+              return chatRoomModel.users == null
+                  ? SizedBox()
+                  : FutureBuilder(
+                      future:
+                          CommonMethod.getTargetUserModel(chatRoomModel.users!),
+                      builder: (context, snapshots) {
+                        UserModel? targetUser;
+                        if (snapshots.data != null) {
+                          targetUser = snapshots.data as UserModel;
+                        }
+                        return targetUser == null
+                            ? SizedBox()
+                            : StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(targetUser.uid)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasError) {
+                                    return Text('Error: ${snapshot.error}');
+                                  }
 
-                                      if (!snapshot.hasData ||
-                                          !snapshot.data!.exists) {
-                                        return SizedBox();
-                                      }
+                                  if (!snapshot.hasData ||
+                                      !snapshot.data!.exists) {
+                                    return SizedBox();
+                                  }
 
-                                      final userData = UserModel.fromMap(
-                                          snapshot.data!.data()
-                                              as Map<String, dynamic>);
+                                  final userData = UserModel.fromMap(
+                                      snapshot.data!.data()
+                                          as Map<String, dynamic>);
 
-                                      // Use userData to display user details
-                                      return ShadowContainerWidget(
-                                        borderColor: themeNotifier.isDark
-                                            ? primaryBlack
-                                            : greyBorderColor,
-                                        color: themeNotifier.isDark
-                                            ? primaryBlack
-                                            : primaryWhite,
-                                        shadowColor: themeNotifier.isDark
-                                            ? Colors.transparent
-                                            : greyBorderColor.withOpacity(.5),
-                                        padding: 0,
-                                        widget: ListTile(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) {
-                                                  return ChatRoomScreen(
-                                                    chatRoomId: chatRoomModel
-                                                        .chatRoomId!,
-                                                    targetUser: userData,
-                                                  );
-                                                }),
-                                              );
-                                            },
-                                            leading: NetworkImageWidget(
-                                                height: 50,
-                                                width: 50,
-                                                isProfile: true,
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                imageUrl:
-                                                    userData.profilepic ?? ''),
-                                            trailing: Column(children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0),
-                                                child: Text(
-                                                  CommonMethod.formatDateTime(
-                                                      chatRoomModel.lastSeen ??
-                                                          DateTime.now()),
-                                                  style: AppTextStyle
-                                                      .normalRegular12
-                                                      .copyWith(
-                                                          color: greyColor),
-                                                ),
-                                              ),
-                                              height08,
-                                              Text(
-                                                userData.status == 'typing'
-                                                    ? "typing..."
-                                                    : userData.status ==
-                                                            "online"
-                                                        ? "online"
-                                                        : userData.status ==
-                                                                "offline"
-                                                            ? "offline"
-                                                            : '-',
+                                  // Use userData to display user details
+
+                                  return Obx(() {
+                                    return ShadowContainerWidget(
+                                      borderColor: themeController.isDark.value
+                                          ? primaryBlack
+                                          : greyBorderColor,
+                                      color: themeController.isDark.value
+                                          ? primaryBlack
+                                          : primaryWhite,
+                                      shadowColor: themeController.isDark.value
+                                          ? Colors.transparent
+                                          : greyBorderColor.withOpacity(.5),
+                                      padding: 0,
+                                      widget: ListTile(
+                                          tileColor:
+                                              themeController.isDark.value
+                                                  ? primaryBlack
+                                                  : primaryWhite,
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) {
+                                                return ChatRoomScreen(
+                                                  chatRoomId:
+                                                      chatRoomModel.chatRoomId!,
+                                                  targetUser: userData,
+                                                );
+                                              }),
+                                            );
+                                          },
+                                          leading: NetworkImageWidget(
+                                              height: 50,
+                                              width: 50,
+                                              isProfile: true,
+                                              borderRadius:
+                                                  BorderRadius.circular(50),
+                                              imageUrl:
+                                                  userData.profilepic ?? ''),
+                                          trailing: Column(children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8.0),
+                                              child: Text(
+                                                CommonMethod.formatDateTime(
+                                                    chatRoomModel.lastSeen ??
+                                                        DateTime.now()),
                                                 style: AppTextStyle
                                                     .normalRegular12
-                                                    .copyWith(
-                                                        color:
-                                                            userData.status ==
-                                                                    'offline'
-                                                                ? redColor
-                                                                : greenColor),
+                                                    .copyWith(color: greyColor),
                                               ),
-                                            ]),
-                                            title: Row(
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                      userData.fullname
-                                                          .toString(),
-                                                      style: themeNotifier
-                                                              .isDark
-                                                          ? AppTextStyle
-                                                              .darkNormalBold16
-                                                          : AppTextStyle
-                                                              .lightNormalBold16),
-                                                ),
-                                              ],
                                             ),
-                                            subtitle: Text(
-                                              chatRoomModel.lastMessage ??
-                                                  "Say hi to your new friend!",
+                                            height08,
+                                            Text(
+                                              userData.status == 'typing'
+                                                  ? "typing..."
+                                                  : userData.status == "online"
+                                                      ? "online"
+                                                      : userData.status ==
+                                                              "offline"
+                                                          ? "offline"
+                                                          : '-',
                                               style: AppTextStyle
                                                   .normalRegular12
-                                                  .copyWith(color: greyColor),
-                                            )),
-                                      );
-                                    },
-                                  );
-                          });
-                },
-              );
+                                                  .copyWith(
+                                                      color: userData.status ==
+                                                              'offline'
+                                                          ? redColor
+                                                          : greenColor),
+                                            ),
+                                          ]),
+                                          title: Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                    userData.fullname
+                                                        .toString(),
+                                                    style: themeController
+                                                            .isDark.value
+                                                        ? AppTextStyle
+                                                            .darkNormalBold16
+                                                        : AppTextStyle
+                                                            .lightNormalBold16),
+                                              ),
+                                            ],
+                                          ),
+                                          subtitle: Text(
+                                            chatRoomModel.lastMessage ??
+                                                "Say hi to your new friend!",
+                                            style: AppTextStyle.normalRegular12
+                                                .copyWith(color: greyColor),
+                                          )),
+                                    );
+                                  });
+                                },
+                              );
+                      });
             },
           ),
         ),
@@ -435,35 +319,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       );
     });
   }
+}
 
-  Widget headerWidget(String profilePic, String fullName, String phone) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(3.0), // Adjust the padding as needed
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white, // Background color of the circle
-          ),
-          child: CircleAvatar(
-            radius: 40,
-            backgroundImage: NetworkImage(profilePic),
-          ),
+Widget headerWidget(String profilePic, String fullName, String phone) {
+  return Row(
+    children: [
+      Container(
+        padding: EdgeInsets.all(3.0), // Adjust the padding as needed
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white, // Background color of the circle
         ),
-        const SizedBox(
-          width: 20,
+        child: CircleAvatar(
+          radius: 40,
+          backgroundImage: NetworkImage(profilePic),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(fullName, style: TextStyle(fontSize: 14, color: Colors.white)),
-            SizedBox(
-              height: 10,
-            ),
-            Text(phone, style: TextStyle(fontSize: 14, color: Colors.white))
-          ],
-        )
-      ],
-    );
-  }
+      ),
+      const SizedBox(
+        width: 20,
+      ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(fullName, style: TextStyle(fontSize: 14, color: Colors.white)),
+          SizedBox(
+            height: 10,
+          ),
+          Text(phone, style: TextStyle(fontSize: 14, color: Colors.white))
+        ],
+      )
+    ],
+  );
 }

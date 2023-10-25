@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/text_form_field_widget.dart';
 import 'package:chatapp/componet/user_widget.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/search_user_controller.dart';
+import '../controller/theme_controller.dart';
 import '../utils/colors.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -54,68 +55,76 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          titleSpacing: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: primaryWhite,
-            ),
-            onPressed: () {
-              Get.back();
-            },
-          ),
-          title: TextFormFieldWidget(
-              keyboardType: searchController.keyboardType.value,
-              controller: searchController.searchTextController,
-              prefixIcon: Icon(Icons.search),
-              focusNode: _focusNode,
-              filledColor: primaryWhite.withOpacity(.1),
-              cursorColor: primaryWhite,
-              autofocus: true,
-              textStyle:
-                  AppTextStyle.normalBold16.copyWith(color: primaryWhite),
-              onChanged: (value) {
-                searchController.searchUsers();
+    final ThemeController themeController = Get.put(ThemeController());
+    return Obx(() {
+      return SafeArea(
+        child: Scaffold(
+          backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
+          appBar: AppBar(
+            backgroundColor: themeController.isDark.value?blackThemeColor:primaryBlack,
+            titleSpacing: 0,
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: primaryWhite,
+              ),
+              onPressed: () {
+                Get.back();
               },
-              hintText: 'search'.tr),
-          actions: [
-            Obx(
-              () => searchController.keyboardType.value == TextInputType.text
-                  ? IconButton(
-                      onPressed: () {
-                        _changeKeyboardType(TextInputType.number);
-                      },
-                      icon: Icon(Icons.dialpad_rounded),
-                    )
-                  : IconButton(
-                      onPressed: () {
-                        _changeKeyboardType(TextInputType.text);
-                      },
-                      icon: Icon(Icons.keyboard),
-                    ),
             ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: Obx(() {
-                final searchedUsers = searchController.searchResults;
-                if (searchedUsers.isNotEmpty) {
-                  return ListView(
-                    children: searchedUsers.map((user) {
-                      return UserWidget(user: user);
-                    }).toList(),
-                  );
-                } else {
-                  return Center(child: Text("No results found!"));
-                }
-              }),
-            ),
-          ],),),);
+            title: TextFormFieldWidget(
+
+                keyboardType: searchController.keyboardType.value,
+                controller: searchController.searchTextController,
+                prefixIcon: Icon(Icons.search),
+                focusNode: _focusNode,
+                filledColor: primaryWhite.withOpacity(.1),
+                cursorColor: primaryWhite,
+                autofocus: true,
+                textStyle:
+                AppTextStyle.normalBold16.copyWith(color: primaryWhite),
+                onChanged: (value) {
+                  searchController.searchUsers();
+                },
+                hintText: 'search'.tr),
+            actions: [
+              Obx(
+                    () => searchController.keyboardType.value == TextInputType.text
+                    ? IconButton(
+                  onPressed: () {
+                    _changeKeyboardType(TextInputType.number);
+                  },
+                  icon: Icon(Icons.dialpad_rounded),
+                )
+                    : IconButton(
+                  onPressed: () {
+                    _changeKeyboardType(TextInputType.text);
+                  },
+                  icon: Icon(Icons.keyboard),
+                ),
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: Obx(() {
+                  final searchedUsers = searchController.searchResults;
+                  if (searchedUsers.isNotEmpty) {
+                    return ListView(
+
+                      children: searchedUsers.map((user) {
+                        return UserWidget(user: user);
+                      }).toList(),
+                    );
+                  } else {
+                    return Center(child: Text("No results found!"));
+                  }
+                }),
+              ),
+            ],),),);
+    });
+
 
   }
 }
