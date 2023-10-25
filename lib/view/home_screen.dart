@@ -173,11 +173,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             itemCount: controller.chatRooms.length,
             itemBuilder: (context, index) {
               final chatRoomModel = controller.chatRooms[index];
-              return chatRoomModel.users == null
+              return chatRoomModel.usersIds == null
                   ? SizedBox()
                   : FutureBuilder(
                       future:
-                          CommonMethod.getTargetUserModel(chatRoomModel.users!),
+                          CommonMethod.getTargetUserModel(
+                          chatRoomModel.usersIds!),
                       builder: (context, snapshots) {
                         UserModel? targetUser;
                         if (snapshots.data != null) {
@@ -245,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                         .profile_circled,
                                                 imageUrl: chatRoomModel.isGroup!
                                                     ? chatRoomModel.groupImage
-                                                    : userData.profilepic ??
+                                                    : userData.profilePic ??
                                                         ''),
                                             trailing: Column(children: [
                                               Padding(
@@ -292,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                           ? chatRoomModel
                                                                   .groupName ??
                                                               "Group"
-                                                          : userData.fullname
+                                                          : userData.fullName
                                                               .toString(),
                                                       style: themeController.isDark
                                                               .value
@@ -303,11 +304,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                 ),
                                               ],
                                             ),
-                                            subtitle: Text(
+                                            subtitle: chatRoomModel
+                                                            .lastMessage ==
+                                                        null &&
+                                                    chatRoomModel.isGroup!
+                                                ? FutureBuilder<String>(
+                                                    future: CommonMethod
+                                                        .getMembersName(
+                                                            chatRoomModel
+                                                                .usersIds!),
+                                                    builder:
+                                                        (context, snapshot) {
+                                                      if (snapshot
+                                                              .connectionState ==
+                                                          ConnectionState
+                                                              .waiting) {
+                                                        return SizedBox(); // Display a loading indicator.
+                                                      } else if (snapshot
+                                                          .hasError) {
+                                                        return SizedBox();
+                                                      } else {
+                                                        return Text(
+                                                          '${snapshot.data}',
+                                                          style: AppTextStyle
+                                                              .normalRegular12
+                                                              .copyWith(
+                                                                  color:
+                                                                      greyColor),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        );
+                                                      }
+                                                    },
+                                                  )
+                                                : Text(
                                               chatRoomModel.lastMessage ??
-                                                  (chatRoomModel.isGroup!
-                                                      ? "New Group"
-                                                      : "Say hi to your new friend!"),
+                                                        "Say hi to your new friend!",
                                               style: AppTextStyle
                                                   .normalRegular12
                                                   .copyWith(color: greyColor),

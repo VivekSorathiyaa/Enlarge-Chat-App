@@ -122,6 +122,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } else {
     }
   }
+  Future<UserModel> getTargetUser() async {
+    return widget.targetUser!;
+  }
 
   Future<void> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
@@ -147,10 +150,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Widget build(BuildContext context) {
     Rx<UserModel> targetUser = UserModel(
             uid: null,
-            fullname: null,
+            fullName: null,
             phone: null,
-            profilepic: null,
-            fcmtoken: null,
+            profilePic: null,
+            fcmToken: null,
             openRoomId: null)
         .obs;
     if (widget.targetUser != null) {
@@ -183,9 +186,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
 
     return Obx(() {
-   return   Scaffold(    backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
-
-        appBar: AppBar(    backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
+      return Scaffold(  
+    
+        backgroundColor:
+            themeController.isDark.value ? primaryBlack : primaryWhite,
+        appBar: AppBar(
+          // backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
 
           titleSpacing: 0,
           leading: IconButton(
@@ -206,7 +212,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   width: 42,
                   height: 42,
                   borderRadius: BorderRadius.circular(42),
-                        imageUrl: targetUser.value.profilepic.toString(),
+                        imageUrl: targetUser.value.profilePic.toString(),
                 ),
                     )
                   : NetworkImageWidget(
@@ -216,34 +222,56 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       imageUrl: widget.chatRoom.groupImage.toString(),
                     ),
               width15,
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  widget.targetUser != null
-                      ?
-
-                  Obx(
-                    () => Text(
-                      targetUser.value.fullname.toString(),
-                      style: AppTextStyle.regularBold.copyWith(
-                          color: primaryWhite, fontSize: 16, height: 1.5),
-                    ),
-                        )
-                      : Text(
-                          widget.chatRoom.groupName.toString(),
-                          style: AppTextStyle.regularBold.copyWith(
-                              color: primaryWhite, fontSize: 16, height: 1.5),
-                        ),
-                  if (widget.targetUser != null)
-                  Obx(
-                    () => Text(
-                      targetUser.value.status.toString(),
-                      style: AppTextStyle.normalRegular14.copyWith(
-                        color: primaryWhite.withOpacity(.7),
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    widget.targetUser != null
+                        ? Obx(
+                            () => Text(
+                              targetUser.value.fullName.toString(),
+                              style: AppTextStyle.regularBold.copyWith(
+                                  color: primaryWhite,
+                                  fontSize: 16,
+                                  height: 1.5),
+                            ),
+                          )
+                        : Text(
+                            widget.chatRoom.groupName.toString(),
+                            style: AppTextStyle.regularBold.copyWith(
+                                color: primaryWhite, fontSize: 16, height: 1.5),
+                          ),
+                    widget.targetUser != null
+                        ? Obx(
+                            () => Text(
+                              targetUser.value.status.toString(),
+                              style: AppTextStyle.normalRegular14.copyWith(
+                                color: primaryWhite.withOpacity(.7),
+                              ),
+                            ),
+                          )
+                        : FutureBuilder<String>(
+                            future: CommonMethod.getMembersName(
+                                widget.chatRoom.usersIds!),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return SizedBox(); // Display a loading indicator.
+                              } else if (snapshot.hasError) {
+                                return SizedBox();
+                              } else {
+                                return Text(
+                                  '${snapshot.data}',
+                                  style: AppTextStyle.normalRegular14.copyWith(
+                                      color: primaryWhite.withOpacity(.7)),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              }
+                            },
+                          )
+                  ],
+                ),
               ),
             ],
           ),
@@ -258,6 +286,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Obx(
                     () {
                       final messages = controller.messages;
+
                       if (messages.isEmpty) {
                         return SizedBox();
                       } else {
@@ -277,67 +306,167 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               alignment: isCurrentUser
                                   ? Alignment.centerRight
                                   : Alignment.centerLeft,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: isCurrentUser
-                                          ? primaryColor
-                                          : greenColor),
-                                  color:
-                                      isCurrentUser ? primaryColor : greenColor,
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: isCurrentUser
-                                          ? Radius.circular(10)
-                                          : Radius.circular(0),
-                                      bottomLeft: Radius.circular(10),
-                                      topRight: isCurrentUser
-                                          ? Radius.circular(0)
-                                          : Radius.circular(10),
-                                      bottomRight: Radius.circular(10)),
-                                ),
-                                constraints: BoxConstraints(
-                                  maxWidth: Get.width * 0.7,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: isCurrentUser
-                                      ? CrossAxisAlignment.end
-                                      : CrossAxisAlignment.start,
-                                  children: [
-                                    if (currentMessage.media != null)
-                                      Column(
-                                        children: [
-                                          if (currentMessage.messageType == 3)
-                                            audioTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 2)
-                                            videoTypeMessageWidget(
-                                                currentMessage, isCurrentUser),
-                                          if (currentMessage.messageType == 1)
-                                            imageTypeMessageWidget(
-                                                currentMessage, isCurrentUser)
-                                        ],
-                                      ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          if (currentMessage.text!.isNotEmpty)
-                                            textTypeMessageWidget(
-                                                currentMessage),
-                                          messageTimeWidget(currentMessage)
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                                child: FutureBuilder<UserModel?>(
+                                  future: isCurrentUser
+                                      ? null
+                                      : widget.targetUser != null
+                                          ? getTargetUser()
+                                          : CommonMethod.getUserModelById(
+                                              currentMessage
+                                                  .sender!), // The future to wait for.
+                                  builder: (BuildContext context,
+                                      AsyncSnapshot<UserModel?> snapshot) {
+                                    var data = snapshot.data;
+                                    return data == null && !isCurrentUser
+                                        ? SizedBox()
+                                        : Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (data != null &&
+                                                  !isCurrentUser)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
+                                                  child: NetworkImageWidget(
+                                                    width: 30,
+                                                    height: 30,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                    imageUrl: snapshot
+                                                        .data!.profilePic,
+                                                  ),
+                                                ),
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: isCurrentUser
+                                                          ? primaryColor
+                                                          : greenColor),
+                                                  color: isCurrentUser
+                                                      ? primaryColor
+                                                      : greenColor,
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                          topLeft: isCurrentUser
+                                                              ? Radius.circular(
+                                                                  10)
+                                                              : Radius.circular(
+                                                                  0),
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                  10),
+                                                          topRight:
+                                                              isCurrentUser
+                                                                  ? Radius
+                                                                      .circular(
+                                                                          0)
+                                                                  : Radius
+                                                                      .circular(
+                                                                          10),
+                                                          bottomRight:
+                                                              Radius.circular(
+                                                                  10)),
+                                                ),
+                                                constraints: BoxConstraints(
+                                                  maxWidth: Get.width * 0.7,
+                                                ),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  crossAxisAlignment:
+                                                      isCurrentUser
+                                                          ? CrossAxisAlignment
+                                                              .end
+                                                          : CrossAxisAlignment
+                                                              .start,
+                                                  children: [
+                                                    if (data != null &&
+                                                        !isCurrentUser)
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .only(
+                                                                left: 10,
+                                                                right: 10,
+                                                                top: 10),
+                                                        child: Text(
+                                                          data.fullName
+                                                              .toString(),
+                                                          style: AppTextStyle
+                                                              .regularBold
+                                                              .copyWith(
+                                                            color: primaryWhite,
+                                                            shadows: [
+                                                              Shadow(
+                                                                offset: Offset(
+                                                                    1, 1),
+                                                                color: primaryBlack
+                                                                    .withOpacity(
+                                                                        .2), // Shadow color
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    if (currentMessage.media !=
+                                                        null)
+                                                      Column(
+                                                        children: [
+                                                          if (currentMessage
+                                                                  .messageType ==
+                                                              3)
+                                                            audioTypeMessageWidget(
+                                                                currentMessage,
+                                                                isCurrentUser),
+                                                          if (currentMessage
+                                                                  .messageType ==
+                                                              2)
+                                                            videoTypeMessageWidget(
+                                                                currentMessage,
+                                                                isCurrentUser),
+                                                          if (currentMessage
+                                                                  .messageType ==
+                                                              1)
+                                                            imageTypeMessageWidget(
+                                                                currentMessage,
+                                                                isCurrentUser)
+                                                        ],
+                                                      ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              10),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          if (currentMessage
+                                                              .text!.isNotEmpty)
+                                                            textTypeMessageWidget(
+                                                                currentMessage),
+                                                          messageTimeWidget(
+                                                              currentMessage)
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                  },
+                                )  
+                          );
                           },
                         );
                       }

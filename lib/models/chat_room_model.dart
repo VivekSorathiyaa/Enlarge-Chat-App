@@ -9,12 +9,12 @@ class ChatRoomModel {
   String? createdBy;
   bool? isGroup;
   DateTime? lastSeen;
-  List<UserModel>? users;
+  List<String>? usersIds;
 
   ChatRoomModel({
     required this.chatRoomId,
     required this.lastMessage,
-    required this.users,
+    required this.usersIds,
     required this.createdBy,
     required this.groupImage,
     required this.lastSeen,
@@ -22,24 +22,21 @@ class ChatRoomModel {
     required this.isGroup,
   });
 
-   ChatRoomModel.fromMap(Map<String, dynamic> map) {
+  ChatRoomModel.fromMap(Map<String, dynamic> map) {
     chatRoomId = map["chatRoomId"];
     lastMessage = map["lastMessage"];
     createdBy = map["createdBy"];
     groupImage = map["groupImage"];
     groupName = map["groupName"];
-    isGroup = map["isGroup"]==null ? false: map["isGroup"];
-    users = map['users'] == null
+    isGroup = map["isGroup"] == null ? false : map["isGroup"];
+    usersIds =
+        map['usersIds'] == null
         ? null
-        : (map['users'] as List<dynamic>)
-            .map((userMap) => UserModel.fromMap(userMap))
-            .toList();
+        : List<String>.from(map['usersIds']);
 
     lastSeen = map["lastSeen"] == null
         ? DateTime.now()
-        : (map["lastSeen"] as Timestamp)
-            .toDate()
-            .toLocal(); // Convert to local time
+        : (map["lastSeen"] as Timestamp).toDate().toLocal();
   }
 
   Map<String, dynamic> toMap() {
@@ -50,10 +47,8 @@ class ChatRoomModel {
       "isGroup": isGroup,
       "groupImage": groupImage,
       "lastMessage": lastMessage,
-      "users":
-          users == null ? null : users!.map((user) => user.toMap()).toList(),
-      "lastSeen":lastSeen ==null ? null:
-          lastSeen!.toUtc(), // Convert to UTC time before saving in Firestore
+      "usersIds": usersIds == null ? null : usersIds!.map((e) => e).toList(),
+      "lastSeen": lastSeen == null ? null : lastSeen!.toUtc(),
     };
   }
 }

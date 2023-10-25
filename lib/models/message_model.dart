@@ -13,10 +13,10 @@ class MessageModel {
   MessageModel({
   required  this.messageId,
   required  this.chatRoomId,
-   required this.sender,
-   required this.text,
-   required this.seen,
- required   this.createdAt,
+    required this.sender,
+    required this.text,
+    required this.seen,
+    required this.createdAt,
   required  this.messageType,
    required this.media,
   });

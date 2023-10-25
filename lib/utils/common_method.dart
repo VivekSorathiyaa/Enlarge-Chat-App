@@ -182,13 +182,14 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
         .get();
     }));
     if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
-    final userMap = userSnapshots
-        .map((snapshot) => UserModel.fromMap(
-            snapshot.docs.first.data() as Map<String, dynamic>))
-          .toList();
+      // final userMap = userSnapshots
+      //     .map((snapshot) => UserModel.fromMap(
+      //         snapshot.docs.first.data() as Map<String, dynamic>))
+      //       .toList();
     final chatRoomSnapshot = await FirebaseFirestore.instance
         .collection("chatrooms")
-        .where('users', isEqualTo: userMap.map((user) => user.toMap()).toList())
+          .where('usersIds', isEqualTo: targetUserIds.map((e) => e).toList())
+          //  userMap.map((user) => user.toMap()).toList())
         .get();
 
       if (chatRoomSnapshot.docs.isNotEmpty) {
@@ -200,7 +201,7 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
         chatRoomId: uuid.v1(),
         lastMessage: null,
         lastSeen: null,
-          users: userMap,
+          usersIds: targetUserIds,
           groupName: null,
           isGroup: false,
           createdBy: AppPreferences.getUiId(),
@@ -231,28 +232,41 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
     return imageUrl;
   }
 
-  static String getMembersName(List<UserModel> users) {
+
+
+static Future<String> getMembersName(List<String> usersIds) async {
+    List<UserModel> users = [];
+    for (String userId in usersIds) {
+      UserModel? user = await getUserModelById(userId);
+      if (user != null) {
+        users.add(user);
+      }
+    }
+
     users
-        .sort((a, b) => a.fullname.toString().compareTo(b.fullname.toString()));
+        .sort((a, b) => a.fullName.toString().compareTo(b.fullName.toString()));
+
     List<String> names = users.map((user) {
       if (user.uid == AppPreferences.getUiId()) {
         return "You";
       }
-      return user.fullname.toString();
+      return user.fullName.toString();
     }).toList();
+
     String concatenatedNames = names.join(', ');
     return concatenatedNames;
   }
 
+
 static Future<ChatRoomModel?> createGroup(
       {required String groupName,
-      required List<UserModel>? members,
+      required List<String>? usersIds,
       required String? groupImage}) async {
     final newChatroom = ChatRoomModel(
       chatRoomId: uuid.v1(),
       lastMessage: null,
       lastSeen: null,
-      users: members,
+      usersIds: usersIds,
       groupName: groupName,
       isGroup: true,
       createdBy: AppPreferences.getUiId(),
@@ -264,11 +278,10 @@ static Future<ChatRoomModel?> createGroup(
         .set(newChatroom.toMap());
     return newChatroom;
   }
-  static Future<UserModel?> getTargetUserModel(List<UserModel> users) async {
-    for (var data in users) {
-      if (data.uid != AppPreferences.getUiId()!) {
-        log("==getUserModelById==");
-        return await getUserModelById(data.uid!);
+  static Future<UserModel?> getTargetUserModel(List<String> usersIds) async {
+    for (var uid in usersIds) {
+      if (uid != AppPreferences.getUiId()!) {
+        return await getUserModelById(uid);
       }
     }
     return null;
@@ -279,18 +292,18 @@ static Future<ChatRoomModel?> createGroup(
     if (userModel.uid != null) {
       await AppPreferences.setUid(userModel.uid!);
     }
-    if (userModel.fullname != null) {
-      await AppPreferences.setFullName(userModel.fullname!);
+    if (userModel.fullName != null) {
+      await AppPreferences.setFullName(userModel.fullName!);
     }
     if (userModel.phone != null) {
       await AppPreferences.setPhone(userModel.phone!);
     }
-    if (userModel.profilepic != null) {
-      await AppPreferences.setProfilePic(userModel.profilepic!);
+    if (userModel.profilePic != null) {
+      await AppPreferences.setProfilePic(userModel.profilePic!);
     }
 
-    if (userModel.fcmtoken != null) {
-      await AppPreferences.setFcmToken(userModel.fcmtoken!);
+    if (userModel.fcmToken != null) {
+      await AppPreferences.setFcmToken(userModel.fcmToken!);
     }
   }
 

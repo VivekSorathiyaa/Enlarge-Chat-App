@@ -28,10 +28,10 @@ class UserWidget extends StatelessWidget {
             height: 50,
             width: 50,
             borderRadius: BorderRadius.circular(50),
-            imageUrl: user.profilepic.toString(),
+            imageUrl: user.profilePic.toString(),
           ),
           title: Text(
-            user.fullname.toString(),
+            user.fullName.toString(),
             style: AppTextStyle.normalBold16,
           ),
           subtitle:

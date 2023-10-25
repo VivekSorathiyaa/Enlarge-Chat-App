@@ -63,9 +63,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       UserModel userModel = UserModel(
           uid: uid,
           phone: phone,
-          fullname: fullNameController.text.trim(),
-          profilepic: imageUrl,
-          fcmtoken: fcmToken, openRoomId: null);
+          fullName: fullNameController.text.trim(),
+          profilePic: imageUrl,
+          fcmToken: fcmToken, openRoomId: null);
       await CommonMethod.saveUserData(userModel);
       await FirebaseFirestore.instance
           .collection("users")

@@ -26,8 +26,8 @@ chatRoomsStream = FirebaseFirestore.instance
     .listen((querySnapshot) {
       chatRooms.assignAll(querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        final users = data['users'] as List<dynamic>;
-        if (users.any((user) => user['uid'] == AppPreferences.getUiId())) {
+        final users = data['usersIds'] as List<dynamic>;
+        if (users.any((uId) => uId == AppPreferences.getUiId())) {
           return ChatRoomModel.fromMap(data);
         }
 

@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,7 +8,7 @@ import '../controller/auth_controller.dart';
 import '../utils/static_decoration.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
-String verificationId;
+  String verificationId;
 
   VerifyCodeScreen(this.verificationId);
 
@@ -21,11 +19,9 @@ String verificationId;
 class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   var controller = Get.put(AuthController());
 
-
   @override
   Widget build(BuildContext context) {
-    return 
-    Scaffold(
+    return Scaffold(
       appBar: CommonAppBar(
         title: "Verification Code",
         hideLeadingIcon: true,
@@ -45,8 +41,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
               height20,
               PrimaryTextButton(
                 onPressed: () {
-                  controller.signInWithSmsCode(context,widget.verificationId);
-
+                  controller.signInWithSmsCode(context, widget.verificationId);
                 },
                 title: 'Verify Code',
               ),
@@ -55,7 +50,5 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         ),
       ),
     );
-    
-
   }
 }

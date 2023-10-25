@@ -122,9 +122,9 @@ class _EditProfileState extends State<EditProfile> {
         UserModel userModel = UserModel(
           uid: uid,
           phone: phone,
-          fullname: fullNameController.text.trim(),
-          profilepic: imageUrl,
-          fcmtoken: fcmToken,
+          fullName: fullNameController.text.trim(),
+          profilePic: imageUrl,
+          fcmToken: fcmToken,
           openRoomId: null,
         );
         await CommonMethod.saveUserData(userModel);

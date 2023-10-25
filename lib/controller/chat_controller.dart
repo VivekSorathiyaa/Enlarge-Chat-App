@@ -61,13 +61,13 @@ class ChatController extends GetxController {
 
       List<String> deviceTokenList = [];
 
-      for (var user in chatRoom.users!) {
-        if (user.uid != AppPreferences.getUiId()) {
+      for (var userId in chatRoom.usersIds!) {
+        if (userId != AppPreferences.getUiId()) {
           UserModel? userStatus =
-              await CommonMethod.getUserModelById(user.uid!);
-          if (userStatus != null &&userStatus.fcmtoken != null && (userStatus.openRoomId == null) ||
+              await CommonMethod.getUserModelById(userId);
+          if (userStatus != null &&userStatus.fcmToken != null && (userStatus.openRoomId == null) ||
               (userStatus!.openRoomId != chatRoom.chatRoomId)) {
-                deviceTokenList.add(userStatus.fcmtoken!);}
+                deviceTokenList.add(userStatus.fcmToken!);}
         }
       }
       if(deviceTokenList.isNotEmpty){

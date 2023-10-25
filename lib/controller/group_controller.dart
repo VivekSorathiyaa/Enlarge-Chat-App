@@ -17,10 +17,10 @@ class GroupController extends GetxController{
   final usersResultsStream = StreamController<List<UserModel>>();
   Rx<UserModel> currentUser = UserModel(
           openRoomId: null,
-          fcmtoken: AppPreferences.getFcmToken(),
-          fullname: AppPreferences.getFullName(),
+          fcmToken: AppPreferences.getFcmToken(),
+          fullName: AppPreferences.getFullName(),
           phone: AppPreferences.getPhone(),
-          profilepic: AppPreferences.getProfilePic(),
+          profilePic: AppPreferences.getProfilePic(),
           uid: AppPreferences.getUiId())
       .obs;
 

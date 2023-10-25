@@ -196,11 +196,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     }
                   }
 
+                  List<String> idList = groupController.selectUserList.value
+                      .map((user) => user.uid.toString())
+                      .toList();
+
                   await CommonMethod.createGroup(
                       groupName: groupController.nameTextController.text,
-                      members: [
-                        groupController.currentUser.value,
-                        ...groupController.selectUserList.value
+                      usersIds: [
+                        AppPreferences.getUiId().toString(),
+                        ...idList
                       ],
                       groupImage: mediaUrl);
                   Get.back();
