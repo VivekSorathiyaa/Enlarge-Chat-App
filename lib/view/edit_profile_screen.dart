@@ -158,6 +158,15 @@ class _EditProfileState extends State<EditProfile> {
         backgroundColor:
             themeController.isDark.value ? primaryBlack : primaryWhite,
         appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: primaryWhite,
+            ),
+            onPressed: () {
+              Get.back();
+            },
+          ),
           backgroundColor:
               themeController.isDark.value ? blackThemeColor : primaryBlack,
           centerTitle: true,

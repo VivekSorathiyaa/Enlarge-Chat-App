@@ -1,3 +1,4 @@
+import 'package:chatapp/controller/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -17,11 +18,13 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController=Get.put(ThemeController());
     return Container(
       decoration: BoxDecoration(
-        color: primaryColor,
+        color:themeController.isDark.value?blackThemeColor:primaryBlack
       ),
       child: AppBar(
+
         systemOverlayStyle: SystemUiOverlayStyle.light,
         automaticallyImplyLeading: false,
         leading: hideLeadingIcon != null && hideLeadingIcon!
@@ -56,7 +59,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
         centerTitle: true,
         actions: [if (actionWidget != null) actionWidget!],
         backgroundColor:
-            Colors.transparent, // Make the AppBar background transparent
+           themeController.isDark.value?blackThemeColor:primaryBlack, // Make the AppBar background transparent
         elevation: 0, // Remove AppBar shadow
       ),
     );

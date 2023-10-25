@@ -77,11 +77,12 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             title: TextFormFieldWidget(
 
+
                 keyboardType: searchController.keyboardType.value,
                 controller: searchController.searchTextController,
                 prefixIcon: Icon(Icons.search),
                 focusNode: _focusNode,
-                filledColor: primaryWhite.withOpacity(.2),
+                filledColor: themeController.isDark.value?Colors.blue:primaryWhite.withOpacity(.2),
                 cursorColor: primaryWhite,
                 autofocus: true,
                 textStyle:

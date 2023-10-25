@@ -1,5 +1,6 @@
 // ignore_for_file: must_be_immutable
 
+import 'package:chatapp/controller/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -30,6 +31,7 @@ class PrimaryTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController  themeController=Get.put(ThemeController());
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(10),
@@ -37,7 +39,7 @@ class PrimaryTextButton extends StatelessWidget {
           height: height ?? 45,
           width: width ?? Get.width,
           decoration: BoxDecoration(
-            color: primaryColor,
+            color: themeController.isDark.value?darkBlueColor:primaryColor,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(

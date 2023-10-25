@@ -9,16 +9,16 @@ import '../controller/theme_controller.dart';
 class CustomDrawer extends StatelessWidget {
   final Function() people;
   final Function() myAccount;
-  final Function() chats;
+
   final Function() changeLang;
   final Function() logout;
-  //final Function() theme;
+
 
   CustomDrawer({
     required this.people,
     required this.myAccount,
-  //  required this.theme,
-    required this.chats,
+
+
     required this.changeLang,
     required this.logout,
   });
@@ -79,12 +79,8 @@ class CustomDrawer extends StatelessWidget {
                 );
               }),
               const SizedBox(height: 30,),
-              DrawerItem(
-                name: 'chats'.tr,
-                icon: Icons.message_outlined,
-                onPressed: chats,
-              ),
-              const SizedBox(height: 30,),
+
+
               const Divider(thickness: 1, height: 10, color: Colors.grey,),
               const SizedBox(height: 30,),
               DrawerItem(
