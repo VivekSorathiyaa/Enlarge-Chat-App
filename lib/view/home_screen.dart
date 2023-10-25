@@ -137,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Obx(() {
       return Scaffold(
+        backgroundColor: themeController.isDark.value ? primaryBlack:primaryWhite,
         drawer: CustomDrawer(
             logout: () {
               MyAlertDialog.showLogoutDialog(context);
@@ -155,8 +156,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             myAccount: () {
               Get.to(() => EditProfile());
             },
-            chats: () {}),
+            ),
         appBar: AppBar(
+          backgroundColor: themeController.isDark.value ? blackThemeColor:primaryBlack,
           centerTitle: true,
           title: Text("head".tr),
           actions: [

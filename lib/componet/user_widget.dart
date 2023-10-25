@@ -32,10 +32,10 @@ class UserWidget extends StatelessWidget {
           ),
           title: Text(
             user.fullname.toString(),
-            style: AppTextStyle.normalBold16,
+            style: themeController.isDark.value? AppTextStyle.normalBold16.copyWith(color: primaryWhite.withOpacity(0.9)):AppTextStyle.normalBold16,
           ),
           subtitle:
-              Text(user.phone.toString(), style: AppTextStyle.normalRegular14),
+              Text(user.phone.toString(), style: themeController.isDark.value? AppTextStyle.normalRegular14.copyWith(color:Colors.grey[600]):AppTextStyle.normalRegular14),
           trailing: trailing ,
         ));
 

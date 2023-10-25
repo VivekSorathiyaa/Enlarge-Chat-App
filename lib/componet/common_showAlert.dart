@@ -7,6 +7,7 @@ import '../utils/colors.dart';
 import '../view/login_screen.dart';
 
 class MyAlertDialog {
+
   static void showLogoutDialog(BuildContext context) {
     final themeController = Get.find<ThemeController>();
 
@@ -28,7 +29,7 @@ class MyAlertDialog {
 
     Widget continueButton = ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
+        backgroundColor:  themeController.isDark.value ?MaterialStateProperty.all<Color>(Colors.blue[900]!.withOpacity(0.9)):MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
       ),
       onPressed: () async {
         await FirebaseAuth.instance.signOut();
@@ -70,10 +71,13 @@ class MyAlertDialog {
   }
 
   static void showLanguageDialog(BuildContext context, List<Map<String, dynamic>> locale, Locale selectedLocale, Function(Locale) updateLanguage) {
+    final themeController = Get.find<ThemeController>();
+
     showDialog(
       context: context,
       builder: (builder) {
         return AlertDialog(
+          backgroundColor: themeController.isDark.value ?blackThemeColor:primaryWhite ,
           actionsAlignment: MainAxisAlignment.start,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
@@ -85,7 +89,7 @@ class MyAlertDialog {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [primaryBlack.withOpacity(0.9), greyColor.withOpacity(0.7)],
+                colors: themeController.isDark.value?[Colors.blue[900]!, Colors.black.withOpacity(0.7)]:[primaryBlack.withOpacity(0.9), greyColor.withOpacity(0.7)],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -100,24 +104,36 @@ class MyAlertDialog {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: List<Widget>.generate(locale.length, (index) {
-              return ListTile(
-                title: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(locale[index]['name']),
+              return Theme(
+                data: ThemeData(
+                  unselectedWidgetColor: themeController.isDark.value?primaryWhite:primaryBlack,
+
                 ),
-                leading: Radio<Locale>(
-                  value: locale[index]['locale'],
-                  groupValue: selectedLocale,
-                  onChanged: (value) {
-                    updateLanguage(value!);
+                child: ListTile(
+                  title: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(locale[index]['name'],style: TextStyle(color: themeController.isDark.value? primaryWhite:primaryBlack),),
+                  ),
+
+                  leading: Radio<Locale>(
+
+
+
+                    activeColor:themeController.isDark.value? primaryWhite:primaryBlack,
+
+                    value: locale[index]['locale'],
+                    groupValue: selectedLocale,
+                    onChanged: (value) {
+                      updateLanguage(value!);
+                      Navigator.of(context).pop(); // Close the dialog after selection
+                    },
+                  ),
+                  splashColor: Colors.grey,
+                  onTap: () {
+                    updateLanguage(locale[index]['locale']);
                     Navigator.of(context).pop(); // Close the dialog after selection
                   },
                 ),
-                splashColor: Colors.grey,
-                onTap: () {
-                  updateLanguage(locale[index]['locale']);
-                  Navigator.of(context).pop(); // Close the dialog after selection
-                },
               );
             }),
           ),
@@ -129,61 +145,4 @@ class MyAlertDialog {
 
 
 }
-class LanguageDialog {
-  static void showLanguageDialog(BuildContext context, List<Map<String, dynamic>> locale, Locale selectedLocale, Function(Locale) updateLanguage) {
-    showDialog(
-      context: context,
-      builder: (builder) {
-        return AlertDialog(
-          actionsAlignment: MainAxisAlignment.start,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          elevation: 15,
-          title: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [primaryBlack.withOpacity(0.9), greyColor.withOpacity(0.7)],
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'chooseLang'.tr,
-                style: TextStyle(color: primaryWhite),
-              ),
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: List<Widget>.generate(locale.length, (index) {
-              return ListTile(
-                title: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(locale[index]['name']),
-                ),
-                leading: Radio<Locale>(
-                  value: locale[index]['locale'],
-                  groupValue: selectedLocale,
-                  onChanged: (value) {
-                    updateLanguage(value!);
-                    Navigator.of(context).pop(); // Close the dialog after selection
-                  },
-                ),
-                splashColor: Colors.grey,
-                onTap: () {
-                  updateLanguage(locale[index]['locale']);
-                  Navigator.of(context).pop(); // Close the dialog after selection
-                },
-              );
-            }),
-          ),
-        );
-      },
-    );
-  }
-}
+

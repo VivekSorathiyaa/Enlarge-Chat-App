@@ -15,6 +15,7 @@ const Color appBarIconColor = Color(0xFFFFFFFF);
 const Color greyContainerColor = Color(0xffEBEBEB);
 const Color lightGreyColor = Color(0xffF5F5F5);
 
+const Color darkBlueColor=Color(0xFF004294);
 const Color lightYellowColor = Color(0xfff8f38d);
 const Color lightRedColor = Color(0xffff6961);
 const Color lightOrangeColor = Color(0xffffb480);
