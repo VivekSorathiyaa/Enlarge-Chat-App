@@ -6,6 +6,7 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -74,11 +75,11 @@ class CommonMethod {
     });
   }
 
-  static Future updateChatActiveStatus(List<String>? userId) async {
+  static Future updateChatActiveStatus(String openRoomId) async {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(AppPreferences.getUiId())
-        .update({'active': userId}).then((value) {
+        .update({'openRoomId': openRoomId}).then((value) {
       log("Fcm updated!");
     });
   }
@@ -180,47 +181,90 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
         .collection("users")
         .where("uid", isEqualTo: userId)
         .get();
-  }));
-
-  if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
-    // All target users exist
+    }));
+    if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
     final userMap = userSnapshots
         .map((snapshot) => UserModel.fromMap(
             snapshot.docs.first.data() as Map<String, dynamic>))
-        .toList();
-
-    // Query chat rooms with the same set of users
+          .toList();
     final chatRoomSnapshot = await FirebaseFirestore.instance
         .collection("chatrooms")
         .where('users', isEqualTo: userMap.map((user) => user.toMap()).toList())
         .get();
 
-    if (chatRoomSnapshot.docs.isNotEmpty) {
-      // Chat room already exists, return the first one found
+      if (chatRoomSnapshot.docs.isNotEmpty) {
       final chatRoomData =
           chatRoomSnapshot.docs.first.data() as Map<String, dynamic>;
       return ChatRoomModel.fromMap(chatRoomData);
-    } else {
-      // Create a new chat room
+      } else {
       final newChatroom = ChatRoomModel(
         chatRoomId: uuid.v1(),
         lastMessage: null,
         lastSeen: null,
-        users: userMap,
-      );
-
+          users: userMap,
+          groupName: null,
+          isGroup: false,
+          createdBy: AppPreferences.getUiId(),
+          groupImage: null,
+        );
       await FirebaseFirestore.instance
           .collection("chatrooms")
           .doc(newChatroom.chatRoomId!)
-          .set(newChatroom.toMap());
-
+            .set(newChatroom.toMap());
       return newChatroom;
     }
   } else {
-    return null; // Some of the target users do not exist
+      return null;
+    }
   }
-}
 
+  static Future<String?> uploadFile(
+      BuildContext context, File selectedFile) async {
+    String? imageUrl;
+    CustomDialog.showLoadingDialog(context, "Uploading...");
+    UploadTask uploadTask = FirebaseStorage.instance
+        .ref("media")
+        .child(uuid.v1())
+        .putFile(selectedFile!);
+    TaskSnapshot snapshot = await uploadTask;
+    imageUrl = await snapshot.ref.getDownloadURL();
+    Get.back();
+    return imageUrl;
+  }
+
+  static String getMembersName(List<UserModel> users) {
+    users
+        .sort((a, b) => a.fullname.toString().compareTo(b.fullname.toString()));
+    List<String> names = users.map((user) {
+      if (user.uid == AppPreferences.getUiId()) {
+        return "You";
+      }
+      return user.fullname.toString();
+    }).toList();
+    String concatenatedNames = names.join(', ');
+    return concatenatedNames;
+  }
+
+static Future<ChatRoomModel?> createGroup(
+      {required String groupName,
+      required List<UserModel>? members,
+      required String? groupImage}) async {
+    final newChatroom = ChatRoomModel(
+      chatRoomId: uuid.v1(),
+      lastMessage: null,
+      lastSeen: null,
+      users: members,
+      groupName: groupName,
+      isGroup: true,
+      createdBy: AppPreferences.getUiId(),
+      groupImage: groupImage,
+    );
+    await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(newChatroom.chatRoomId!)
+        .set(newChatroom.toMap());
+    return newChatroom;
+  }
   static Future<UserModel?> getTargetUserModel(List<UserModel> users) async {
     for (var data in users) {
       if (data.uid != AppPreferences.getUiId()!) {

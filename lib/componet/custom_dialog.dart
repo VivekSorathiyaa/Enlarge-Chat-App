@@ -150,9 +150,11 @@ class CustomDialog {
       barrierDismissible: false,
       context: context,
       barrierColor: primaryBlack.withOpacity(.3),
+      
       builder: (BuildContext context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
         child: AlertDialog(
+          title: title == null ? null : Text(title),
           insetPadding: EdgeInsets.symmetric(horizontal: 15),
           // contentPadding: EdgeInsets.zero,
           clipBehavior: Clip.antiAliasWithSaveLayer,

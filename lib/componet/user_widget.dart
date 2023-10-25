@@ -11,27 +11,17 @@ import 'network_image_widget.dart';
 
 class UserWidget extends StatelessWidget {
   final UserModel user;
-  const UserWidget({Key? key, required this.user}) : super(key: key);
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  const UserWidget({Key? key, required this.user, this.trailing, this.onTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ShadowContainerWidget(
         padding: 0,
         widget: ListTile(
-          onTap: () async {
-            final chatRoomModel = await CommonMethod.getChatRoomModel(
-                [user.uid!, AppPreferences.getUiId()!]);
-
-            if (chatRoomModel != null) {
-              Get.back();
-              Get.to(
-                () => ChatRoomScreen(
-                  chatRoomId: chatRoomModel.chatRoomId!,
-                  targetUser: user,
-                ),
-              );
-            }
-          },
+          onTap: onTap,
           leading: NetworkImageWidget(
             height: 50,
             width: 50,
@@ -44,7 +34,7 @@ class UserWidget extends StatelessWidget {
           ),
           subtitle:
               Text(user.phone.toString(), style: AppTextStyle.normalRegular14),
-          trailing: Icon(Icons.keyboard_arrow_right),
+          trailing: trailing ,
         ));
   }
 }

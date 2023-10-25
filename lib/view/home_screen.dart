@@ -5,6 +5,7 @@ import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -338,26 +339,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         padding: 0,
                                         widget: ListTile(
                                             onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) {
-                                                  return ChatRoomScreen(
-                                                    chatRoomId: chatRoomModel
-                                                        .chatRoomId!,
-                                                    targetUser: userData,
-                                                  );
-                                                }),
-                                              );
+                                              Get.to(() => ChatRoomScreen(
+                                                  chatRoom: chatRoomModel,
+                                                  targetUser:
+                                                      chatRoomModel.isGroup!
+                                                          ? null
+                                                          : userData));
                                             },
-                                            leading: NetworkImageWidget(
-                                                height: 50,
-                                                width: 50,
-                                                isProfile: true,
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                imageUrl:
-                                                    userData.profilepic ?? ''),
+                                            leading: Stack(
+                                              children: [
+                                                NetworkImageWidget(
+                                                    height: 50,
+                                                    width: 50,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            50),
+                                                    errorIcon: chatRoomModel
+                                                            .isGroup!
+                                                        ? CupertinoIcons
+                                                            .group_solid
+                                                        : CupertinoIcons
+                                                            .profile_circled,
+                                                    imageUrl: chatRoomModel
+                                                            .isGroup!
+                                                        ? chatRoomModel
+                                                            .groupImage
+                                                        : userData.profilepic ??
+                                                            ''),
+                                                if (chatRoomModel.isGroup!)
+                                                  Positioned(
+                                                    bottom: 0,
+                                                    right: 0,
+                                                    child: NetworkImageWidget(
+                                                      height: 20,
+                                                      errorIcon: CupertinoIcons
+                                                          .profile_circled,
+                                                      width: 20,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                    ),
+                                                  )
+                                              ],
+                                            ),
                                             trailing: Column(children: [
                                               Padding(
                                                 padding: const EdgeInsets.only(
@@ -373,6 +397,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                 ),
                                               ),
                                               height08,
+                                              if (chatRoomModel.isGroup ==
+                                                  false)
                                               Text(
                                                 userData.status == 'typing'
                                                     ? "typing..."
@@ -397,7 +423,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                               children: [
                                                 Flexible(
                                                   child: Text(
-                                                      userData.fullname
+                                                      chatRoomModel.isGroup!
+                                                          ? chatRoomModel
+                                                                  .groupName ??
+                                                              "Group"
+                                                          : userData.fullname
                                                           .toString(),
                                                       style: themeNotifier
                                                               .isDark
@@ -410,7 +440,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             ),
                                             subtitle: Text(
                                               chatRoomModel.lastMessage ??
-                                                  "Say hi to your new friend!",
+                                                  (chatRoomModel.isGroup!
+                                                      ? CommonMethod
+                                                          .getMembersName(
+                                                              chatRoomModel
+                                                                  .users!)
+                                                      : "Say hi to your new friend!"),
                                               style: AppTextStyle
                                                   .normalRegular12
                                                   .copyWith(color: greyColor),

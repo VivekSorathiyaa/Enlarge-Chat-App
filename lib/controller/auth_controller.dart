@@ -121,7 +121,7 @@ class AuthController extends GetxController {
             uid: uid,
             phone: phoneTxtController.text,
             fullname: null,
-            profilepic: null, fcmtoken:fcmtoken, active: []);
+            profilepic: null, fcmtoken:fcmtoken, openRoomId: null);
         await CommonMethod.saveUserData(newUser);
 
         if (isRegistered) {
@@ -138,7 +138,7 @@ class AuthController extends GetxController {
               fcmtoken:null,
               phone: phoneTxtController.text,
               fullname: null,
-              profilepic: null, active: []);
+              profilepic: null, openRoomId: null);
           await CommonMethod.saveUserData(newUser);
           await FirebaseFirestore.instance
               .collection("users")

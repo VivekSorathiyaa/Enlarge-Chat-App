@@ -8,22 +8,17 @@ import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
-
 import 'package:chatapp/models/chat_room_model.dart';
-
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:intl/intl.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -37,12 +32,12 @@ import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 
 class ChatRoomScreen extends StatefulWidget {
-  final String chatRoomId;
-  final UserModel targetUser;
+  final ChatRoomModel chatRoom;
+  final UserModel? targetUser;
 
   const ChatRoomScreen({
     Key? key,
-    required this.chatRoomId,
+    required this.chatRoom,
     required this.targetUser,
   }) : super(key: key);
 
@@ -64,7 +59,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void initState() {
-    CommonMethod.updateChatActiveStatus([widget.targetUser.uid!]);
+    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     CommonMethod.setOnlineStatus();
     _requestMicrophonePermission();
     _initializeSpeechToText();
@@ -73,16 +68,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   void _requestMicrophonePermission() async {
     var status = await Permission.microphone.request();
-
     if (status.isGranted) {
-      // Microphone permission granted, you can now start speech recognition
-      // _listen('gu');
-      // listenAndTranslate();
     } else if (status.isPermanentlyDenied) {
-      // Permission is permanently denied, ask the user to go to app settings
       openAppSettings();
     } else {
-      // Permission is denied, handle accordingly (e.g., show a message to the user)
     }
   }
 
@@ -97,14 +86,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
 
     if (!available) {
-      // Handle the case where speech recognition is not available
       print('Speech recognition not available');
     }
   }
 
   void listen(Locale savedLocale) async {
     var microphoneStatus = await Permission.microphone.status;
-
     if (microphoneStatus.isGranted) {
       if (!_speech.isListening) {
         bool available = await _speech.initialize(
@@ -114,51 +101,34 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           onError: (errorNotification) {
             print('Speech Recognition Error: $errorNotification');
           },
-          // localeId: selectedLanguage, // Set the selected language for recognition
         );
-
         if (available) {
-         // controller.messageController.text='Listinhgjhkhjuh.....';
           setState(() {
             _text = '';
           });
-
           _speech.listen(
-
             onResult: (result) {
-
               setState(() async {
-
                 _text = result.recognizedWords;
                 log('Speech Recognition : $_text');
-                log('Languagjehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh============${savedLocale.languageCode}');
+                log('---savedLocale.languageCode---${savedLocale.languageCode}');
                 translateTo(_text, savedLocale.languageCode);
-                //    controller.messageController.text = msg1;
               });
             },
-
           );
-
         }
-
-
       }
     } else if (microphoneStatus.isPermanentlyDenied) {
-      // Handle permanently denied permission (e.g., show a message to the user)
       openAppSettings();
     } else {
-      // Handle other permission states (e.g., show a message to the user)
     }
   }
 
   Future<void> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
-
     Translation translation = await translator.translate(text, to: local);
-
-    // Set the translated text to the messageController
     controller.messageController.text = translation.text;
-    log('Languagjehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh============${controller.messageController.text}');
+    log('---controller.messageController.text---${controller.messageController.text}');
   }
 
   void _stopListening() {
@@ -169,18 +139,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
-    CommonMethod.updateChatActiveStatus(null);
+    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     CommonMethod.setOnlineStatus();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Rx<UserModel> targetUser = widget.targetUser.obs;
+    Rx<UserModel> targetUser = UserModel(
+            uid: null,
+            fullname: null,
+            phone: null,
+            profilepic: null,
+            fcmtoken: null,
+            openRoomId: null)
+        .obs;
+    if (widget.targetUser != null) {
+      targetUser = widget.targetUser!.obs;
     FirebaseFirestore.instance
         .collection('users')
-        .doc(widget.targetUser.uid)
+          .doc(widget.targetUser!.uid)
         .snapshots()
         .listen((querySnapshot) {
       if (querySnapshot.exists) {
@@ -188,12 +166,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             UserModel.fromMap(querySnapshot.data() as Map<String, dynamic>);
         targetUser.value = user;
       } else {
-        targetUser.value = widget.targetUser;
+          targetUser.value = widget.targetUser!;
       }
-    });
+      });
+    }
     FirebaseFirestore.instance
         .collection("chatrooms")
-        .doc(widget.chatRoomId)
+        .doc(widget.chatRoom.chatRoomId)
         .collection("messages")
         .orderBy("createdAt", descending: true)
         .snapshots()
@@ -220,34 +199,65 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
           title: Row(
             children: [
+              widget.targetUser != null
+                  ?
               Obx(
-                () => NetworkImageWidget(
-                  width: 42,
-                  height: 42,
-                  borderRadius: BorderRadius.circular(42),
-                  imageUrl: targetUser.value.profilepic.toString(),
+                      () => NetworkImageWidget(
+                        height: 42,
+                        width: 42,
+                        errorIcon: CupertinoIcons.profile_circled,
+                        borderRadius: BorderRadius.circular(42),
+                        imageUrl: targetUser.value.profilepic.toString(),
                 ),
-              ),
+                    )
+                  : NetworkImageWidget(
+                      height: 42,
+                      width: 42,
+                      errorIcon: CupertinoIcons.group_solid,
+                      borderRadius: BorderRadius.circular(42),
+                      imageUrl: widget.chatRoom.groupImage,
+                    ),
               width15,
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(
-                    () => Text(
-                      targetUser.value.fullname.toString(),
-                      style: AppTextStyle.regularBold.copyWith(
-                          color: primaryWhite, fontSize: 16, height: 1.5),
-                    ),
-                  ),
-                  Obx(
-                    () => Text(
-                      targetUser.value.status.toString(),
-                      style: AppTextStyle.normalRegular14.copyWith(
-                        color: primaryWhite.withOpacity(.7),
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    widget.targetUser != null
+                        ? Obx(
+                            () => Text(
+                              targetUser.value.fullname.toString(),
+                              style: AppTextStyle.regularBold.copyWith(
+                                  color: primaryWhite,
+                                  fontSize: 16,
+                                  height: 1.5),
+                            ),
+                          )
+                        : Text(
+                            widget.chatRoom.groupName.toString(),
+                            style: AppTextStyle.regularBold.copyWith(
+                                color: primaryWhite, fontSize: 16, height: 1.5),
+                          ),
+                 
+                    widget.targetUser != null
+                        ? Obx(
+                            () => Text(
+                              targetUser.value.status.toString(),
+                              style: AppTextStyle.normalRegular14.copyWith(
+                                color: primaryWhite.withOpacity(.7),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            CommonMethod.getMembersName(
+                                    widget.chatRoom.users!) +
+                                CommonMethod.getMembersName(
+                                    widget.chatRoom.users!),
+                            style: AppTextStyle.normalRegular14.copyWith(
+                              color: primaryWhite.withOpacity(.7),
+                            ),
+                          ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -272,8 +282,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           itemCount: messages.length,
                           itemBuilder: (context, index) {
                             final currentMessage = messages[index];
-                            final isCurrentUser =
-                                currentMessage.sender == AppPreferences.getUiId();
+                            final isCurrentUser = currentMessage.sender ==
+                                AppPreferences.getUiId();
 
                             return Container(
                               margin: EdgeInsets.symmetric(
@@ -332,7 +342,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             CrossAxisAlignment.end,
                                         children: [
                                           if (currentMessage.text!.isNotEmpty)
-                                            textTypeMessageWidget(currentMessage),
+                                            textTypeMessageWidget(
+                                                currentMessage),
                                           messageTimeWidget(currentMessage)
                                         ],
                                       ),
@@ -349,28 +360,28 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ],
               ),
             ),
-            Obx(
-              () => targetUser.value.status == 'typing'
-                  ? Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          width12,
-                          Text(
-                            'Typing ',
-                            style: AppTextStyle.normalBold14
-                                .copyWith(color: greenColor),
-                          ),
-                          LoadingAnimationWidget.waveDots(
-                            color: greenColor,
-                            size: 30,
-                          ),
-                        ],
-                      ),
-                    )
-                  : SizedBox(),
-            ),
+            // Obx(
+            //   () => targetUser.value.status == 'typing'
+            //       ? Align(
+            //           alignment: Alignment.bottomLeft,
+            //           child: Row(
+            //             crossAxisAlignment: CrossAxisAlignment.start,
+            //             children: [
+            //               width12,
+            //               Text(
+            //                 'Typing ',
+            //                 style: AppTextStyle.normalBold14
+            //                     .copyWith(color: greenColor),
+            //               ),
+            //               LoadingAnimationWidget.waveDots(
+            //                 color: greenColor,
+            //                 size: 30,
+            //               ),
+            //             ],
+            //           ),
+            //         )
+            //       : SizedBox(),
+            // ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
@@ -378,7 +389,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 children: [
                   Expanded(
                     child: TextFormFieldWidget(
-                     change: false,
                       controller: controller.messageController,
                       keyboardType: TextInputType.multiline,
                       maxLines: 5,
@@ -400,24 +410,28 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               },
                               icon: Icon(
                                 Icons.mic_none,
-                                color: themeNotifier.isDark ? primaryWhite:primaryBlack,
+                                color: themeNotifier.isDark
+                                    ? primaryWhite
+                                    : primaryBlack,
                               )),
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,
-                              color: themeNotifier.isDark ? primaryWhite:primaryBlack,
+                              color: themeNotifier.isDark
+                                  ? primaryWhite
+                                  : primaryBlack,
                             ),
                             onPressed: () async {
                               controller.selectedFile =
                                   await CommonMethod.pickFile();
                               if (controller.selectedFile != null) {
                                 String? path =
-                                    await controller.uploadFile(context);
+                                    await CommonMethod.uploadFile(
+                                    context, controller.selectedFile!);
                                 if (path != null) {
                                   controller.mediaUrl = path;
                                   controller.sendMessage(
-                                      chatRoomId: widget.chatRoomId,
-                                      targetUser: widget.targetUser);
+                                      chatRoom: widget.chatRoom);
                                 }
                               }
                             },
@@ -429,7 +443,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   width10,
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: themeNotifier.isDark ? blackThemeColor:primaryBlack,
+                    backgroundColor:
+                        themeNotifier.isDark ? blackThemeColor : primaryBlack,
                     child: IconButton(
                       icon: Icon(
                         Icons.send,
@@ -437,8 +452,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       ),
                       onPressed: () {
                         controller.sendMessage(
-                            chatRoomId: widget.chatRoomId,
-                            targetUser: widget.targetUser);
+                            chatRoom: widget.chatRoom);
                       },
                     ),
                   ),
@@ -448,8 +462,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             height12,
           ],
         ),
-      );}
-    );
+      );
+    });
   }
 
   Widget messageTimeWidget(MessageModel currentMessage) {

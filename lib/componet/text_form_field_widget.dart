@@ -38,7 +38,7 @@ class TextFormFieldWidget extends StatelessWidget {
     this.scropadding,
     this.textAlign = TextAlign.left,
     this.contentPadding,
-this.change,
+// this.change,
   }) : super(key: key);
   final EdgeInsets? scropadding;
   final Key? fieldKey;
@@ -48,7 +48,7 @@ this.change,
   final TextStyle? textStyle;
   final TextStyle? hintStyle;
   final Color? borderColor;
-  final Color? filledColor;
+  Color? filledColor;
   final Color? cursorColor;
   final FormFieldValidator<String?>? validator;
   final ValueChanged<String?>? onFieldSubmitted;
@@ -67,7 +67,6 @@ this.change,
   final bool? filled;
   final bool? autofocus;
   final EdgeInsetsGeometry? contentPadding;
-  final bool? change;
 
   @override
   bool isAnotherPage = true;
@@ -100,6 +99,7 @@ this.change,
             validator: validator,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
+              autofocus: autofocus,
             maxLength: maxLength,
             maxLines: maxLines,
             enabled: enabled ?? true,
@@ -109,47 +109,21 @@ this.change,
             onTap: onTap,
             onFieldSubmitted: onFieldSubmitted,
             onChanged: onChanged,
-            textStyle: themeNotifier.isDark?  TextStyle(color: primaryWhite):TextStyle(color: primaryBlack),
+              textStyle: themeNotifier.isDark
+                  ? TextStyle(color: primaryWhite)
+                  : TextStyle(color: primaryBlack),
             borderColor:themeNotifier.isDark? blackThemeColor:Colors.grey,
-            filledColor: change! ?primaryBlack:
-                 themeNotifier.isDark?  blackThemeColor:primaryWhite,
+              filledColor: filledColor,
+              
             // hintStyle: hintStyle ?? TextStyle(color: primaryBlack),
             hintStyle: themeNotifier.isDark
                 ? TextStyle(color: primaryWhite)
-                : TextStyle(color: primaryBlack),
+                  : TextStyle(color: hintTextColor),
             cursorColor: themeNotifier.isDark? primaryWhite:Colors.grey,
 
 
           ),
-// <<<<<<< HEAD
-//         textFormField(
-//           fieldKey: fieldKey,
-//           focusNode: focusNode,
-//           hintText: hintText,
-//           autofocus: autofocus ?? false,
-//           scropadding: scropadding,
-//           filled: filled,
-//           controller: controller,
-//           keyboardType: keyboardType ?? TextInputType.text,
-//           validator: validator,
-//           prefixIcon: prefixIcon,
-//           suffixIcon: suffixIcon,
-//           maxLength: maxLength,
-//           maxLines: maxLines,
-//           enabled: enabled ?? true,
-//           readonly: readonly,
-//           textInputAction: textInputAction,
-//           textAlign: textAlign,
-//           onTap: onTap,
-//           onFieldSubmitted: onFieldSubmitted,
-//           onChanged: onChanged,
-//           textStyle: textStyle,
-//           borderColor: borderColor,
-//           filledColor: filledColor,
-//         ),
-//       ],
-//     );
-// =======
+
         ],
       );
     },);
@@ -203,6 +177,7 @@ class _PasswordWidgetState extends State<PasswordWidget> {
             ),
           ),
         textFormField(
+          
             fieldKey: widget.fieldKey,
             hintText: widget.hintText,
             obscureText: _obscureText,
@@ -247,7 +222,7 @@ TextFormField textFormField({
   final bool? filled,
   final bool? autofocus,
   final bool obscureText = false,
-  final Color? filledColor,
+  Color? filledColor,
   final Color? cursorColor,
   final Color? borderColor,
   final Widget? prefixIcon,

@@ -8,7 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/search_user_controller.dart';
+import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
+import '../utils/common_method.dart';
+import 'chat_room_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -72,7 +75,7 @@ class _SearchScreenState extends State<SearchScreen> {
               controller: searchController.searchTextController,
               prefixIcon: Icon(Icons.search),
               focusNode: _focusNode,
-              filledColor: primaryWhite.withOpacity(.1),
+              filledColor: primaryWhite.withOpacity(.2),
               cursorColor: primaryWhite,
               autofocus: true,
               textStyle:
@@ -107,7 +110,25 @@ class _SearchScreenState extends State<SearchScreen> {
                 if (searchedUsers.isNotEmpty) {
                   return ListView(
                     children: searchedUsers.map((user) {
-                      return UserWidget(user: user);
+                      return UserWidget(
+                        user: user,
+                        trailing: Icon(Icons.keyboard_arrow_right),
+                        onTap: () async {
+                          final chatRoomModel =
+                              await CommonMethod.getChatRoomModel(
+                                  [user.uid!, AppPreferences.getUiId()!]);
+
+                          if (chatRoomModel != null) {
+                            // Get.back();
+                            Get.to(
+                              () => ChatRoomScreen(
+                                chatRoom: chatRoomModel,
+                                targetUser: user,
+                              ),
+                            );
+                          }
+                        },
+                      );
                     }).toList(),
                   );
                 } else {

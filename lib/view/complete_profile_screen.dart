@@ -15,6 +15,8 @@ import 'package:get/get.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../controller/image_picker_controller.dart';
+import '../utils/colors.dart';
 import '../utils/common_method.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
@@ -28,61 +30,15 @@ class CompleteProfileScreen extends StatefulWidget {
 }
 
 class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
-  File? imageFile;
   TextEditingController fullNameController = TextEditingController();
 
+  var imagePickerController = Get.put(ImagePickerController());
 
   
-  void selectImage(ImageSource source) async {
-    XFile? pickedFile = await ImagePicker().pickImage(source: source);
-    if (pickedFile != null) {
-      cropImage(pickedFile);
-    }
-  }
-
-  void cropImage(XFile file) async {
-    ImageCropper imageCropper = ImageCropper();
-    CroppedFile? croppedImage = await imageCropper.cropImage(
-        sourcePath: file.path,
-        aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 20);
-    if (croppedImage != null) {
-      setState(() {
-        imageFile = File(croppedImage.path);
-      });
-    }
-  }
-
-  void showPhotoOptions() {
-    CustomDialog.showSimpleDialog(
-        context: context,
-        title: 'Upload Profile Picture',
-        child: Column(
-          children: [
-            ListTile(
-                  onTap: () {
-                    Navigator.pop(context);
-                    selectImage(ImageSource.gallery);
-                  },
-                  leading: Icon(Icons.photo_album),
-                  title: Text("Select from Gallery"),
-                ),
-                ListTile(
-                  onTap: () {
-                    Navigator.pop(context);
-                    selectImage(ImageSource.camera);
-                  },
-                  leading: Icon(Icons.camera_alt),
-                  title: Text("Take a photo"),
-                ),
-          ],
-        ));
   
-  }
-
 
   void checkValues() {
-    if (fullNameController.text.isEmpty || imageFile == null) {
+    if (fullNameController.text.isEmpty || imagePickerController.selectedImage.value == null) {
       print("Please fill all the fields");
       CustomDialog.showAlertDialog(context, "Incomplete Data",
           "Please fill all the fields and upload a profile picture");
@@ -102,7 +58,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       UploadTask uploadTask = FirebaseStorage.instance
           .ref("profilepictures")
           .child(uid)
-          .putFile(imageFile!);
+          .putFile(imagePickerController.selectedImage.value!);
       TaskSnapshot snapshot = await uploadTask;
       String? imageUrl = await snapshot.ref.getDownloadURL();
       UserModel userModel = UserModel(
@@ -110,7 +66,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           phone: phone,
           fullname: fullNameController.text.trim(),
           profilepic: imageUrl,
-          fcmtoken: fcmToken, active: []);
+          fcmtoken: fcmToken, openRoomId: null);
       await CommonMethod.saveUserData(userModel);
       await FirebaseFirestore.instance
           .collection("users")
@@ -141,22 +97,27 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 height: 20,
               ),
               CupertinoButton(
-                onPressed: () {
-                  showPhotoOptions();
-                },
-                padding: EdgeInsets.all(0),
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage:
-                      (imageFile != null) ? FileImage(imageFile!) : null,
-                  child: (imageFile == null)
+              onPressed: () async {
+imagePickerController.pickImage(context);
+              },
+              child: Obx(
+                () => CircleAvatar(
+                  radius: 40,
+                  backgroundColor: greyBorderColor,
+                  backgroundImage: (imagePickerController.selectedImage.value !=
+                          null)
+                      ? FileImage(imagePickerController.selectedImage.value!)
+                      : null,
+                  child: (imagePickerController.selectedImage.value == null)
                       ? Icon(
-                          Icons.person,
-                          size: 60,
+                          Icons.image,
+                          color: greyColor,
+                          // size: 60,
                         )
                       : null,
                 ),
               ),
+            ),
               SizedBox(
                 height: 20,
               ),

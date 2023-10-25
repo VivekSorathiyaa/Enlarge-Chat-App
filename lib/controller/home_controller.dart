@@ -19,14 +19,21 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     refreshPage();
-    chatRoomsStream = FirebaseFirestore.instance
-        .collection("chatrooms")
-        .snapshots()
-        .listen((querySnapshot) {
+
+
+chatRoomsStream = FirebaseFirestore.instance
+    .collection("chatrooms")
+    .snapshots()
+    .listen((querySnapshot) {
       chatRooms.assignAll(querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return ChatRoomModel.fromMap(data);
-      }).toList());
+        final users = data['users'] as List<dynamic>;
+        if (users.any((user) => user['uid'] == AppPreferences.getUiId())) {
+          return ChatRoomModel.fromMap(data);
+        }
+
+        return null;
+      }).whereType<ChatRoomModel>());
     });
   }
 

@@ -32,9 +32,9 @@ class ChatController extends GetxController {
   }
 
   Future sendMessage(
-      {required String chatRoomId, required UserModel targetUser}) async {
+      {required ChatRoomModel chatRoom}) async {
     CommonMethod.setOnlineStatus();
-        
+
     String msg = messageController.text.trim();
     messageController.clear();
     if (msg != "" || mediaUrl != null) {
@@ -52,50 +52,40 @@ class ChatController extends GetxController {
               : 0,
           media: mediaUrl,
           seen: false,
-          chatRoomId: chatRoomId,
+          chatRoomId: chatRoom.chatRoomId,
           createdAt: DateTime.now(),
           messageId: uuid.v1());
       await CommonMethod.addMessage(newMessage);
       var lastMessage =
           await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
       CommonMethod.updateLastMessage(
-          chatRoomId: chatRoomId, lastMessage: lastMessage);
+          chatRoomId: chatRoom.chatRoomId!, lastMessage: lastMessage);
 
-      if (targetUser != null &&
-          targetUser.uid != null &&
-          targetUser.uid != null) {
-        UserModel? user = await CommonMethod.getUserModelById(targetUser.uid!);
-        log("---user!.active---${user!.active}");
-        log("---AppPreferences.getUiId()---${AppPreferences.getUiId()}");
-        // log("---user.active!.first---${user.active!.first}");
-        if ((user.active == null) ||
-            (user.active != null &&
-                user.active!.isNotEmpty &&
-                user.active!.first != AppPreferences.getUiId())) {
+      List<String> deviceTokenList = [];
+
+      for (var user in chatRoom.users!) {
+        if (user.uid != AppPreferences.getUiId()) {
+          UserModel? userStatus =
+              await CommonMethod.getUserModelById(user.uid!);
+          if (userStatus != null &&userStatus.fcmtoken != null && (userStatus.openRoomId == null) ||
+              (userStatus!.openRoomId != chatRoom.chatRoomId)) {
+                deviceTokenList.add(userStatus.fcmtoken!);}
+        }
+      }
+      if(deviceTokenList.isNotEmpty){
           await sendNotification(
-            deviceTokens: [user.fcmtoken!],
+            deviceTokens: deviceTokenList,
             textMessage: lastMessage,
             title: AppPreferences.getFullName() ?? 'Unknown',
           );
-        }
       }
+
+      
       clearForm();
       log("Message Sent!");
     }
   }
 
-  Future<String?> uploadFile(BuildContext context) async {
-    String? imageUrl;
-    CustomDialog.showLoadingDialog(context, "Uploading...");
-    UploadTask uploadTask = FirebaseStorage.instance
-        .ref("media")
-        .child(uuid.v1())
-        .putFile(selectedFile!);
-    TaskSnapshot snapshot = await uploadTask;
-    imageUrl = await snapshot.ref.getDownloadURL();
-    Get.back();
-    return imageUrl;
-  }
 
   Future<void> sendNotification(
       {required List<String> deviceTokens,
@@ -127,6 +117,7 @@ class ChatController extends GetxController {
       print('Failed to send notification');
     }
 }
+
 
 
 }
