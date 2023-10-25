@@ -8,26 +8,25 @@ import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
-import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:translator/translator.dart';
 
-import '../Change Theme/model_theme.dart';
+import '../controller/theme_controller.dart';
 import '../componet/image_view_widget.dart';
 import '../componet/text_form_field_widget.dart';
+import '../models/chat_room_model.dart';
 import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 
@@ -143,7 +142,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     CommonMethod.setOnlineStatus();
     super.dispose();
   }
-
+  final ThemeController themeController = Get.put(ThemeController());
   @override
   Widget build(BuildContext context) {
     Rx<UserModel> targetUser = UserModel(
@@ -183,10 +182,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       controller.updateMessages(messages);
     });
 
-    return Consumer<ModelTheme>(
-        builder: (context, ModelTheme themeNotifier, child) {
-      return Scaffold(
-        appBar: AppBar(
+    return Obx(() {
+   return   Scaffold(    backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
+
+        appBar: AppBar(    backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
+
           titleSpacing: 0,
           leading: IconButton(
             icon: Icon(
@@ -202,62 +202,48 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               widget.targetUser != null
                   ?
               Obx(
-                      () => NetworkImageWidget(
-                        height: 42,
-                        width: 42,
-                        errorIcon: CupertinoIcons.profile_circled,
-                        borderRadius: BorderRadius.circular(42),
+                () => NetworkImageWidget(
+                  width: 42,
+                  height: 42,
+                  borderRadius: BorderRadius.circular(42),
                         imageUrl: targetUser.value.profilepic.toString(),
                 ),
                     )
                   : NetworkImageWidget(
-                      height: 42,
                       width: 42,
-                      errorIcon: CupertinoIcons.group_solid,
+                      height: 42,
                       borderRadius: BorderRadius.circular(42),
-                      imageUrl: widget.chatRoom.groupImage,
+                      imageUrl: widget.chatRoom.groupImage.toString(),
                     ),
               width15,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    widget.targetUser != null
-                        ? Obx(
-                            () => Text(
-                              targetUser.value.fullname.toString(),
-                              style: AppTextStyle.regularBold.copyWith(
-                                  color: primaryWhite,
-                                  fontSize: 16,
-                                  height: 1.5),
-                            ),
-                          )
-                        : Text(
-                            widget.chatRoom.groupName.toString(),
-                            style: AppTextStyle.regularBold.copyWith(
-                                color: primaryWhite, fontSize: 16, height: 1.5),
-                          ),
-                 
-                    widget.targetUser != null
-                        ? Obx(
-                            () => Text(
-                              targetUser.value.status.toString(),
-                              style: AppTextStyle.normalRegular14.copyWith(
-                                color: primaryWhite.withOpacity(.7),
-                              ),
-                            ),
-                          )
-                        : Text(
-                            CommonMethod.getMembersName(
-                                    widget.chatRoom.users!) +
-                                CommonMethod.getMembersName(
-                                    widget.chatRoom.users!),
-                            style: AppTextStyle.normalRegular14.copyWith(
-                              color: primaryWhite.withOpacity(.7),
-                            ),
-                          ),
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  widget.targetUser != null
+                      ?
+
+                  Obx(
+                    () => Text(
+                      targetUser.value.fullname.toString(),
+                      style: AppTextStyle.regularBold.copyWith(
+                          color: primaryWhite, fontSize: 16, height: 1.5),
+                    ),
+                        )
+                      : Text(
+                          widget.chatRoom.groupName.toString(),
+                          style: AppTextStyle.regularBold.copyWith(
+                              color: primaryWhite, fontSize: 16, height: 1.5),
+                        ),
+                  if (widget.targetUser != null)
+                  Obx(
+                    () => Text(
+                      targetUser.value.status.toString(),
+                      style: AppTextStyle.normalRegular14.copyWith(
+                        color: primaryWhite.withOpacity(.7),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -360,28 +346,29 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ],
               ),
             ),
-            // Obx(
-            //   () => targetUser.value.status == 'typing'
-            //       ? Align(
-            //           alignment: Alignment.bottomLeft,
-            //           child: Row(
-            //             crossAxisAlignment: CrossAxisAlignment.start,
-            //             children: [
-            //               width12,
-            //               Text(
-            //                 'Typing ',
-            //                 style: AppTextStyle.normalBold14
-            //                     .copyWith(color: greenColor),
-            //               ),
-            //               LoadingAnimationWidget.waveDots(
-            //                 color: greenColor,
-            //                 size: 30,
-            //               ),
-            //             ],
-            //           ),
-            //         )
-            //       : SizedBox(),
-            // ),
+            if(widget.targetUser != null)
+            Obx(
+              () => targetUser.value.status == 'typing'
+                  ? Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          width12,
+                          Text(
+                            'Typing ',
+                            style: AppTextStyle.normalBold14
+                                .copyWith(color: greenColor),
+                          ),
+                          LoadingAnimationWidget.waveDots(
+                            color: greenColor,
+                            size: 30,
+                          ),
+                        ],
+                      ),
+                    )
+                  : SizedBox(),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
@@ -410,16 +397,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               },
                               icon: Icon(
                                 Icons.mic_none,
-                                color: themeNotifier.isDark
-                                    ? primaryWhite
-                                    : primaryBlack,
+                                                           color: themeController.isDark.value ? primaryWhite:primaryBlack,
+
                               )),
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,
-                              color: themeNotifier.isDark
-                                  ? primaryWhite
-                                  : primaryBlack,
+                                                    color: themeController.isDark.value ? primaryWhite:primaryBlack,
+
                             ),
                             onPressed: () async {
                               controller.selectedFile =
@@ -443,9 +428,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   width10,
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor:
-                        themeNotifier.isDark ? blackThemeColor : primaryBlack,
-                    child: IconButton(
+                    backgroundColor: themeController.isDark.value ? blackThemeColor:primaryBlack,
+                  child: IconButton(
                       icon: Icon(
                         Icons.send,
                         color: primaryWhite,

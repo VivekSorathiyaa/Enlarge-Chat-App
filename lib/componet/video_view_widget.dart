@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chewie/chewie.dart';

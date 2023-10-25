@@ -1,7 +1,6 @@
 import 'dart:developer';
 
-import 'package:chatapp/utils/app_preferences.dart';
-import 'package:chatapp/utils/common_method.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../main.dart';

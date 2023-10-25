@@ -3,7 +3,9 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../controller/theme_controller.dart';
 import '../utils/colors.dart';
 
 class ShadowContainerWidget extends StatelessWidget {
@@ -30,19 +32,22 @@ class ShadowContainerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController =Get.put(ThemeController());
     return Container(
         padding: EdgeInsets.all(padding ?? 15.0),
         decoration: BoxDecoration(
-          color: color ?? primaryWhite,
+          color: color ?? (themeController.isDark.value ? primaryBlack : primaryWhite),
+
           boxShadow: [
             BoxShadow(
               blurRadius: blurRadius ?? 9,
               // spreadRadius: 1,
-              color: shadowColor ?? greyBorderColor.withOpacity(.5),
+              color: shadowColor ??  (themeController.isDark.value ? blackThemeColor : greyBorderColor.withOpacity(.5)),
             ),
           ],
           borderRadius: customRadius ?? BorderRadius.circular(radius ?? 8),
-          border: Border.all(color: borderColor ?? greyBorderColor, width: 1),
+          border: Border.all(color: borderColor ?? (themeController.isDark.value ? primaryBlack : greyBorderColor.withOpacity(.5)),width: 1),
+
         ),
         child: widget);
   }

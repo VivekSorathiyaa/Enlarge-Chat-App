@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 
+
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 var uuid = Uuid();
 
@@ -18,6 +19,7 @@ void main() async {
   await Firebase.initializeApp();
   await requestNotificationPermission();
   await AppPreferences.init();
+
   runApp(
      MyApp(),
 

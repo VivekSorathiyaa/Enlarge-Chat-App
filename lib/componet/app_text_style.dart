@@ -98,6 +98,14 @@ class AppTextStyle {
     color: primaryBlack,
     fontFamily: fontFamilyInter,
   );
+  // static TextStyle normalBold16({Color? color}) {
+  //   return TextStyle(
+  //     fontSize: 16,
+  //     fontWeight: FontWeight.bold,
+  //     color: color ?? primaryBlack, // Use the provided color or the default one
+  //     fontFamily: fontFamilyInter,
+  //   );
+  // }
 
   static final normalRegular15 = TextStyle(
     fontSize: 15,

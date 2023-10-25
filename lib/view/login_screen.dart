@@ -3,7 +3,6 @@ import 'package:chatapp/componet/shadow_container_widget.dart';
 import 'package:chatapp/componet/text_form_field_widget.dart';
 import 'package:chatapp/controller/auth_controller.dart';
 import 'package:chatapp/utils/static_decoration.dart';
-import 'package:chatapp/utils/validators.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

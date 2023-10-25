@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../main.dart';
-import '../models/chat_room_model.dart';
 import '../models/user_model.dart';
 import '../utils/app_preferences.dart';
 
