@@ -3,6 +3,7 @@
 import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/primary_text_button.dart';
 import 'package:chatapp/componet/user_widget.dart';
+import 'package:chatapp/controller/theme_controller.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
@@ -22,9 +23,11 @@ class SelectContactScreen extends StatefulWidget {
 
 class _SelectContactScreenState extends State<SelectContactScreen> {
   var groupController = Get.put(GroupController());
+  final ThemeController themeController=Get.put(ThemeController());
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: CommonAppBar(
         title: 'Select Contacts',
@@ -69,7 +72,7 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
                                     ? IconButton(
                                         icon: Icon(
                                           Icons.check_circle_rounded,
-                                          color: primaryColor,
+                                          color: themeController.isDark.value?primaryWhite:primaryColor,
                                         ),
                                         onPressed: () {
                                           groupController.selectUserList
@@ -79,6 +82,7 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
                                         },
                                       )
                                     : IconButton(
+                                  color: themeController.isDark.value?primaryWhite:primaryColor,
                                         icon: Icon(Icons.circle_outlined),
                                         onPressed: () {
                                           groupController.selectUserList.value

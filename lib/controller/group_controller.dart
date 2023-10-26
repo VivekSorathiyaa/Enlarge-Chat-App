@@ -65,9 +65,9 @@ class GroupController extends GetxController{
           searchedUserList.add(searchedUser);
         }
       }
-            allUserList.assignAll(searchedUserList);
 
 
+      allUserList.assignAll(searchedUserList);
       // usersResultsStream.add(searchedUserList);
     });
   }

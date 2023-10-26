@@ -238,7 +238,7 @@ class _EditProfileState extends State<EditProfile> {
                       TextFormFieldWidget(
                         suffixIcon: Icon(
                           Icons.edit,
-                          color: primaryBlack,
+                          color:  themeController.isDark.value?primaryWhite:primaryBlack,
                         ),
                         controller: fullNameController,
                         hintText: fullname,
@@ -261,6 +261,7 @@ class _EditProfileState extends State<EditProfile> {
                         keyboardType: TextInputType.number,
                         controller: null,
                         hintText: phone,
+                     
                       ),
                       height30,
                       Padding(
