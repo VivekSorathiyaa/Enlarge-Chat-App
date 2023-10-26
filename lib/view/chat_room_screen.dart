@@ -1,8 +1,10 @@
 // ignore_for_file: unnecessary_null_comparison
 
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:chatapp/componet/app_text_style.dart';
 
 import 'package:chatapp/componet/network_image_widget.dart';
@@ -13,13 +15,16 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_glow/flutter_glow.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:translator/translator.dart';
 
 import '../controller/theme_controller.dart';
@@ -45,13 +50,14 @@ class ChatRoomScreen extends StatefulWidget {
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  final stt.SpeechToText _speech = stt.SpeechToText();
+  SpeechToText speechToText = SpeechToText();
   String _text = '';
   String msg = '';
   String? localeId;
 
   Locale? locale = AppPreferences().getLocaleFromPreferences();
-  bool isListening = false;
+  bool isListening = false;int maxDurationInSeconds = 10;
+  Timer? timer;
 
 
 
@@ -63,98 +69,81 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void initState() {
     CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     CommonMethod.setOnlineStatus();
-    _requestMicrophonePermission();
-    _initializeSpeechToText();
+    checkMicrophoneAvailability();
     super.initState();
   }
 
-  void _requestMicrophonePermission() async {
-    var status = await Permission.microphone.request();
-    if (status.isGranted) {
-    } else if (status.isPermanentlyDenied) {
-      openAppSettings();
-    } else {}
-  }
-  void openMicrophoneDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Microphone Dialog"),
-          content: Text(_text),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Close"),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-  void _initializeSpeechToText() async {
-    bool available = await _speech.initialize(
-      onStatus: (status) {
-        print('Speech Recognition Status: $status');
-      },
-      onError: (errorNotification) {
-        print('Speech Recognition Error: $errorNotification');
-      },
-    );
-
-    if (!available) {
-      print('Speech recognition not available');
+  void checkMicrophoneAvailability() async {
+    bool available = await speechToText.initialize();
+    if (available) {
+      setState(() {
+        if (kDebugMode) {
+          print('Microphone available: $available');
+        }
+      });
+    } else {
+      if (kDebugMode) {
+        print("The user has denied the use of speech recognition.");
+      }
     }
   }
 
-  void listen(Locale savedLocale) async {
-    var microphoneStatus = await Permission.microphone.status;
-    if (microphoneStatus.isGranted) {
-      if (!_speech.isListening) {
-        bool available = await _speech.initialize(
-          onStatus: (status) {
-            if (status =="listening") {
-              // Show a loading spinner while listening
-
-              showListeningEffect();
-            }
-            else if (status == 'notListening') {
-              // Hide the loading spinner when not listening
-              hideListeningEffect();
-            }
-
-            print('Speech Recognition Status: $status');
-          },
-          onError: (errorNotification) {
-            print('Speech Recognition Error: $errorNotification');
-          },
-        );
-        if (available) {
-          setState(() {
-            _text = '';
-          });
-          _speech.listen(
-            onResult: (result) {
-            //  openMicrophoneDialog();
-              showListeningEffect();
-              setState(() async {
-                _text = result.recognizedWords;
-                log('Speech Recognition : $_text');
-                log('---savedLocale.languageCode---${savedLocale.languageCode}');
-                translateTo(_text, savedLocale.languageCode);
-              });
-            },
-          ).whenComplete(() {
-            hideListeningEffect();
-          });
-        }
-      }
-    } else if (microphoneStatus.isPermanentlyDenied) {
-      openAppSettings();
-    } else {}
-  }
+  //  listen() async {
+  //   var microphoneStatus = await Permission.microphone.status;
+  //   if (microphoneStatus.isGranted) {
+  //     if (!_speech.isListening) {
+  //       bool available = await _speech.initialize(
+  //         onStatus: (status) {
+  //           if (status =="listening") {
+  //             // Show a loading spinner while listening
+  //             setState(() {
+  //               isListening=true;
+  //             });
+  //
+  //         //    showListeningEffect();
+  //           }
+  //           else if (status == 'notListening') {
+  //             // Hide the loading spinner when not listening
+  //          //   hideListeningEffect();
+  //           }
+  //
+  //           print('Speech Recognition Status: $status');
+  //         },
+  //         onError: (errorNotification) {
+  //           print('Speech Recognition Error: $errorNotification');
+  //         },
+  //       );
+  //       if (available) {
+  //         setState(() {
+  //           isListening = true;
+  //           _text = '';
+  //         });
+  //         _speech.listen(
+  //           onResult: (result) {
+  //           //  openMicrophoneDialog();
+  //             showListeningEffect();
+  //             setState(() async {
+  //               _text = result.recognizedWords;
+  //               log('Speech Recognition : $_text');
+  //               controller.messageController.text = _text;
+  //
+  //
+  //             });
+  //           },
+  //         ).whenComplete(() {
+  //           hideListeningEffect();
+  //         });
+  //       }
+  //       else{
+  //         setState(() {
+  //           isListening = false;
+  //         });
+  //       }
+  //     }
+  //   } else if (microphoneStatus.isPermanentlyDenied) {
+  //     openAppSettings();
+  //   } else {}
+  // }
 
   void showListeningEffect() {
     // Show a loading spinner or any other visual effect in your UI
@@ -174,21 +163,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     return widget.targetUser!;
   }
 
-  Future<void> translateTo(String text, String local) async {
-    final translator = GoogleTranslator();
-    log('----text-------  ${text}');
 
-    Translation translation = await translator.translate(text, to: local);
-    log('----translation.text-------  ${translation.text}');
-    controller.messageController.text = translation.text;
-    log('---controller.messageController.text---${controller.messageController.text}');
-  }
-
-  void _stopListening() {
-    if (_speech.isListening) {
-      _speech.stop();
-    }
-  }
+  //
+  // void _stopListening() {
+  //   if (_speech.isListening) {
+  //     _speech.stop();
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -341,17 +322,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
         ),
         body: Column(
-          children: [  if (isListening)
-              AnimatedContainer(
-          duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      padding: EdgeInsets.all(8.0), // Adjust the padding as needed
-      decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: isListening
-      ? Colors.blue // Use a different color when listening
-          : Colors.transparent,
-      ),),
+          children: [
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -596,28 +567,279 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkWell(
-                            onTap: () {
-                              // Call the listen method when the microphone icon is pressed
-                              listen(locale!);
-                            },
-                            child: AnimatedContainer(
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              padding: EdgeInsets.all(8.0), // Adjust the padding as needed
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isListening
-                                    ? Colors.blue // Use a different color when listening
-                                    : Colors.transparent,
-                              ),
-                              child: Icon(
-                                Icons.mic_none,
-                                color: isListening
-                                    ? Colors.white // Use a different color when listening
-                                    : themeController.isDark.value
-                                    ? primaryWhite
-                                    : primaryBlack,
+
+
+
+                          // IconButton(
+                          //   icon: Icon(
+                          //     Icons.mic_none,
+                          //     color: themeController.isDark.value
+                          //         ? primaryWhite
+                          //         : primaryBlack,
+                          //   ),
+                          //   onPressed: () async {
+                          //    listen();
+                          //       }
+                          //
+                          //
+                          // ),
+
+                          // IconButton(
+                          //     icon: isListening
+                          //         ? CircleAvatar(
+                          //       backgroundColor: Colors.green,
+                          //       child: Icon(Icons.mic_none, color: Colors.white),
+                          //     )
+                          //         : Icon(
+                          //       Icons.mic_none,
+                          //       color: themeController.isDark.value
+                          //           ? primaryWhite
+                          //           : primaryBlack,
+                          //     ),
+                          //     onPressed: () async {
+                          //       listen().then((_) {
+                          //         // Set isListening to false when the listen process is completed
+                          //         setState(() {
+                          //           isListening = false;
+                          //         });
+                          //       });
+                          //     }
+                          // ),
+                          // IconButton(
+                          //     icon: isListening
+                          //         ? CircleAvatar(
+                          //       backgroundColor: Colors.green,
+                          //       child: Icon(Icons.mic_none, color: Colors.white),
+                          //     )
+                          //         : Icon(
+                          //       Icons.mic_none,
+                          //       color: themeController.isDark.value
+                          //           ? primaryWhite
+                          //           : primaryBlack,
+                          //     ),
+                          //     onPressed: () async {
+                          //       listen().then((_) {
+                          //         // Set isListening to false when the listen process is completed
+                          //         setState(() {
+                          //           isListening = false;
+                          //         });
+                          //       });
+                          //     }
+                          // ),
+                          // FadeIn(
+                          //   child: Padding(
+                          //     padding: const EdgeInsets.all(8.0),
+                          //     child: GestureDetector(
+                          //       onTap: () async {
+                          //         if (!isListening) {
+                          //           var available =
+                          //           await speechToText.initialize();
+                          //           if (available) {
+                          //             setState(() {
+                          //               isListening = true;
+                          //             });
+                          //             speechToText.listen(
+                          //                 listenFor:
+                          //                 const Duration(days: 1),
+                          //                 onResult: (result) {
+                          //                   setState(() {
+                          //                     controller.messageController.text =
+                          //                         result.recognizedWords;
+                          //                   });
+                          //                 });
+                          //           }
+                          //         } else {
+                          //           setState(() {
+                          //             isListening = false;
+                          //           });
+                          //           speechToText.stop();
+                          //         }
+                          //       },
+                          //       child: GlowIcon(
+                          //         isListening ? Icons.mic : Icons.mic_none,
+                          //         color: themeController.isDark.value
+                          //             ? isListening
+                          //             ? greenColor
+                          //             : primaryWhite
+                          //             : isListening
+                          //             ? greenColor
+                          //             : primaryBlack,
+                          //         glowColor: isListening
+                          //             ? Colors.teal
+                          //             : Colors.transparent,
+                          //         blurRadius: isListening ? 26 : 5,
+                          //         size: isListening ? 30 : 23,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // FadeIn(
+                          //   child: Padding(
+                          //     padding: const EdgeInsets.all(8.0),
+                          //     child: GestureDetector(
+                          //       onTap: () async {
+                          //         if (!isListening) {
+                          //           var available = await speechToText.initialize();
+                          //           if (available) {
+                          //             setState(() {
+                          //               isListening = true;
+                          //             });
+                          //             speechToText.listen(
+                          //               listenFor: const Duration(days: 1),
+                          //               onResult: (result) {
+                          //                 setState(() {
+                          //                   controller.messageController.text = result.recognizedWords;
+                          //                   if (result.finalResult) {
+                          //                     // Recognition is complete
+                          //                     setState(() {
+                          //                       isListening = false;
+                          //                     });
+                          //                   }
+                          //                 });
+                          //               },
+                          //             );
+                          //           }
+                          //         } else {
+                          //           setState(() {
+                          //             isListening = false;
+                          //           });
+                          //           speechToText.stop();
+                          //         }
+                          //       },
+                          //       child: GlowIcon(
+                          //         isListening ? Icons.mic : Icons.mic_none,
+                          //         color: themeController.isDark.value
+                          //             ? isListening
+                          //             ? greenColor
+                          //             : primaryWhite
+                          //             : isListening
+                          //             ? greenColor
+                          //             : primaryBlack,
+                          //         glowColor: isListening ? Colors.teal : Colors.transparent,
+                          //         blurRadius: isListening ? 25 : 5,
+                          //         size: isListening ? 30 : 23,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+
+      //                     FadeIn(
+      //                       child: GestureDetector(
+      //                         onTap: () async {
+      //                           if (!isListening) {
+      //                             var available = await speechToText.initialize();
+      //                             if (available) {
+      //                               setState(() {
+      //                                 isListening = true;
+      //                               });
+      //                               speechToText.listen(
+      //                                 listenFor: const Duration(days: 1),
+      //                                 onResult: (result) {
+      //                                   setState(() {
+      //                                     controller.messageController.text = result.recognizedWords;
+      //                                     if (result.finalResult) {
+      //                                       // Recognition is complete
+      //                                       setState(() {
+      //                                         isListening = false;
+      //                                       });
+      //                                     }
+      //                                   });
+      //                                 },
+      //                               );
+      //                             }const int maxDurationInSeconds = 10; // Adjust the duration as needed
+      // Timer(Duration(seconds: maxDurationInSeconds), () {
+      // if (isListening) {
+      // // If the user hasn't spoken, stop listening
+      // setState(() {
+      // isListening = false;
+      // });
+      // speechToText.stop();
+      // }
+      // });
+      //
+      //                           } else {
+      //                             setState(() {
+      //                               isListening = false;
+      //                             });
+      //                             speechToText.stop();
+      //                           }
+      //                         },
+      //                         child: Container(
+      //                           decoration: BoxDecoration(
+      //                             shape: BoxShape.circle,
+      //                             color: isListening?greenColor:Colors.transparent,
+      //                           ),
+      //                           child: Padding(
+      //                             padding: const EdgeInsets.all(8.0),
+      //                             child: GlowIcon(
+      //                               isListening ? Icons.mic : Icons.mic_none,
+      //                               color: themeController.isDark.value
+      //                                   ? isListening
+      //                                   ? primaryWhite
+      //                                   : primaryWhite
+      //                                   : isListening
+      //                                   ? primaryWhite
+      //                                   : primaryBlack,
+      //                               glowColor: isListening ? primaryWhite : Colors.transparent,
+      //                               blurRadius: isListening ? 10 : 5,
+      //                               size: isListening ? 24 : 23,
+      //                             ),
+      //                           ),
+      //                         ),
+      //                       ),
+      //                     ),
+                          FadeIn(
+                            child: GestureDetector(
+                              onTap: () async {
+                                if (!isListening) {
+                                  var available = await speechToText.initialize();
+                                  if (available) {
+                                    setState(() {
+                                      isListening = true;
+                                    });
+                                    speechToText.listen(
+                                      listenFor: const Duration(days: 1),
+                                      onResult: (result) {
+                                        setState(() {
+                                          controller.messageController.text = result.recognizedWords;
+                                          if (result.finalResult) {
+                                            // Recognition is complete
+                                            setState(() {
+                                              isListening = false;
+                                            });
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }
+                                } else {
+                                  setState(() {
+                                    isListening = false;
+                                  });
+                                  speechToText.stop();
+                                }
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isListening ? greenColor : Colors.transparent,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: GlowIcon(
+                                    isListening ? Icons.mic : Icons.mic_none,
+                                    color: themeController.isDark.value
+                                        ? isListening
+                                        ? primaryWhite
+                                        : primaryWhite
+                                        : isListening
+                                        ? primaryWhite
+                                        : primaryBlack,
+                                    glowColor: isListening ? primaryWhite : Colors.transparent,
+                                    blurRadius: isListening ? 10 : 5,
+                                    size: isListening ? 24 : 23,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

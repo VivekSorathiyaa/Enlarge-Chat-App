@@ -58,9 +58,13 @@ dependencies:
   translator: ^0.1.7
   flutter_localization: 
   flutter_spinkit: ^5.0.0
+  animate_do: ^3.1.2
+  avatar_glow: ^2.0.2
+  flutter_glow: ^0.3.0
 
 
- # flutter_translate: ^4.0.4
+
+  # flutter_translate: ^4.0.4
 
 
 
@@ -88,7 +92,7 @@ flutter:
   assets:
     - assets/json/
     - assets/fonts/
-    - assets/images/
+
 
   # assets:
 
