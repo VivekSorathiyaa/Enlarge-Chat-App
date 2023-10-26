@@ -286,6 +286,14 @@ static Future<ChatRoomModel?> createGroup(
     }
     return null;
   }
+  static Future<List<UserModel>> getUserListByIds(List<String> usersIds) async {
+    List<UserModel> list = [];
+    for (var uid in usersIds) {
+      var data = await getUserModelById(uid);
+      list.add(data!);
+    }
+    return list;
+  }
 
 
   static Future saveUserData(UserModel userModel) async {

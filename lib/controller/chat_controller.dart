@@ -57,10 +57,12 @@ class ChatController extends GetxController {
       var lastMessage =
           await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
       CommonMethod.updateLastMessage(
-          chatRoomId: chatRoom.chatRoomId!, lastMessage: lastMessage);
-
+          chatRoomId: chatRoom.chatRoomId!,
+          lastMessage: (chatRoom.isGroup!
+                  ? "${AppPreferences.getFullName().toString()}: "
+                  : "") +
+              lastMessage);
       List<String> deviceTokenList = [];
-
       for (var userId in chatRoom.usersIds!) {
         if (userId != AppPreferences.getUiId()) {
           UserModel? userStatus =

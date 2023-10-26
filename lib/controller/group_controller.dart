@@ -14,7 +14,7 @@ class GroupController extends GetxController{
   TextEditingController searchTextController = TextEditingController();
   final allUserList = <UserModel>[].obs;
   final selectUserList = <UserModel>[].obs;
-  final usersResultsStream = StreamController<List<UserModel>>();
+  // final usersResultsStream = StreamController<List<UserModel>>();
   Rx<UserModel> currentUser = UserModel(
           openRoomId: null,
           fcmToken: AppPreferences.getFcmToken(),
@@ -29,11 +29,11 @@ class GroupController extends GetxController{
     super.onInit();
     getCurrentUser();
     searchUsers();
-    usersResultsStream.stream.listen((results) {
-      allUserList.assignAll(results);
-    });
+    // usersResultsStream.stream.listen((results) {
+    //   allUserList.assignAll(results);
+    // });
   }
-
+ 
   getCurrentUser() async {
     currentUser.value =
         await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
@@ -42,7 +42,7 @@ class GroupController extends GetxController{
 
   @override
   void onClose() {
-    usersResultsStream.close();
+    // usersResultsStream.close();
     super.onClose();
   }
 
@@ -58,15 +58,17 @@ class GroupController extends GetxController{
       for (final QueryDocumentSnapshot doc in phoneSnapshot.docs) {
         final userData = doc.data() as Map<String, dynamic>;
         final userPhone = userData['phone'].toString().toLowerCase();
-        final userFullname = userData['fullname'].toString().toLowerCase();
+        final userFullname = userData['fullName'].toString().toLowerCase();
         if (userPhone.contains(searchText) ||
             userFullname.contains(searchText)) {
           final searchedUser = UserModel.fromMap(userData);
           searchedUserList.add(searchedUser);
         }
       }
+            allUserList.assignAll(searchedUserList);
 
-      usersResultsStream.add(searchedUserList);
+
+      // usersResultsStream.add(searchedUserList);
     });
   }
 }

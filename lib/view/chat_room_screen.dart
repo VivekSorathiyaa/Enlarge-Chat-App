@@ -28,6 +28,7 @@ import '../componet/text_form_field_widget.dart';
 import '../models/chat_room_model.dart';
 import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
+import 'group_info_screen.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final ChatRoomModel chatRoom;
@@ -126,7 +127,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
+    log('----text-------  ${text}');
+
     Translation translation = await translator.translate(text, to: local);
+    log('----translation.text-------  ${translation.text}');
     controller.messageController.text = translation.text;
     log('---controller.messageController.text---${controller.messageController.text}');
   }
@@ -189,8 +193,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         backgroundColor:
             themeController.isDark.value ? primaryBlack : primaryWhite,
         appBar: AppBar(
-          // backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
-
           titleSpacing: 0,
           leading: IconButton(
             icon: Icon(
@@ -201,76 +203,89 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               Get.back();
             },
           ),
-          title: Row(
-            children: [
-              widget.targetUser != null
-                  ? Obx(
-                      () => NetworkImageWidget(
+          title: GestureDetector(
+            onTap: () {
+              if (widget.chatRoom.isGroup!) {
+                Get.to(() => GroupInfoScreen(
+                      chatRoom: widget.chatRoom,
+                    ));
+              }
+            },
+            child: Row(
+              children: [
+                widget.targetUser != null
+                    ? Obx(
+                        () => NetworkImageWidget(
+                          width: 42,
+                          height: 42,
+                          borderRadius: BorderRadius.circular(42),
+                          imageUrl: targetUser.value.profilePic.toString(),
+                        ),
+                      )
+                    : NetworkImageWidget(
                         width: 42,
                         height: 42,
                         borderRadius: BorderRadius.circular(42),
-                        imageUrl: targetUser.value.profilePic.toString(),
+                        imageUrl: widget.chatRoom.groupImage.toString(),
                       ),
-                    )
-                  : NetworkImageWidget(
-                      width: 42,
-                      height: 42,
-                      borderRadius: BorderRadius.circular(42),
-                      imageUrl: widget.chatRoom.groupImage.toString(),
-                    ),
-              width15,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    widget.targetUser != null
-                        ? Obx(
-                            () => Text(
-                              targetUser.value.fullName.toString(),
+                width15,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      widget.targetUser != null
+                          ? Obx(
+                              () => Text(
+                                targetUser.value.fullName.toString(),
+                                style: AppTextStyle.regularBold.copyWith(
+                                    color: primaryWhite,
+                                    fontSize: 16,
+                                    height: 1.5),
+                              ),
+                            )
+                          : Text(
+                              widget.chatRoom.groupName.toString(),
                               style: AppTextStyle.regularBold.copyWith(
                                   color: primaryWhite,
                                   fontSize: 16,
                                   height: 1.5),
                             ),
-                          )
-                        : Text(
-                            widget.chatRoom.groupName.toString(),
-                            style: AppTextStyle.regularBold.copyWith(
-                                color: primaryWhite, fontSize: 16, height: 1.5),
-                          ),
-                    widget.targetUser != null
-                        ? Obx(
-                            () => Text(
-                              targetUser.value.status.toString(),
-                              style: AppTextStyle.normalRegular14.copyWith(
-                                color: primaryWhite.withOpacity(.7),
+                      widget.targetUser != null
+                          ? Obx(
+                              () => Text(
+                                targetUser.value.status.toString(),
+                                style: AppTextStyle.normalRegular14.copyWith(
+                                  color: primaryWhite.withOpacity(.7),
+                                ),
                               ),
-                            ),
-                          )
-                        : FutureBuilder<String>(
-                            future: CommonMethod.getMembersName(
-                                widget.chatRoom.usersIds!),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return SizedBox(); // Display a loading indicator.
-                              } else if (snapshot.hasError) {
-                                return SizedBox();
-                              } else {
-                                return Text(
-                                  '${snapshot.data}',
-                                  style: AppTextStyle.normalRegular14.copyWith(
-                                      color: primaryWhite.withOpacity(.7)),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                );
-                              }
-                            },
-                          )
-                  ],
+                            )
+                          : FutureBuilder<String>(
+                              future: CommonMethod.getMembersName(
+                                  widget.chatRoom.usersIds!),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return SizedBox(); // Display a loading indicator.
+                                } else if (snapshot.hasError) {
+                                  return SizedBox();
+                                } else {
+                                  return Text(
+                                    '${snapshot.data}',
+                                    style: AppTextStyle.normalRegular14
+                                        .copyWith(
+                                            color:
+                                                primaryWhite.withOpacity(.7)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                }
+                              },
+                            )
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         body: Column(
@@ -322,7 +337,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               if (data != null &&
-                                                  !isCurrentUser)
+                                                  !isCurrentUser &&
+                                                  widget.targetUser == null)
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
@@ -382,7 +398,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                               .start,
                                                   children: [
                                                     if (data != null &&
-                                                        !isCurrentUser)
+                                                        !isCurrentUser &&
+                                                        widget.targetUser ==
+                                                            null)
                                                       Padding(
                                                         padding:
                                                             const EdgeInsets

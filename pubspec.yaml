@@ -34,7 +34,7 @@ dependencies:
   firebase_core:
   firebase_messaging:
   app_settings: ^5.1.1
-  permission_handler: ^11.0.1
+  permission_handler: 
   flutter_local_notifications: ^16.1.0
   image_picker: 
   image_cropper:
@@ -52,12 +52,10 @@ dependencies:
   video_thumbnail: ^0.5.3
   photo_view: ^0.14.0
   chewie: ^1.7.1
-  cloud_functions: ^4.5.0
   background_fetch: 
-  loading_animation_widget: ^1.2.0+4
+  loading_animation_widget: 
   speech_to_text: ^6.3.0
-  flutter_localization: 
-  translator:
+  translator: ^0.1.7
 
  # flutter_translate: ^4.0.4
 
@@ -88,6 +86,7 @@ flutter:
     - assets/json/
     - assets/fonts/
     - assets/images/
+
   # assets:
 
   #   - images/a_dot_burr.jpeg
@@ -116,5 +115,6 @@ flutter:
           weight: 400
         - asset: assets\fonts\Inter-SemiBold.ttf
           weight: 500
+
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages

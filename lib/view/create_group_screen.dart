@@ -37,7 +37,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       appBar: CommonAppBar(
         title: 'Create Group',
       ),
-      body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body:
+      
+       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
           padding: const EdgeInsets.all(15),
           child: Row(
