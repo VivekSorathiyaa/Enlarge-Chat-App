@@ -7,6 +7,7 @@ import 'package:chatapp/componet/primary_text_button.dart';
 import 'package:chatapp/componet/shadow_container_widget.dart';
 import 'package:chatapp/componet/text_form_field_widget.dart';
 import 'package:chatapp/componet/user_widget.dart';
+import 'package:chatapp/controller/theme_controller.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:chatapp/view/select_contact_screen.dart';
@@ -33,7 +34,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController=Get.put(ThemeController());
     return Scaffold(
+      backgroundColor: themeController.isDark.value?primaryBlack:primaryWhite,
       appBar: CommonAppBar(
         title: 'Create Group',
       ),
@@ -66,11 +69,18 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 : null,
                       ),
                       Positioned(
-                        bottom: 0,
+                        bottom:5,
                         right: 0,
-                        child: Icon(
-                          CupertinoIcons.camera_circle_fill,
-                          color: primaryColor,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: themeController.isDark.value?Colors.blue:null,
+                          ),
+
+                          child: Icon(
+                            CupertinoIcons.camera_circle_fill,
+                            color: themeController.isDark.value?Colors.grey[100]:primaryColor,
+                          ),
                         ),
                       )
                     ],
@@ -95,7 +105,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               Expanded(
                 child: Text(
                   'Members : ${(groupController.selectUserList.value.length + 1)}',
-                  style: AppTextStyle.normalBold14,
+                  style: themeController.isDark.value?AppTextStyle.normalBold14.copyWith(color: primaryWhite):AppTextStyle.normalBold14,
                 ),
               ),
               TextButton.icon(
@@ -103,7 +113,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     Get.to(() => SelectContactScreen());
                   },
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    backgroundColor: themeController.isDark.value?MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                        if (states.contains(MaterialState.pressed)) {
+                          return darkBlueColor
+                              .withOpacity(.9); // Color for the pressed state
+                        }
+                        return darkBlueColor; // Default color
+                      },
+                    ):MaterialStateProperty.resolveWith<Color>(
                       (Set<MaterialState> states) {
                         if (states.contains(MaterialState.pressed)) {
                           return primaryColor
@@ -162,7 +180,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             child: UserWidget(
                               user: element,
                               trailing: IconButton(
-                                icon: Icon(Icons.close_rounded),
+                                icon: Icon(Icons.close_rounded, color: themeController.isDark.value?greyColor:primaryColor,),
                                 onPressed: () {
                                   groupController.selectUserList.value
                                       .remove(element);

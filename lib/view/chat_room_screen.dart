@@ -15,6 +15,7 @@ import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -50,6 +51,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   String? localeId;
 
   Locale? locale = AppPreferences().getLocaleFromPreferences();
+  bool isListening = false;
+
+
 
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
@@ -71,7 +75,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       openAppSettings();
     } else {}
   }
-
+  void openMicrophoneDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Microphone Dialog"),
+          content: Text(_text),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
   void _initializeSpeechToText() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -93,6 +115,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (!_speech.isListening) {
         bool available = await _speech.initialize(
           onStatus: (status) {
+            if (status =="listening") {
+              // Show a loading spinner while listening
+
+              showListeningEffect();
+            }
+            else if (status == 'notListening') {
+              // Hide the loading spinner when not listening
+              hideListeningEffect();
+            }
+
             print('Speech Recognition Status: $status');
           },
           onError: (errorNotification) {
@@ -105,6 +137,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           });
           _speech.listen(
             onResult: (result) {
+            //  openMicrophoneDialog();
+              showListeningEffect();
               setState(() async {
                 _text = result.recognizedWords;
                 log('Speech Recognition : $_text');
@@ -112,12 +146,28 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 translateTo(_text, savedLocale.languageCode);
               });
             },
-          );
+          ).whenComplete(() {
+            hideListeningEffect();
+          });
         }
       }
     } else if (microphoneStatus.isPermanentlyDenied) {
       openAppSettings();
     } else {}
+  }
+
+  void showListeningEffect() {
+    // Show a loading spinner or any other visual effect in your UI
+    setState(() {
+      isListening = true; // You can use this flag to conditionally display the effect
+    });
+  }
+
+  void hideListeningEffect() {
+    // Hide the loading spinner or visual effect
+    setState(() {
+      isListening = false;
+    });
   }
 
   Future<UserModel> getTargetUser() async {
@@ -145,8 +195,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   final ThemeController themeController = Get.put(ThemeController());
+
   @override
   Widget build(BuildContext context) {
+
+
     Rx<UserModel> targetUser = UserModel(
             uid: null,
             fullName: null,
@@ -274,7 +327,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
         ),
         body: Column(
-          children: [
+          children: [  if (isListening)
+              AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      padding: EdgeInsets.all(8.0), // Adjust the padding as needed
+      decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: isListening
+      ? Colors.blue // Use a different color when listening
+          : Colors.transparent,
+      ),),
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -341,10 +404,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 decoration: BoxDecoration(
                                                   border: Border.all(
                                                       color: isCurrentUser
-                                                          ? primaryColor
+                                                          ?   themeController.isDark.value ?Color(0xFF3B444B): primaryBlack
                                                           : greenColor),
                                                   color: isCurrentUser
-                                                      ? primaryColor
+                                                      ?  themeController.isDark.value ?Color(0xFF3B444B): primaryBlack
                                                       : greenColor,
                                                   borderRadius:
                                                       BorderRadius.only(
@@ -471,6 +534,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ],
               ),
             ),
+
             if (widget.targetUser != null)
               Obx(
                 () => targetUser.value.status == 'typing'
@@ -515,17 +579,32 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                              onPressed: () {
-                                //listenAndTranslate();
-                                listen(locale!);
-                              },
-                              icon: Icon(
+                          InkWell(
+                            onTap: () {
+                              // Call the listen method when the microphone icon is pressed
+                              listen(locale!);
+                            },
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              padding: EdgeInsets.all(8.0), // Adjust the padding as needed
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isListening
+                                    ? Colors.blue // Use a different color when listening
+                                    : Colors.transparent,
+                              ),
+                              child: Icon(
                                 Icons.mic_none,
-                                color: themeController.isDark.value
+                                color: isListening
+                                    ? Colors.white // Use a different color when listening
+                                    : themeController.isDark.value
                                     ? primaryWhite
                                     : primaryBlack,
-                              )),
+                              ),
+                            ),
+                          ),
+
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,

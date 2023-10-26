@@ -58,6 +58,8 @@ dependencies:
   speech_to_text: ^6.3.0
   flutter_localization: 
   translator:
+  flutter_spinkit: ^5.0.0
+
 
  # flutter_translate: ^4.0.4
 
