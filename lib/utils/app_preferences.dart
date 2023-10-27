@@ -48,6 +48,7 @@ class AppPreferences {
       return Locale('en', 'US');
     }
   }
+  
 
   static Future<void> setLocal(Locale locale) async {
     await _prefs!.setString(_languageKey, locale.languageCode);

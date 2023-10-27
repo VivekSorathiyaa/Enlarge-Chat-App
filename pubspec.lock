@@ -41,14 +41,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
-  avatar_glow:
-    dependency: "direct main"
-    description:
-      name: avatar_glow
-      sha256: "3627f6f97d1f10d3c1996ae108d3488eabaf68c0cf0c3eac7e7c746a3812881d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.2"
   background_fetch:
     dependency: "direct main"
     description:
@@ -117,10 +109,10 @@ packages:
     dependency: "direct main"
     description:
       name: cloud_firestore
-      sha256: "7dd7e9505e4e895c87e7bc0c4cf49a2c0b0255fae900ab7fcac3c5daa9f422d5"
+      sha256: "666ae6914f5d9dde04d7fb49c5983d3bf7b887021a79a3ac17de2e95386b8006"
       url: "https://pub.dev"
     source: hosted
-    version: "4.12.0"
+    version: "4.12.1"
   cloud_firestore_platform_interface:
     dependency: transitive
     description:
@@ -382,14 +374,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.1"
-  flutter_glow:
-    dependency: "direct main"
-    description:
-      name: flutter_glow
-      sha256: "158f041ddbc18f199dcfd9375d40b983a2bf887752598cdf7b41ac6ff36362bf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0"
   flutter_local_notifications:
     dependency: "direct main"
     description:
@@ -435,19 +419,19 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.17"
-  flutter_spinkit:
-    dependency: "direct main"
-    description:
-      name: flutter_spinkit
-      sha256: b39c753e909d4796906c5696a14daf33639a76e017136c8d82bf3e620ce5bb8e
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.2.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_tts:
+    dependency: "direct main"
+    description:
+      name: flutter_tts
+      sha256: "23d47e1335c632228b80d9693e2494a834393fff5893b66e8ae494dcce4e9867"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.8.3"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
