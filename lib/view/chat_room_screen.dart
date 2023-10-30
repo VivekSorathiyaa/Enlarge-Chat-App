@@ -19,6 +19,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+
+import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:flutter_glow/flutter_glow.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -34,7 +36,6 @@ import '../models/chat_room_model.dart';
 import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 import 'group_info_screen.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:grouped_list/grouped_list.dart';
 
 class ChatRoomScreen extends StatefulWidget {
@@ -346,6 +347,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   final currentMessage = e;
                   final isCurrentUser =
                       currentMessage.sender == AppPreferences.getUiId();
+
+                                            if (currentMessage.sender != AppPreferences.getUiId()) {
+
+                                controller.playMessageReceiveSound();
+                            }
+                           else if (currentMessage.sender == AppPreferences.getUiId()) {
+
+                              controller.playMessageSentSound();
+                            }
+
                   return InkWell(
                     onTap: () {
                       log("-----locale!.languageCode----${locale!.languageCode}");

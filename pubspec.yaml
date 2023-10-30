@@ -42,7 +42,8 @@ dependencies:
   uuid: 
   # rxdart: ^0.27.7
   get: ^4.6.5
-  intl: 
+  intl: ^0.18.1
+  google_translator:
   country_code_picker: ^3.0.0
   file_picker: ^5.5.0
   shared_preferences: ^2.2.2
@@ -52,17 +53,17 @@ dependencies:
   video_thumbnail: ^0.5.3
   photo_view: ^0.14.0
   chewie: ^1.7.1
-  # background_fetch: 
   loading_animation_widget: 
+  loading_animation_widget:
   speech_to_text: ^6.3.0
   translator: ^0.1.7
   flutter_localization: 
-  # flutter_spinkit: ^5.0.0
   animate_do: ^3.1.2
   flutter_tts: ^3.8.3
   grouped_list: ^5.1.2
-  # avatar_glow: ^2.0.2
-  # flutter_glow: ^0.3.0
+  assets_audio_player: ^3.1.1
+
+
 
 
 
@@ -94,6 +95,8 @@ flutter:
   assets:
     - assets/json/
     - assets/fonts/
+    - assets/audio/
+
 
 
   # assets:

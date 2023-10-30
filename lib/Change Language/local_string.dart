@@ -37,7 +37,7 @@ class LocaleString extends Translations{
       'chooseLang':'अपनी भाषा चुनें'
 
     },
-    //KANNADA LANGUAGE
+    //GUJARATI LANGUAGE
     'gu_IN':{
       'head': 'ચેટ એપ્લિકેશન',
       'people':'લોકો',

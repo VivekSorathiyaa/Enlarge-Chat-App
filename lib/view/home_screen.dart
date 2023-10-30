@@ -1,6 +1,4 @@
 import 'dart:developer';
-
-// import 'package:background_fetch/background_fetch.dart';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
@@ -8,7 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import '../componet/common_showAlert.dart';
 import '../controller/theme_controller.dart';
 import '../componet/app_text_style.dart';
@@ -43,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+   // initPlatformState();
     selectedLocale = savedLocale;
     super.initState();
   }
@@ -62,6 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
       selectedLocale = locale;
     });
   }
+
+
 
   @override
   void dispose() {
