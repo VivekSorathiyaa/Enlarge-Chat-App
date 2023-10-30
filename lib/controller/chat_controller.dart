@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -28,6 +29,21 @@ class ChatController extends GetxController {
     mediaUrl = null;
     selectedFile = null;
   }
+  AssetsAudioPlayer assetsAudioPlayer = AssetsAudioPlayer();
+
+  playMessageSentSound() {
+    assetsAudioPlayer.open(
+      Audio("assets/audio/sent_message.mp3"),
+    );
+    log('----------------------------play sound');
+  }
+
+  playMessageReceiveSound() {
+    assetsAudioPlayer.open(
+      Audio("assets/audio/receive_message.mp3"),
+    );
+    log('----------------------------recieve sound');
+  }
 
   Future sendMessage(
       {required ChatRoomModel chatRoom}) async {
@@ -36,6 +52,7 @@ class ChatController extends GetxController {
     String msg = messageController.text.trim();
     messageController.clear();
     if (msg != "" || mediaUrl != null) {
+
       MessageModel newMessage = MessageModel(
           sender: AppPreferences.getUiId(),
           text: msg,
@@ -54,6 +71,7 @@ class ChatController extends GetxController {
           createdAt: DateTime.now(),
           messageId: uuid.v1());
       await CommonMethod.addMessage(newMessage);
+
       var lastMessage =
           await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
       CommonMethod.updateLastMessage(
@@ -73,6 +91,7 @@ class ChatController extends GetxController {
         }
       }
       if(deviceTokenList.isNotEmpty){
+
           await sendNotification(
             deviceTokens: deviceTokenList,
             textMessage: lastMessage,
@@ -112,7 +131,8 @@ class ChatController extends GetxController {
     final response = await http.post(Uri.parse(url),
         headers: headers, body: json.encode(message));
     if (response.statusCode == 200) {
-      print('Notification sent successfully to multiple users');
+
+    print('Notification sent successfully to multiple users');
     } else {
       print('Failed to send notification');
     }

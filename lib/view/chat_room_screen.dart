@@ -18,8 +18,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+
+import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:flutter_glow/flutter_glow.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -34,7 +37,6 @@ import '../models/chat_room_model.dart';
 import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 import 'group_info_screen.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final ChatRoomModel chatRoom;
@@ -57,11 +59,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   String? localeId;
 
   Locale? locale = AppPreferences().getLocaleFromPreferences();
-  bool isListening = false;int maxDurationInSeconds = 10;
+  bool isListening = false;
+  int maxDurationInSeconds = 10;
   Timer? timer;
 
   final FlutterTts flutterTts = FlutterTts();
-
 
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
@@ -90,13 +92,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  
   Future<String> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
     print('----beforeTranslator---$local----  ${text}');
     Translation translation = await translator.translate(text,
-    // from: 'en',
-     to: local);
+        // from: 'en',
+        to: local);
     print('----afterTranslator-------  ${translation.text}');
     return translation.text;
   }
@@ -191,7 +192,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void showListeningEffect() {
     // Show a loading spinner or any other visual effect in your UI
     setState(() {
-      isListening = true; // You can use this flag to conditionally display the effect
+      isListening =
+          true; // You can use this flag to conditionally display the effect
     });
   }
 
@@ -202,10 +204,43 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
+  // String transliterateToGujarati(String text) {
+  //   // Replace English characters with Gujarati characters based on a mapping
+  //   final Map<String, String> gujaratiMap = {
+  //     'a': 'અ',
+  //     'b': 'બ',
+  //     'c': 'ક',
+  //     // Add more mappings as needed
+  //   };
+  //
+  //   return text.split('').map((char) {
+  //     final transliteration = gujaratiMap[char.toLowerCase()] ?? char;
+  //     return char == char.toUpperCase()
+  //         ? transliteration.toUpperCase()
+  //         : transliteration;
+  //   }).join();
+  // }
+  //
+  // String transliterateToHindi(String text) {
+  //   // Replace English characters with Hindi characters based on a mapping
+  //   final Map<String, String> hindiMap = {
+  //     'a': 'अ',
+  //     'b': 'ब',
+  //     'c': 'क',
+  //     // Add more mappings as needed
+  //   };
+  //
+  //   return text.split('').map((char) {
+  //     final transliteration = hindiMap[char.toLowerCase()] ?? char;
+  //     return char == char.toUpperCase()
+  //         ? transliteration.toUpperCase()
+  //         : transliteration;
+  //   }).join();
+  // }
+
   Future<UserModel> getTargetUser() async {
     return widget.targetUser!;
   }
-
 
   //
   // void _stopListening() {
@@ -213,6 +248,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   //     _speech.stop();
   //   }
   // }
+
+
 
   @override
   void dispose() {
@@ -226,8 +263,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-
     Rx<UserModel> targetUser = UserModel(
             uid: null,
             fullName: null,
@@ -367,6 +402,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
         body: Column(
           children: [
+
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -375,6 +411,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Obx(
                     () {
                       final messages = controller.messages;
+
 
                       if (messages.isEmpty) {
                         return SizedBox();
@@ -388,9 +425,34 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             final currentMessage = messages[index];
                             final isCurrentUser = currentMessage.sender ==
                                 AppPreferences.getUiId();
+                            if (currentMessage.sender != AppPreferences.getUiId()) {
+
+                                controller.playMessageReceiveSound();
+                            }
+                           else if (currentMessage.sender == AppPreferences.getUiId()) {
+
+                              controller.playMessageSentSound();
+                            }
+
 
                             return InkWell(
-                              onTap: () {
+                              onTap: () async {
+                                // String englishText = currentMessage.text ?? "";
+                                // String phoneticPronunciation;
+                                //
+                                // if (locale!.languageCode == 'gu') {
+                                //  phoneticPronunciation=transliterateToGujarati(englishText);
+                                // } else if (locale!.languageCode == 'hi') {
+                                //   phoneticPronunciation=transliterateToHindi(englishText);
+                                // } else {
+                                //   // Handle other languages or default behavior
+                                //   phoneticPronunciation =
+                                //       englishText; // Using the same text for other languages
+                                // }
+                                //
+                                //
+                                //
+                                // log('Pronunciation======$phoneticPronunciation');
                                 log("-----locale!.languageCode----${locale!.languageCode}");
                                 if (locale!.languageCode == 'gu') {
                                   speakGujaratiText(currentMessage.text ?? "");
@@ -399,7 +461,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 } else {
                                   speakEnglishText(currentMessage.text ?? "");
                                 }
+
                               },
+
                               child: Container(
                                   margin: EdgeInsets.symmetric(
                                       vertical: 5.0, horizontal: 10),
@@ -584,7 +648,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ],
               ),
             ),
-
             if (widget.targetUser != null)
               Obx(
                 () => targetUser.value.status == 'typing'
@@ -629,12 +692,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-
                           FadeIn(
                             child: GestureDetector(
                               onTap: () async {
                                 if (!isListening) {
-                                  var available = await speechToText.initialize();
+                                  var available =
+                                      await speechToText.initialize();
                                   if (available) {
                                     setState(() {
                                       isListening = true;
@@ -643,7 +706,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                       listenFor: const Duration(days: 1),
                                       onResult: (result) {
                                         setState(() {
-                                          controller.messageController.text = result.recognizedWords;
+                                          controller.messageController.text =
+                                              result.recognizedWords;
                                           if (result.finalResult) {
                                             // Recognition is complete
                                             setState(() {
@@ -664,7 +728,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isListening ? greenColor : Colors.transparent,
+                                  color: isListening
+                                      ? greenColor
+                                      : Colors.transparent,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -672,11 +738,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     isListening ? Icons.mic : Icons.mic_none,
                                     color: themeController.isDark.value
                                         ? isListening
-                                        ? primaryWhite
-                                        : primaryWhite
+                                            ? primaryWhite
+                                            : primaryWhite
                                         : isListening
-                                        ? primaryWhite
-                                        : primaryBlack,
+                                            ? primaryWhite
+                                            : primaryBlack,
                                     // glowColor: isListening ? primaryWhite : Colors.transparent,
                                     // blurRadius: isListening ? 10 : 5,
                                     size: isListening ? 24 : 23,
@@ -685,7 +751,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               ),
                             ),
                           ),
-
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,
@@ -723,6 +788,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         color: primaryWhite,
                       ),
                       onPressed: () {
+
                         controller.sendMessage(chatRoom: widget.chatRoom);
                       },
                     ),

@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:background_fetch/background_fetch.dart';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
@@ -8,7 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import '../componet/common_showAlert.dart';
 import '../controller/theme_controller.dart';
 import '../componet/app_text_style.dart';
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    initPlatformState();
+   // initPlatformState();
     selectedLocale = savedLocale;
     super.initState();
   }
@@ -72,33 +72,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     {'name': 'हिंदी', 'locale': Locale('hi', 'IN')},
   ];
 
-  Future<void> initPlatformState() async {
-    // Configure the background fetch
-    await BackgroundFetch.configure(
-        BackgroundFetchConfig(
-          minimumFetchInterval: 2, // Time in minutes
-          stopOnTerminate: false,
-          startOnBoot: true,
-        ),
-        onBackgroundFetch);
-  }
-
-  void onBackgroundFetch(String taskId) async {
-    // Check if the app is terminated
-
-    if (taskId == "myTask") {
-      // This is your custom task ID
-      // The app is in a background state
-      // Perform your background tasks here
-      BackgroundFetch.finish(taskId);
-    } else {
-      // This is a terminated state
-      await CommonMethod.setOfflineStatus();
-    }
-    // Perform your background tasks here
-    // This code will run even when the app is terminated
-    BackgroundFetch.finish(taskId);
-  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -123,6 +96,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       selectedLocale = locale;
     });
   }
+
+
 
   @override
   void dispose() {
