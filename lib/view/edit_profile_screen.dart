@@ -66,7 +66,7 @@ class _EditProfileState extends State<EditProfile> {
           children: [
             ListTile(
               onTap: () {
-                Navigator.pop(context);
+                Get.back();
                 selectImage(ImageSource.gallery);
               },
               leading: Icon(Icons.photo_album),
@@ -74,7 +74,7 @@ class _EditProfileState extends State<EditProfile> {
             ),
             ListTile(
               onTap: () {
-                Navigator.pop(context);
+                Get.back();
                 selectImage(ImageSource.camera);
               },
               leading: Icon(Icons.camera_alt),

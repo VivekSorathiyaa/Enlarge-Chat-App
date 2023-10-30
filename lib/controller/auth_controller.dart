@@ -62,36 +62,25 @@ class AuthController extends GetxController {
 
             await CommonMethod.saveUserData(userModel);
             log("Log In Successful!");
-            Navigator.popUntil(context, (route) => route.isFirst);
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) {
-                 return HomeScreen();
+            Get.offAll(() => HomeScreen());
 
-              }),
-            );
           }
         },
         verificationFailed: (FirebaseAuthException e) {
           log('Verification failed: $e');
-          Navigator.pop(context);
+          Get.back();
           CustomDialog.showAlertDialog(
               context, "An error occured", e.message.toString());
         },
         codeSent: (String verificationId, int? resendToken) {
-          Navigator.popUntil(context, (route) => route.isFirst);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VerifyCodeScreen(verificationId),
-            ),
-          );
+          Get.to(() => VerifyCodeScreen(verificationId));
+
         },
         codeAutoRetrievalTimeout: (String verificationId) {},
       );
     } on FirebaseAuthException catch (ex) {
       log('Phone authentication error: $ex');
-      Navigator.pop(context);
+      Get.back();
       CustomDialog.showAlertDialog(
           context, "An error occurred", ex.message.toString());
     }
@@ -151,7 +140,7 @@ class AuthController extends GetxController {
         }
       }
     } on FirebaseAuthException catch (ex) {
-      Navigator.pop(context);
+      Get.back();
       CustomDialog.showAlertDialog(context, "An error occurred", ex.toString());
       log('Sign in with SMS code error: $ex');
     }

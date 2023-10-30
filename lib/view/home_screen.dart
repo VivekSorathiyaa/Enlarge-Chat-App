@@ -1,6 +1,6 @@
 import 'dart:developer';
 
-import 'package:background_fetch/background_fetch.dart';
+// import 'package:background_fetch/background_fetch.dart';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
@@ -33,7 +33,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen> {
   HomeController controller = Get.put(HomeController());
   Locale? selectedLocale;
   String? fullname = AppPreferences.getFullName();
@@ -43,28 +43,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
-    initPlatformState();
     selectedLocale = savedLocale;
     super.initState();
   }
-  // void initState() {
-  //   WidgetsBinding.instance.addObserver(this);
-  //   super.initState();
-  //   initPlatformState();
-
-  //                 onTap: () {
-  //                   print(locale[index]['name']);
-  //                   updateLanguage(locale[index]['locale']);
-  //                   Navigator.of(context).pop(); // Close the dialog after selection
-  //                 },
-  //               );
-  //             }),
-  //           ),
-  //         );
-  //       }
-  //   );
-  // }
+  
 
   final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
@@ -72,53 +54,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     {'name': 'हिंदी', 'locale': Locale('hi', 'IN')},
   ];
 
-  Future<void> initPlatformState() async {
-    // Configure the background fetch
-    await BackgroundFetch.configure(
-        BackgroundFetchConfig(
-          minimumFetchInterval: 2, // Time in minutes
-          stopOnTerminate: false,
-          startOnBoot: true,
-        ),
-        onBackgroundFetch);
-  }
-
-  void onBackgroundFetch(String taskId) async {
-    // Check if the app is terminated
-
-    if (taskId == "myTask") {
-      // This is your custom task ID
-      // The app is in a background state
-      // Perform your background tasks here
-      BackgroundFetch.finish(taskId);
-    } else {
-      // This is a terminated state
-      await CommonMethod.setOfflineStatus();
-    }
-    // Perform your background tasks here
-    // This code will run even when the app is terminated
-    BackgroundFetch.finish(taskId);
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // App is back to the foreground
-      CommonMethod.setOnlineStatus();
-    } else if (state == AppLifecycleState.paused) {
-      // App is going into the background
-      CommonMethod.setOfflineStatus();
-    } else if (state == AppLifecycleState.detached) {
-      // App is closed or terminated
-      CommonMethod.setOfflineStatus();
-    }
-  }
-
   updateLanguage(Locale locale) {
     Get.back();
     Get.updateLocale(locale);
     AppPreferences.setLocal(locale);
-
     setState(() {
       selectedLocale = locale;
     });
@@ -126,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -134,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
-
     return Obx(() {
       return Scaffold(
         backgroundColor: themeController.isDark.value ? primaryBlack:primaryWhite,
@@ -358,9 +295,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) {
-              return SearchScreen();
-            }));
+            Get.to(() => SearchScreen());
+
           },
           child: Icon(Icons.search),
         ),

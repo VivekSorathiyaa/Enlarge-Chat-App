@@ -33,13 +33,9 @@ class MyAlertDialog {
       ),
       onPressed: () async {
         await FirebaseAuth.instance.signOut();
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) {
-            return LoginScreen();
-          }),
-        );
+Get.offAll(() => LoginScreen());
+
+      
       },
       child: Text(
         'continue'.tr,
@@ -125,13 +121,13 @@ class MyAlertDialog {
                     groupValue: selectedLocale,
                     onChanged: (value) {
                       updateLanguage(value!);
-                      Navigator.of(context).pop(); // Close the dialog after selection
+                      Get.back(); // Close the dialog after selection
                     },
                   ),
                   splashColor: Colors.grey,
                   onTap: () {
                     updateLanguage(locale[index]['locale']);
-                    Navigator.of(context).pop(); // Close the dialog after selection
+                    Get.back(); // Close the dialog after selection
                   },
                 ),
               );

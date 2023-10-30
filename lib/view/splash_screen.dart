@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 import '../utils/colors.dart';
 import 'home_screen.dart';
 
@@ -36,17 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void navigationPage() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      // UserModel? thisUserModel =
-      //     await FirebaseHelper.getUserModelById(currentUser.uid);
-      // if (thisUserModel != null) {
-        Get.offAll(() =>
-            HomeScreen(
-              // userModel: thisUserModel,
-              //  firebaseUser: currentUser
-               ));
-      // } else {
-      //   Get.offAll(() => LoginScreen());
-      // }
+      Get.offAll(() => HomeScreen());
     } else {
       Get.offAll(() => LoginScreen());
     }

@@ -8,6 +8,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:chatapp/componet/app_text_style.dart';
 
 import 'package:chatapp/componet/network_image_widget.dart';
+import 'package:chatapp/componet/shadow_container_widget.dart';
 import 'package:chatapp/componet/video_view_widget.dart';
 import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/models/message_model.dart';
@@ -20,10 +21,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter_glow/flutter_glow.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:translator/translator.dart';
 
@@ -35,6 +35,7 @@ import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 import 'group_info_screen.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:grouped_list/grouped_list.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final ChatRoomModel chatRoom;
@@ -57,11 +58,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   String? localeId;
 
   Locale? locale = AppPreferences().getLocaleFromPreferences();
-  bool isListening = false;int maxDurationInSeconds = 10;
+  bool isListening = false;
+  int maxDurationInSeconds = 10;
   Timer? timer;
 
   final FlutterTts flutterTts = FlutterTts();
-
 
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
@@ -90,13 +91,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  
   Future<String> translateTo(String text, String local) async {
     final translator = GoogleTranslator();
     print('----beforeTranslator---$local----  ${text}');
     Translation translation = await translator.translate(text,
-    // from: 'en',
-     to: local);
+        // from: 'en',
+        to: local);
     print('----afterTranslator-------  ${translation.text}');
     return translation.text;
   }
@@ -131,88 +131,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     var translate = await translateTo(text, 'gu');
     await flutterTts.speak(translate);
   }
-  //  listen() async {
-  //   var microphoneStatus = await Permission.microphone.status;
-  //   if (microphoneStatus.isGranted) {
-  //     if (!_speech.isListening) {
-  //       bool available = await _speech.initialize(
-  //         onStatus: (status) {
-  //           if (status =="listening") {
-  //             // Show a loading spinner while listening
-  //             setState(() {
-  //               isListening=true;
-  //             });
-  //
-  //         //    showListeningEffect();
-  //           }
-  //           else if (status == 'notListening') {
-  //             // Hide the loading spinner when not listening
-  //          //   hideListeningEffect();
-  //           }
-  //
-  //           print('Speech Recognition Status: $status');
-  //         },
-  //         onError: (errorNotification) {
-  //           print('Speech Recognition Error: $errorNotification');
-  //         },
-  //       );
-  //       if (available) {
-  //         setState(() {
-  //           isListening = true;
-  //           _text = '';
-  //         });
-  //         _speech.listen(
-  //           onResult: (result) {
-  //           //  openMicrophoneDialog();
-  //             showListeningEffect();
-  //             setState(() async {
-  //               _text = result.recognizedWords;
-  //               log('Speech Recognition : $_text');
-  //               controller.messageController.text = _text;
-  //
-  //
-  //             });
-  //           },
-  //         ).whenComplete(() {
-  //           hideListeningEffect();
-  //         });
-  //       }
-  //       else{
-  //         setState(() {
-  //           isListening = false;
-  //         });
-  //       }
-  //     }
-  //   } else if (microphoneStatus.isPermanentlyDenied) {
-  //     openAppSettings();
-  //   } else {}
-  // }
-
-  void showListeningEffect() {
-    // Show a loading spinner or any other visual effect in your UI
-    setState(() {
-      isListening = true; // You can use this flag to conditionally display the effect
-    });
-  }
-
-  void hideListeningEffect() {
-    // Hide the loading spinner or visual effect
-    setState(() {
-      isListening = false;
-    });
-  }
 
   Future<UserModel> getTargetUser() async {
     return widget.targetUser!;
   }
-
-
-  //
-  // void _stopListening() {
-  //   if (_speech.isListening) {
-  //     _speech.stop();
-  //   }
-  // }
 
   @override
   void dispose() {
@@ -226,8 +148,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-
     Rx<UserModel> targetUser = UserModel(
             uid: null,
             fullName: null,
@@ -284,7 +204,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             onTap: () {
               if (widget.chatRoom.isGroup!) {
                 Get.to(() => GroupInfoScreen(
-                      chatRoom: widget.chatRoom,
+                      chatRoomId: widget.chatRoom.chatRoomId!,
                     ));
               }
             },
@@ -368,226 +288,229 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         body: Column(
           children: [
             Expanded(
-              child: ListView(
-                controller: _scrollController,
+                child: Obx(
+              () => GroupedListView<MessageModel, DateTime>(
+                padding: const EdgeInsets.only(bottom: 20),
+                shrinkWrap: true,
                 reverse: true,
-                children: [
-                  Obx(
-                    () {
-                      final messages = controller.messages;
+                controller: _scrollController,
+                floatingHeader: true,
+                elements: controller.messages.value,
+                scrollDirection: Axis.vertical,
+                sort: false,
+                itemComparator: (a, b) {
+                  final valueA =
+                      CommonMethod.currentUtcTime(a.createdAt.toString());
+                  final valueB =
+                      CommonMethod.currentUtcTime(b.createdAt.toString());
 
-                      if (messages.isEmpty) {
-                        return SizedBox();
+                  return valueA.compareTo(valueB);
+                },
+                groupBy: (element) {
+                  final datetime =
+                      CommonMethod.currentUtcTime(element.createdAt.toString());
+
+                  final date =
+                      DateTime(datetime.year, datetime.month, datetime.day);
+                  return date;
+                },
+                groupHeaderBuilder: (element) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ShadowContainerWidget(
+                      shadowColor: primaryColor.withOpacity(.1),
+                      borderColor: primaryBlack.withOpacity(.1),
+                      padding: 0,
+                      radius: 10,
+                      widget: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: Text(
+                          DateFormat('EEEE dd MMMM, yyyy').format(
+                                      CommonMethod.currentUtcTime(
+                                          element.createdAt.toString())) ==
+                                  DateFormat('EEEE dd MMMM, yyyy')
+                                      .format(DateTime.now())
+                              ? "Today"
+                              : DateFormat('EEEE dd MMMM, yyyy').format(
+                                  CommonMethod.currentUtcTime(
+                                      element.createdAt.toString())),
+                          style: AppTextStyle.normalRegular10
+                              .copyWith(color: primaryBlack),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                indexedItemBuilder: (context, e, index) {
+                  final currentMessage = e;
+                  final isCurrentUser =
+                      currentMessage.sender == AppPreferences.getUiId();
+                  return InkWell(
+                    onTap: () {
+                      log("-----locale!.languageCode----${locale!.languageCode}");
+                      if (locale!.languageCode == 'gu') {
+                        speakGujaratiText(currentMessage.text ?? "");
+                      } else if (locale!.languageCode == 'hi') {
+                        speakHindiText(currentMessage.text ?? "");
                       } else {
-                        return ListView.builder(
-                          reverse: true,
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            final currentMessage = messages[index];
-                            final isCurrentUser = currentMessage.sender ==
-                                AppPreferences.getUiId();
-
-                            return InkWell(
-                              onTap: () {
-                                log("-----locale!.languageCode----${locale!.languageCode}");
-                                if (locale!.languageCode == 'gu') {
-                                  speakGujaratiText(currentMessage.text ?? "");
-                                } else if (locale!.languageCode == 'hi') {
-                                  speakHindiText(currentMessage.text ?? "");
-                                } else {
-                                  speakEnglishText(currentMessage.text ?? "");
-                                }
-                              },
-                              child: Container(
-                                  margin: EdgeInsets.symmetric(
-                                      vertical: 5.0, horizontal: 10),
-                                  alignment: isCurrentUser
-                                      ? Alignment.centerRight
-                                      : Alignment.centerLeft,
-                                  child: FutureBuilder<UserModel?>(
-                                    future: isCurrentUser
-                                        ? null
-                                        : widget.targetUser != null
-                                            ? getTargetUser()
-                                            : CommonMethod.getUserModelById(
-                                                currentMessage
-                                                    .sender!), // The future to wait for.
-                                    builder: (BuildContext context,
-                                        AsyncSnapshot<UserModel?> snapshot) {
-                                      var data = snapshot.data;
-                                      return data == null && !isCurrentUser
-                                          ? SizedBox()
-                                          : Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                if (data != null &&
-                                                    !isCurrentUser &&
-                                                    widget.targetUser == null)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            right: 8.0),
-                                                    child: NetworkImageWidget(
-                                                      width: 30,
-                                                      height: 30,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              30),
-                                                      imageUrl: snapshot
-                                                          .data!.profilePic,
-                                                    ),
-                                                  ),
-                                                Container(
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(
-                                                        color: isCurrentUser
-                                                            ? themeController
-                                                                    .isDark
-                                                                    .value
-                                                                ? Color(
-                                                                    0xFF3B444B)
-                                                                : primaryBlack
-                                                            : greenColor),
-                                                    color: isCurrentUser
-                                                        ? themeController
-                                                                .isDark.value
-                                                            ? Color(0xFF3B444B)
-                                                            : primaryBlack
-                                                        : greenColor,
-                                                    borderRadius: BorderRadius.only(
-                                                        topLeft: isCurrentUser
-                                                            ? Radius.circular(
-                                                                10)
-                                                            : Radius.circular(
-                                                                0),
-                                                        bottomLeft:
-                                                            Radius.circular(10),
-                                                        topRight: isCurrentUser
-                                                            ? Radius.circular(0)
-                                                            : Radius.circular(
-                                                                10),
-                                                        bottomRight:
-                                                            Radius.circular(
-                                                                10)),
-                                                  ),
-                                                  constraints: BoxConstraints(
-                                                    maxWidth: Get.width * 0.7,
-                                                  ),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    crossAxisAlignment:
-                                                        isCurrentUser
-                                                            ? CrossAxisAlignment
-                                                                .end
-                                                            : CrossAxisAlignment
-                                                                .start,
-                                                    children: [
-                                                      if (data != null &&
-                                                          !isCurrentUser &&
-                                                          widget.targetUser ==
-                                                              null)
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10,
-                                                                  right: 10,
-                                                                  top: 10),
-                                                          child: Text(
-                                                            data.fullName
-                                                                .toString(),
-                                                            style: AppTextStyle
-                                                                .regularBold
-                                                                .copyWith(
-                                                              color:
-                                                                  primaryWhite,
-                                                              shadows: [
-                                                                Shadow(
-                                                                  offset:
-                                                                      Offset(
-                                                                          1, 1),
-                                                                  color: primaryBlack
-                                                                      .withOpacity(
-                                                                          .2), // Shadow color
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      if (currentMessage
-                                                              .media !=
-                                                          null)
-                                                        Column(
-                                                          children: [
-                                                            if (currentMessage
-                                                                    .messageType ==
-                                                                3)
-                                                              audioTypeMessageWidget(
-                                                                  currentMessage,
-                                                                  isCurrentUser),
-                                                            if (currentMessage
-                                                                    .messageType ==
-                                                                2)
-                                                              videoTypeMessageWidget(
-                                                                  currentMessage,
-                                                                  isCurrentUser),
-                                                            if (currentMessage
-                                                                    .messageType ==
-                                                                1)
-                                                              imageTypeMessageWidget(
-                                                                  currentMessage,
-                                                                  isCurrentUser)
-                                                          ],
-                                                        ),
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .end,
-                                                          children: [
-                                                            if (currentMessage
-                                                                .text!
-                                                                .isNotEmpty)
-                                                              textTypeMessageWidget(
-                                                                  currentMessage),
-                                                            messageTimeWidget(
-                                                                currentMessage)
-                                                          ],
-                                                        ),
+                        speakEnglishText(currentMessage.text ?? "");
+                      }
+                    },
+                    child: Container(
+                        margin:
+                            EdgeInsets.symmetric(vertical: 5.0, horizontal: 10),
+                        alignment: isCurrentUser
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: FutureBuilder<UserModel?>(
+                          future: isCurrentUser
+                              ? null
+                              : widget.targetUser != null
+                                  ? getTargetUser()
+                                  : CommonMethod.getUserModelById(currentMessage
+                                      .sender!), // The future to wait for.
+                          builder: (BuildContext context,
+                              AsyncSnapshot<UserModel?> snapshot) {
+                            var data = snapshot.data;
+                            return data == null && !isCurrentUser
+                                ? SizedBox()
+                                : Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (data != null &&
+                                          !isCurrentUser &&
+                                          widget.targetUser == null)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 8.0),
+                                          child: NetworkImageWidget(
+                                            width: 30,
+                                            height: 30,
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            imageUrl: snapshot.data!.profilePic,
+                                          ),
+                                        ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: isCurrentUser
+                                                  ? themeController.isDark.value
+                                                      ? Color(0xFF3B444B)
+                                                      : primaryBlack
+                                                  : greenColor),
+                                          color: isCurrentUser
+                                              ? themeController.isDark.value
+                                                  ? Color(0xFF3B444B)
+                                                  : primaryBlack
+                                              : greenColor,
+                                          borderRadius: BorderRadius.only(
+                                              topLeft: isCurrentUser
+                                                  ? Radius.circular(10)
+                                                  : Radius.circular(0),
+                                              bottomLeft: Radius.circular(10),
+                                              topRight: isCurrentUser
+                                                  ? Radius.circular(0)
+                                                  : Radius.circular(10),
+                                              bottomRight: Radius.circular(10)),
+                                        ),
+                                        constraints: BoxConstraints(
+                                          maxWidth: Get.width * 0.7,
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          crossAxisAlignment: isCurrentUser
+                                              ? CrossAxisAlignment.end
+                                              : CrossAxisAlignment.start,
+                                          children: [
+                                            if (data != null &&
+                                                !isCurrentUser &&
+                                                widget.targetUser == null)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 10,
+                                                    right: 10,
+                                                    top: 10),
+                                                child: Text(
+                                                  data.fullName.toString(),
+                                                  style: AppTextStyle
+                                                      .regularBold
+                                                      .copyWith(
+                                                    color: primaryWhite,
+                                                    shadows: [
+                                                      Shadow(
+                                                        offset: Offset(1, 1),
+                                                        color: primaryBlack
+                                                            .withOpacity(
+                                                                .2), // Shadow color
                                                       ),
                                                     ],
                                                   ),
                                                 ),
-                                              ],
-                                            );
-                                    },
-                                  )),
-                            );
+                                              ),
+                                            if (currentMessage.media != null)
+                                              Column(
+                                                children: [
+                                                  if (currentMessage
+                                                          .messageType ==
+                                                      3)
+                                                    audioTypeMessageWidget(
+                                                        currentMessage,
+                                                        isCurrentUser),
+                                                  if (currentMessage
+                                                          .messageType ==
+                                                      2)
+                                                    videoTypeMessageWidget(
+                                                        currentMessage,
+                                                        isCurrentUser),
+                                                  if (currentMessage
+                                                          .messageType ==
+                                                      1)
+                                                    imageTypeMessageWidget(
+                                                        currentMessage,
+                                                        isCurrentUser)
+                                                ],
+                                              ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  if (currentMessage
+                                                      .text!.isNotEmpty)
+                                                    textTypeMessageWidget(
+                                                        currentMessage),
+                                                  messageTimeWidget(
+                                                      currentMessage)
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
                           },
-                        );
-                      }
-                    },
-                  ),
-                ],
+                        )),
+                  );
+                },
               ),
-            ),
-
+            )),
+          
             if (widget.targetUser != null)
               Obx(
-                () => targetUser.value.status == 'typing'
+                () => targetUser.value.status == 'typing' &&
+                        targetUser.value.openRoomId ==
+                            widget.chatRoom.chatRoomId
                     ? Align(
                         alignment: Alignment.bottomLeft,
                         child: Row(
@@ -629,12 +552,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-
                           FadeIn(
                             child: GestureDetector(
                               onTap: () async {
                                 if (!isListening) {
-                                  var available = await speechToText.initialize();
+                                  var available =
+                                      await speechToText.initialize();
                                   if (available) {
                                     setState(() {
                                       isListening = true;
@@ -643,7 +566,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                       listenFor: const Duration(days: 1),
                                       onResult: (result) {
                                         setState(() {
-                                          controller.messageController.text = result.recognizedWords;
+                                          controller.messageController.text =
+                                              result.recognizedWords;
                                           if (result.finalResult) {
                                             // Recognition is complete
                                             setState(() {
@@ -664,7 +588,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isListening ? greenColor : Colors.transparent,
+                                  color: isListening
+                                      ? greenColor
+                                      : Colors.transparent,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -672,11 +598,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     isListening ? Icons.mic : Icons.mic_none,
                                     color: themeController.isDark.value
                                         ? isListening
-                                        ? primaryWhite
-                                        : primaryWhite
+                                            ? primaryWhite
+                                            : primaryWhite
                                         : isListening
-                                        ? primaryWhite
-                                        : primaryBlack,
+                                            ? primaryWhite
+                                            : primaryBlack,
                                     // glowColor: isListening ? primaryWhite : Colors.transparent,
                                     // blurRadius: isListening ? 10 : 5,
                                     size: isListening ? 24 : 23,
@@ -685,7 +611,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               ),
                             ),
                           ),
-
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,

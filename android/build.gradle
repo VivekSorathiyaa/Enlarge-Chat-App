@@ -21,9 +21,9 @@ allprojects {
         google()
         jcenter()
        // mavenCentral()
-        maven {
-   url "${project(':background_fetch').projectDir}/libs"
-}
+//         maven {
+//    url "${project(':background_fetch').projectDir}/libs"
+// }
     }
 }
 

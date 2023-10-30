@@ -4,10 +4,8 @@ import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/primary_text_button.dart';
 import 'package:chatapp/componet/user_widget.dart';
 import 'package:chatapp/controller/theme_controller.dart';
-import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,8 +24,7 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
   final ThemeController themeController=Get.put(ThemeController());
 
   @override
-  Widget build(BuildContext context) {
-
+  Widget build(BuildContext context) { 
     return Scaffold(
       appBar: CommonAppBar(
         title: 'Select Contacts',
@@ -56,7 +53,6 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
           child: ListView(
             children: [
               height10,
-     
               Obx(
                 () => Column(
                   mainAxisSize: MainAxisSize.min,

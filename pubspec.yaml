@@ -52,7 +52,7 @@ dependencies:
   video_thumbnail: ^0.5.3
   photo_view: ^0.14.0
   chewie: ^1.7.1
-  background_fetch: 
+  # background_fetch: 
   loading_animation_widget: 
   speech_to_text: ^6.3.0
   translator: ^0.1.7
@@ -60,6 +60,7 @@ dependencies:
   # flutter_spinkit: ^5.0.0
   animate_do: ^3.1.2
   flutter_tts: ^3.8.3
+  grouped_list: ^5.1.2
   # avatar_glow: ^2.0.2
   # flutter_glow: ^0.3.0
 

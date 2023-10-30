@@ -57,11 +57,11 @@ class CommonMethod {
               .collection("users")
               .doc(currentUserId)
               .update({'fcmtoken': token}).then((value) {
-            log("Fcm updated!");
+            print("Fcm updated!");
           });
         }
       }
-      log('FCM Token: $token');
+      print('FCM Token: $token');
     });
   }
 
@@ -74,7 +74,7 @@ class CommonMethod {
     });
   }
 
-  static Future updateChatActiveStatus(String openRoomId) async {
+  static Future updateChatActiveStatus(String? openRoomId) async {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(AppPreferences.getUiId())
@@ -97,6 +97,7 @@ class CommonMethod {
         .collection("users")
         .doc(AppPreferences.getUiId())
         .update({'status': 'offline'}).then((value) {
+      updateChatActiveStatus(null);
       log("Set Status Offline!");
     });
   }
@@ -162,16 +163,14 @@ class CommonMethod {
 
   static Future<UserModel?> getUserModelById(String uid) async {
     UserModel? userModel;
-
     DocumentSnapshot docSnap =
         await FirebaseFirestore.instance.collection("users").doc(uid).get();
-
     if (docSnap.data() != null) {
       userModel = UserModel.fromMap(docSnap.data() as Map<String, dynamic>);
     }
-
     return userModel;
   }
+
 
 static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
   final List<QuerySnapshot> userSnapshots =
@@ -233,6 +232,11 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
   }
 
 
+ static DateTime currentUtcTime(String utcTime) {
+    DateTime utcDateTime = DateTime.parse(utcTime.toString()).toUtc().toLocal();
+    String formattedDateTime = utcDateTime.toString();
+    return DateTime.parse(formattedDateTime);
+  }
 
 static Future<String> getMembersName(List<String> usersIds) async {
     List<UserModel> users = [];

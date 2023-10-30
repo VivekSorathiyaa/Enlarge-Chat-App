@@ -9,28 +9,23 @@ import '../utils/common_method.dart';
 
 class HomeController extends GetxController {
   final currentUserId = RxString('');
-  // final chatRooms = RxList<ChatRoomModel>([]);
   final RxList<ChatRoomModel> chatRooms = RxList<ChatRoomModel>([]);
   StreamSubscription<QuerySnapshot>? chatRoomsStream;
-
 
   @override
   void onInit() {
     super.onInit();
     refreshPage();
-
-
-chatRoomsStream = FirebaseFirestore.instance
-    .collection("chatrooms")
-    .snapshots()
-    .listen((querySnapshot) {
+    chatRoomsStream = FirebaseFirestore.instance
+        .collection("chatrooms")
+        .snapshots()
+        .listen((querySnapshot) {
       chatRooms.assignAll(querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         final users = data['usersIds'] as List<dynamic>;
         if (users.any((uId) => uId == AppPreferences.getUiId())) {
           return ChatRoomModel.fromMap(data);
         }
-
         return null;
       }).whereType<ChatRoomModel>());
     });
@@ -44,25 +39,12 @@ chatRoomsStream = FirebaseFirestore.instance
   @override
   void onClose() {
     chatRoomsStream?.cancel();
-
     super.onClose();
   }
 
   Future<void> refreshPage() async {
     currentUserId.value = (await AppPreferences.getUiId()) ?? ''; // Handle null
     CommonMethod.setOnlineStatus();
-
     await CommonMethod.refreshToken();
   }
-
-  // Future<void> loadChatRooms() async {
-  //     final chatRooms = RxList<ChatRoomModel>([]);
-
-  //   final snapshot =
-  //       await FirebaseFirestore.instance.collection("chatrooms").get();
-  //   chatRooms.assignAll(snapshot.docs.map((doc) {
-  //     final data = doc.data() as Map<String, dynamic>;
-  //     return ChatRoomModel.fromMap(data);
-  //   }).toList());
-  // }
 }
