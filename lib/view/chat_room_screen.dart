@@ -18,6 +18,7 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
@@ -67,7 +68,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Timer? timer;
 
   final FlutterTts flutterTts = FlutterTts();
-
+  RxBool currentSpeaking = false.obs;
+  RxInt selectedIndex = 0.obs;
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
   final ScrollController _scrollController = ScrollController();
@@ -107,15 +109,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> speakHindiText(String text) async {
     print("----speakHindiText---");
+    currentSpeaking.value = true;
+
     await flutterTts.setLanguage("hi-IN");
     await flutterTts.isLanguageAvailable("hi-IN");
     await flutterTts.setPitch(1.0);
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'hi');
     await flutterTts.speak(translate);
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
 
   Future<void> speakEnglishText(String text) async {
+    currentSpeaking.value = true;
     print("----speakEnglishText---");
     await flutterTts.setLanguage("en-IN");
     await flutterTts.isLanguageAvailable("en-IN");
@@ -123,9 +131,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'en');
     await flutterTts.speak(translate);
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
 
   Future<void> speakGujaratiText(String text) async {
+    currentSpeaking.value = true;
     print("----speakGujaratiText---");
     await flutterTts.setLanguage("gu-IN");
     await flutterTts.isLanguageAvailable("gu-IN");
@@ -134,6 +146,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'gu');
     await flutterTts.speak(translate);
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
 
   Future<UserModel> getTargetUser() async {
@@ -355,9 +370,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   final isCurrentUser = currentMessage.sender == null
                       ? false
                       : currentMessage.sender == AppPreferences.getUiId();
-              
-                       
-    
+
                   return currentMessage.sender == null
                       ? Center(
                           child: Padding(
@@ -384,10 +397,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             ),
                           ),
                         ))
-                      :
-                  
-                   InkWell(
+                      : InkWell(
                           onTap: () {
+                            selectedIndex.value = index;
                             print(
                                 "-----currentMessage.messageType----${currentMessage.messageType}");
                             if (currentMessage.messageType == 3) {
@@ -396,9 +408,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     audioUrl: currentMessage.media.toString(),
                                   ),
                                   context: context);
-                              // Get.to(() => AudioPlayerWidget(
-                              //       audioUrl: currentMessage.media.toString(),
-                              //     ));
                             }
                             if (currentMessage.messageType == 0 &&
                                 currentMessage.text != null &&
@@ -440,8 +449,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 !isCurrentUser &&
                                                 widget.targetUser == null)
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
+                                                padding: const EdgeInsets.only(
                                                     right: 8.0),
                                                 child: NetworkImageWidget(
                                                   width: 30,
@@ -452,12 +460,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                       snapshot.data!.profilePic,
                                                 ),
                                               ),
+                                            Obx(() => currentSpeaking.value &&
+                                                    selectedIndex.value == index
+                                                ? IconButton(
+                                                    icon: Icon(
+                                                        CupertinoIcons.waveform,
+                                                        color: primaryColor),
+                                                    onPressed: () {},
+                                                  )
+                                                : SizedBox()),
                                             Container(
                                               decoration: BoxDecoration(
-                                                
-                                    
                                                 border: Border.all(
-                                                  
                                                     color: isCurrentUser
                                                         ? themeController
                                                                 .isDark.value
@@ -696,8 +710,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               controller.selectedFile =
                                   await CommonMethod.pickFile();
                               if (controller.selectedFile != null) {
-    
-    
                                 String? path = await CommonMethod.uploadFile(
                                     context, controller.selectedFile!);
                                 if (path != null) {
