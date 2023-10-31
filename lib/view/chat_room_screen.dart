@@ -62,7 +62,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool isListening = false;
   int maxDurationInSeconds = 10;
   Timer? timer;
-
+  RxBool currentSpeaking = false.obs;
+  RxInt selectedIndex= 0.obs;
+  // bool isSpeaking = false;
   final FlutterTts flutterTts = FlutterTts();
 
   AppPreferences preferences = AppPreferences();
@@ -104,25 +106,37 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> speakHindiText(String text) async {
     print("----speakHindiText---");
+    currentSpeaking.value = true;
+
     await flutterTts.setLanguage("hi-IN");
     await flutterTts.isLanguageAvailable("hi-IN");
     await flutterTts.setPitch(1.0);
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'hi');
     await flutterTts.speak(translate);
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
 
   Future<void> speakEnglishText(String text) async {
+    currentSpeaking.value = true;
+
     print("----speakEnglishText---");
     await flutterTts.setLanguage("en-IN");
     await flutterTts.isLanguageAvailable("en-IN");
     await flutterTts.setPitch(1.0);
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'en');
-    await flutterTts.speak(translate);
+    await flutterTts
+        .speak(translate);
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
 
   Future<void> speakGujaratiText(String text) async {
+    currentSpeaking.value = true;
     print("----speakGujaratiText---");
     await flutterTts.setLanguage("gu-IN");
     await flutterTts.isLanguageAvailable("gu-IN");
@@ -131,63 +145,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     await flutterTts.setSpeechRate(0.5);
     var translate = await translateTo(text, 'gu');
     await flutterTts.speak(translate);
+
+    flutterTts.setCompletionHandler(() {
+      currentSpeaking.value = false;
+    });
   }
-  //  listen() async {
-  //   var microphoneStatus = await Permission.microphone.status;
-  //   if (microphoneStatus.isGranted) {
-  //     if (!_speech.isListening) {
-  //       bool available = await _speech.initialize(
-  //         onStatus: (status) {
-  //           if (status =="listening") {
-  //             // Show a loading spinner while listening
-  //             setState(() {
-  //               isListening=true;
-  //             });
-  //
-  //         //    showListeningEffect();
-  //           }
-  //           else if (status == 'notListening') {
-  //             // Hide the loading spinner when not listening
-  //          //   hideListeningEffect();
-  //           }
-  //
-  //           print('Speech Recognition Status: $status');
-  //         },
-  //         onError: (errorNotification) {
-  //           print('Speech Recognition Error: $errorNotification');
-  //         },
-  //       );
-  //       if (available) {
-  //         setState(() {
-  //           isListening = true;
-  //           _text = '';
-  //         });
-  //         _speech.listen(
-  //           onResult: (result) {
-  //           //  openMicrophoneDialog();
-  //             showListeningEffect();
-  //             setState(() async {
-  //               _text = result.recognizedWords;
-  //               log('Speech Recognition : $_text');
-  //               controller.messageController.text = _text;
-  //
-  //
-  //             });
-  //           },
-  //         ).whenComplete(() {
-  //           hideListeningEffect();
-  //         });
-  //       }
-  //       else{
-  //         setState(() {
-  //           isListening = false;
-  //         });
-  //       }
-  //     }
-  //   } else if (microphoneStatus.isPermanentlyDenied) {
-  //     openAppSettings();
-  //   } else {}
-  // }
 
   void showListeningEffect() {
     // Show a loading spinner or any other visual effect in your UI
@@ -204,52 +166,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
-  // String transliterateToGujarati(String text) {
-  //   // Replace English characters with Gujarati characters based on a mapping
-  //   final Map<String, String> gujaratiMap = {
-  //     'a': 'અ',
-  //     'b': 'બ',
-  //     'c': 'ક',
-  //     // Add more mappings as needed
-  //   };
-  //
-  //   return text.split('').map((char) {
-  //     final transliteration = gujaratiMap[char.toLowerCase()] ?? char;
-  //     return char == char.toUpperCase()
-  //         ? transliteration.toUpperCase()
-  //         : transliteration;
-  //   }).join();
-  // }
-  //
-  // String transliterateToHindi(String text) {
-  //   // Replace English characters with Hindi characters based on a mapping
-  //   final Map<String, String> hindiMap = {
-  //     'a': 'अ',
-  //     'b': 'ब',
-  //     'c': 'क',
-  //     // Add more mappings as needed
-  //   };
-  //
-  //   return text.split('').map((char) {
-  //     final transliteration = hindiMap[char.toLowerCase()] ?? char;
-  //     return char == char.toUpperCase()
-  //         ? transliteration.toUpperCase()
-  //         : transliteration;
-  //   }).join();
-  // }
-
   Future<UserModel> getTargetUser() async {
     return widget.targetUser!;
   }
-
-  //
-  // void _stopListening() {
-  //   if (_speech.isListening) {
-  //     _speech.stop();
-  //   }
-  // }
-
-
 
   @override
   void dispose() {
@@ -402,7 +321,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
         body: Column(
           children: [
-
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -411,8 +329,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   Obx(
                     () {
                       final messages = controller.messages;
-
-
                       if (messages.isEmpty) {
                         return SizedBox();
                       } else {
@@ -425,35 +341,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             final currentMessage = messages[index];
                             final isCurrentUser = currentMessage.sender ==
                                 AppPreferences.getUiId();
-                            if (currentMessage.sender != AppPreferences.getUiId()) {
 
-                                controller.playMessageReceiveSound();
-                            }
-                           else if (currentMessage.sender == AppPreferences.getUiId()) {
-
-                              controller.playMessageSentSound();
-                            }
-
-
+                            // isSpeaking = currentlySpeakingMessageIndex == index;
+                            log('tap');
                             return InkWell(
                               onTap: () async {
-                                // String englishText = currentMessage.text ?? "";
-                                // String phoneticPronunciation;
-                                //
-                                // if (locale!.languageCode == 'gu') {
-                                //  phoneticPronunciation=transliterateToGujarati(englishText);
-                                // } else if (locale!.languageCode == 'hi') {
-                                //   phoneticPronunciation=transliterateToHindi(englishText);
-                                // } else {
-                                //   // Handle other languages or default behavior
-                                //   phoneticPronunciation =
-                                //       englishText; // Using the same text for other languages
-                                // }
-                                //
-                                //
-                                //
-                                // log('Pronunciation======$phoneticPronunciation');
-                                log("-----locale!.languageCode----${locale!.languageCode}");
+                                // currentlySpeakingMessageIndex = index;
+selectedIndex.value = index;
                                 if (locale!.languageCode == 'gu') {
                                   speakGujaratiText(currentMessage.text ?? "");
                                 } else if (locale!.languageCode == 'hi') {
@@ -461,9 +355,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 } else {
                                   speakEnglishText(currentMessage.text ?? "");
                                 }
-
                               },
-
                               child: Container(
                                   margin: EdgeInsets.symmetric(
                                       vertical: 5.0, horizontal: 10),
@@ -488,6 +380,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                   CrossAxisAlignment.start,
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
+                                                Obx(
+                                                  () => currentSpeaking.value && selectedIndex.value == index
+                                                      ? IconButton(
+                                                          icon: Icon(
+                                                              Icons
+                                                                  .multitrack_audio_sharp,
+                                                              color:
+                                                                  Colors.red),
+                                                          onPressed: () {
+                                                            // Handle play button click while speaking (if needed)
+                                                          },
+                                                        )
+                                                      : SizedBox(),
+                                                ),
                                                 if (data != null &&
                                                     !isCurrentUser &&
                                                     widget.targetUser == null)
@@ -635,6 +541,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                     ],
                                                   ),
                                                 ),
+                                                // if (isSpeaking &&
+                                                //     !isCurrentUser)
+                                                //   if (isSpeaking )
+                                                //   IconButton(
+                                                //     icon: Icon(
+                                                //         Icons
+                                                //             .multitrack_audio_sharp,
+                                                //         color: Colors.red),
+                                                //     onPressed: () {
+                                                //       // Handle play button click while speaking (if needed)
+                                                //     },
+                                                //   ),
                                               ],
                                             );
                                     },
@@ -788,7 +706,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         color: primaryWhite,
                       ),
                       onPressed: () {
-
                         controller.sendMessage(chatRoom: widget.chatRoom);
                       },
                     ),
