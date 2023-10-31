@@ -2,7 +2,7 @@ import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/app.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart'; // Import Cupertino package
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
@@ -14,13 +14,12 @@ var uuid = Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  WidgetsBinding.instance.addObserver(MyWidgetsBindingObserver());
-
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await requestNotificationPermission();
   await AppPreferences.init();
   runApp(MyApp());
+  WidgetsBinding.instance.addObserver(MyWidgetsBindingObserver());
 }
 
 Future<void> requestNotificationPermission() async {
@@ -30,6 +29,7 @@ Future<void> requestNotificationPermission() async {
     }
   });
 }
+
 class MyWidgetsBindingObserver extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {

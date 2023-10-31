@@ -2,7 +2,9 @@ import 'package:chatapp/componet/custom_dialog.dart';
 import 'package:chatapp/componet/user_widget.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/models/chat_room_model.dart';
+import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
+import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/select_contact_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -108,14 +110,17 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                               ),
                               TextButton.icon(
                                   onPressed: () {
-                                    Get.to(() => SelectContactScreen())!
+                                    Get.to(() => SelectContactScreen(
+                                              existingUsersId: chatRoomSnapshot
+                                                  .data!.usersIds!,
+                                            ))!
                                         .then((value) {
                                       print(
                                           '---controller.selectUserList.value----${controller.selectUserList.value}');
                                       for (var data
                                           in controller.selectUserList.value) {
                                         addUserToChatroom(widget.chatRoomId,
-                                            data.uid.toString());
+                                            data);
                                       }
                                     });
                                   },
@@ -177,9 +182,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                                                   .data!
                                                                   .chatRoomId
                                                                   .toString(),
-                                                              element.uid
-                                                                  .toString());
-                                                          Get.back();
+                                                              element);
                                                         },
                                                         context: context);
                                                 // groupController.selectUserList.value
@@ -205,42 +208,54 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 }
 Future<void> removeUserFromChatroom(
-    String chatroomID, String userIdToRemove) async {
+    String chatroomID, UserModel user) async {
   try {
     final chatroomRef =
         FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID);
-
     await chatroomRef.update({
-      'usersIds': FieldValue.arrayRemove([userIdToRemove]),
+      'usersIds': FieldValue.arrayRemove([user.uid]),
     });
 
-    print('User $userIdToRemove removed from the chatroom.');
+    MessageModel newMessage = MessageModel(
+        sender: null,
+        text:
+            '${AppPreferences.getFullName()} has removed ${user.fullName} from this conversation',
+        messageType: 0,
+        media: null,
+        seen: false,
+        chatRoomId: chatroomID,
+        createdAt: DateTime.now(),
+        messageId: uuid.v1());
+    await CommonMethod.addMessage(newMessage);
+    Get.back();
+    print('User ${user.fullName} removed from the chatroom.');
   } catch (e) {
     print('Error: $e');
   }
 }
 
-Future<void> addUserToChatroom(String chatroomID, String userIdToAdd) async {
+Future<void> addUserToChatroom(String chatroomID, UserModel user) async {
   print("====addUserToChatroom====");
   try {
     final chatroomRef =
         FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID);
 
     await chatroomRef.update({
-      'usersIds': FieldValue.arrayUnion([userIdToAdd]),
+      'usersIds': FieldValue.arrayUnion([user.uid]),
     });
 
-      //     MessageModel newMessage = MessageModel(
-      //     sender: AppPreferences.getUiId(),
-      //     text: '',
-      //     messageType:  0,
-      //     media: null,
-      //     seen: false,
-      //     chatRoomId: chatroomID,
-      //     createdAt: DateTime.now(),
-      //     messageId: uuid.v1());
-      // await CommonMethod.addMessage(newMessage);
-    print('User $userIdToAdd added to the chatroom.');
+    MessageModel newMessage = MessageModel(
+        sender: null,
+        text:
+            '${AppPreferences.getFullName()} added ${user.fullName} to this conversation',
+        messageType: 0,
+        media: null,
+        seen: false,
+        chatRoomId: chatroomID,
+        createdAt: DateTime.now(),
+        messageId: uuid.v1());
+    await CommonMethod.addMessage(newMessage);
+    print('User ${user.fullName} added to the chatroom.');
   } catch (e) {
     print('Error: $e');
   }

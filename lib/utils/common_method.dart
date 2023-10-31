@@ -6,6 +6,7 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -48,7 +49,7 @@ class CommonMethod {
   
 
   static Future refreshToken() async {
-    firebaseMessaging.getToken().then((token) async {
+    FirebaseMessaging.instance.getToken().then((token) async {
       if (token != null) {
         await AppPreferences.setFcmToken(token);
         String? currentUserId = await AppPreferences.getUiId();
@@ -230,6 +231,36 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
     Get.back();
     return imageUrl;
   }
+
+  static String detectFileType(String filePath) {
+    print('----filePath----$filePath');
+    // Get the file extension from the filePath
+    String fileExtension = filePath.split('.').last.toLowerCase();
+
+    // Define a list of common video and audio file extensions
+    List<String> videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
+    List<String> audioExtensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'];
+
+    // Check the file extension to determine the file type
+    if (videoExtensions.contains(fileExtension)) {
+      return 'video';
+    } else if (audioExtensions.contains(fileExtension)) {
+      return 'audio';
+    } else if (fileExtension == 'jpg' ||
+        fileExtension == 'png' ||
+        fileExtension == 'gif') {
+      return 'image';
+    } else if (fileExtension == 'pdf') {
+      return 'pdf';
+    } else if (fileExtension == 'doc' ||
+        fileExtension == 'docx' ||
+        fileExtension == 'txt') {
+      return 'document';
+    } else {
+      return 'Unknown'; // Unknown file type
+    }
+  }
+
 
 
  static DateTime currentUtcTime(String utcTime) {

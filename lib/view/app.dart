@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
+import 'package:chatapp/componet/custom_dialog.dart';
+import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/splash_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -10,28 +11,11 @@ import 'package:get/get.dart';
 
 import '../Change Language/local_string.dart';
 import '../controller/theme_controller.dart';
-import '../utils/app_preferences.dart';
 import '../utils/firebase_notification_handler.dart';
 
 final StreamController<String?> selectNotificationStream =
     StreamController<String?>.broadcast();
-final StreamController<ReceivedNotification> didReceiveLocalNotificationStream =
-    StreamController<ReceivedNotification>.broadcast();
-
-class ReceivedNotification {
-  ReceivedNotification({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.payload,
-  });
-
-  final int id;
-  final String? title;
-  final String? body;
-  final String? payload;
-}
-
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
   // ignore: avoid_print
@@ -44,7 +28,6 @@ void notificationTapBackground(NotificationResponse notificationResponse) {
         'notification action tapped with input: ${notificationResponse.input}');
   }
 }
-
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -52,8 +35,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final FirebaseNotificationHandler notificationHandler =
       FirebaseNotificationHandler();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -66,12 +48,16 @@ class _MyAppState extends State<MyApp> {
     requestBadgePermission: false,
     requestAlertPermission: false,
   );
+  final ThemeController themeController = Get.put(ThemeController());
 
   @override
   void initState() {
-    init();
     super.initState();
+    init();
+    WidgetsBinding.instance.addObserver(this);
+
     _configureSelectNotificationSubject();
+    
     // Listen to theme changes and update the theme in the initState
     ever<bool>(themeController.isDark, (isDark) {
       final newTheme = isDark ? themeController.darkTheme : themeController.lightTheme;
@@ -81,19 +67,25 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future init() async {
-    await notificationHandler.initialize();
-    await notificationConfiguration();
-  }
-
   @override
   void dispose() {
-    // WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     selectNotificationStream.close();
     super.dispose();
   }
 
-  notificationConfiguration() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Handle app lifecycle changes (e.g., app going to the background or foreground).
+    // You can take appropriate actions here.
+  }
+
+  Future<void> init() async {
+    await notificationHandler.initialize();
+    await notificationConfiguration();
+  }
+
+  Future<void> notificationConfiguration() async {
     final InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
@@ -108,36 +100,28 @@ class _MyAppState extends State<MyApp> {
             selectNotificationStream.add(notificationResponse.payload);
             break;
           case NotificationResponseType.selectedNotificationAction:
-            // if (notificationResponse.actionId == navigationActionId) {
             selectNotificationStream.add(notificationResponse.payload);
-            // }
             break;
         }
       },
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) async {
-        RemoteNotification? notification = message.notification;
-        if (notification != null) {
-          // await homeScreenController.getNotificationCount();
-          showNotification(notification.title!, notification.body!,
-              json.encode(message.data));
-        }
-      },
-    );
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      RemoteNotification? notification = message.notification;
+      if (notification != null) {
+        showNotification(
+            notification.title!, notification.body!, json.encode(message.data));
+      }
+    });
 
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      (RemoteMessage message) {
-        // onSelectNotification(json.encode(message.data));
-        selectNotificationStream.add(json.encode(message.data));
-      },
-    );
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      selectNotificationStream.add(json.encode(message.data));
+    });
   }
 
-  showNotification(String title, String message, dynamic payload) async {
-    var android = const AndroidNotificationDetails(
+  void showNotification(String title, String message, dynamic payload) async {
+    final android = const AndroidNotificationDetails(
       'channel id',
       'channel NAME',
       channelDescription: 'CHANNEL DESCRIPTION',
@@ -145,8 +129,8 @@ class _MyAppState extends State<MyApp> {
       importance: Importance.max,
       playSound: true,
     );
-    var iOS = const DarwinNotificationDetails();
-    var platform = NotificationDetails(iOS: iOS, android: android);
+    final iOS = const DarwinNotificationDetails();
+    final platform = NotificationDetails(iOS: iOS, android: android);
     await flutterLocalNotificationsPlugin.show(
       0,
       title,
@@ -157,28 +141,23 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _configureSelectNotificationSubject() {
-    selectNotificationStream.stream.listen((String? payLoadData) async {
-      log("===payLoadData===   $payLoadData");
+    selectNotificationStream.stream.listen((String? payloadData) {
+      print("===payloadData===   $payloadData");
     });
   }
-  final ThemeController themeController = Get.put(ThemeController());
-
 
   @override
   Widget build(BuildContext context) {
-    final ThemeController themeController = Get.put(ThemeController());
-
-    final savedLocale = AppPreferences().getLocaleFromPreferences();
-    themeController.getPreferences();
-
     return GetMaterialApp(
       translations: LocaleString(),
       locale: AppPreferences().getLocaleFromPreferences() ?? Locale('en', 'US'),
       title: 'Chat App',
-      themeMode: themeController.isDark.value ? ThemeMode.dark
-          : ThemeMode.light,
-
-      theme:themeController.isDark.value ? themeController.darkTheme : themeController.lightTheme,
+      themeMode:
+          themeController.isDark.value ? ThemeMode.dark : ThemeMode.light,
+      navigatorKey: navigatorKey,
+      theme: themeController.isDark.value
+          ? themeController.darkTheme
+          : themeController.lightTheme,
       debugShowCheckedModeBanner: false,
       home: SplashScreen(),
     );

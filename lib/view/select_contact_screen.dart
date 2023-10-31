@@ -4,6 +4,7 @@ import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/primary_text_button.dart';
 import 'package:chatapp/componet/user_widget.dart';
 import 'package:chatapp/controller/theme_controller.dart';
+import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,8 @@ import 'package:get/get.dart';
 import '../controller/group_controller.dart';
 
 class SelectContactScreen extends StatefulWidget {
-  const SelectContactScreen({Key? key}) : super(key: key);
+  final List<String>? existingUsersId;
+  const SelectContactScreen({Key? key, this.existingUsersId}) : super(key: key);
 
   @override
   State<SelectContactScreen> createState() => _SelectContactScreenState();
@@ -22,6 +24,17 @@ class SelectContactScreen extends StatefulWidget {
 class _SelectContactScreenState extends State<SelectContactScreen> {
   var groupController = Get.put(GroupController());
   final ThemeController themeController=Get.put(ThemeController());
+
+@override
+  void initState() {
+    refreshPage();
+    super.initState();
+  }
+
+  Future<void> refreshPage() async {
+    await groupController.getCurrentUser();
+    await groupController.searchUsers().whenComplete(() {});
+  }
 
   @override
   Widget build(BuildContext context) { 
@@ -57,7 +70,10 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
                 () => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: groupController.allUserList
-                      .map((element) => Padding(
+                      .map((element) => (widget.existingUsersId != null &&
+                              widget.existingUsersId!.contains(element.uid))
+                          ? SizedBox()
+                          : Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 15, vertical: 5),
                             child: Obx(

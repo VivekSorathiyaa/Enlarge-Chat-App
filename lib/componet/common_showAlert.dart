@@ -33,7 +33,7 @@ class MyAlertDialog {
       ),
       onPressed: () async {
         await FirebaseAuth.instance.signOut();
-Get.offAll(() => LoginScreen());
+Get.to(() => LoginScreen());
 
       
       },

@@ -7,7 +7,7 @@ import '../main.dart';
 
 class FirebaseNotificationHandler {
   Future<void> initialize() async {
-    NotificationSettings settings = await firebaseMessaging.requestPermission(
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       announcement: false,
       badge: true,

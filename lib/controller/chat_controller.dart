@@ -19,16 +19,18 @@ class ChatController extends GetxController {
   TextEditingController messageController = TextEditingController();
   File? selectedFile;
   String? mediaUrl;
- final RxList<MessageModel> messages = <MessageModel>[].obs;
+  final RxList<MessageModel> messages = <MessageModel>[].obs;
 
   void updateMessages(List<MessageModel> newMessages) {
     messages.assignAll(newMessages);
   }
+
   Future clearForm() async {
     messageController.clear();
     mediaUrl = null;
     selectedFile = null;
   }
+
   AssetsAudioPlayer assetsAudioPlayer = AssetsAudioPlayer();
 
   playMessageSentSound() {
@@ -45,23 +47,22 @@ class ChatController extends GetxController {
     log('----------------------------recieve sound');
   }
 
-  Future sendMessage(
-      {required ChatRoomModel chatRoom}) async {
+  Future sendMessage({required ChatRoomModel chatRoom}) async {
     CommonMethod.setOnlineStatus();
 
     String msg = messageController.text.trim();
     messageController.clear();
     if (msg != "" || mediaUrl != null) {
-
       MessageModel newMessage = MessageModel(
           sender: AppPreferences.getUiId(),
           text: msg,
           messageType: selectedFile != null
-              ? GetUtils.isImage(selectedFile!.path)
+              ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
                   ? 1
-                  : GetUtils.isVideo(selectedFile!.path)
+                  : CommonMethod.detectFileType(selectedFile!.path) == 'video'
                       ? 2
-                      : GetUtils.isAudio(selectedFile!.path)
+                      : CommonMethod.detectFileType(selectedFile!.path) ==
+                              'audio'
                           ? 3
                           : 0
               : 0,
@@ -71,7 +72,7 @@ class ChatController extends GetxController {
           createdAt: DateTime.now(),
           messageId: uuid.v1());
       await CommonMethod.addMessage(newMessage);
-
+      playMessageSentSound();
       var lastMessage =
           await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
       CommonMethod.updateLastMessage(
@@ -83,33 +84,31 @@ class ChatController extends GetxController {
       List<String> deviceTokenList = [];
       for (var userId in chatRoom.usersIds!) {
         if (userId != AppPreferences.getUiId()) {
-
-          UserModel? userStatus =
-              await CommonMethod.getUserModelById(userId);
+          UserModel? userStatus = await CommonMethod.getUserModelById(userId);
           print("--- userStatus.openRoomId----${userStatus!.openRoomId}");
           print("--- chatRoom.chatRoomId----${chatRoom.chatRoomId}");
 
-          if (userStatus != null &&userStatus.fcmToken != null && (userStatus.openRoomId == null) ||
+          if (userStatus != null &&
+                  userStatus.fcmToken != null &&
+                  (userStatus.openRoomId == null) ||
               (userStatus!.openRoomId != chatRoom.chatRoomId)) {
-                deviceTokenList.add(userStatus.fcmToken!);}
+            deviceTokenList.add(userStatus.fcmToken!);
+          }
         }
         print('----deviceTokenList----${deviceTokenList.toString()}');
       }
-      if(deviceTokenList.isNotEmpty){
-
-          await sendNotification(
-            deviceTokens: deviceTokenList,
-            textMessage: lastMessage,
-            title: AppPreferences.getFullName() ?? 'Unknown',
-          );
+      if (deviceTokenList.isNotEmpty) {
+        await sendNotification(
+          deviceTokens: deviceTokenList,
+          textMessage: lastMessage,
+          title: AppPreferences.getFullName() ?? 'Unknown',
+        );
       }
 
-      
       clearForm();
       log("Message Sent!");
     }
   }
-
 
   Future<void> sendNotification(
       {required List<String> deviceTokens,
@@ -136,13 +135,9 @@ class ChatController extends GetxController {
     final response = await http.post(Uri.parse(url),
         headers: headers, body: json.encode(message));
     if (response.statusCode == 200) {
-
-    print('Notification sent successfully to multiple users');
+      print('Notification sent successfully to multiple users');
     } else {
       print('Failed to send notification');
     }
-}
-
-
-
+  }
 }

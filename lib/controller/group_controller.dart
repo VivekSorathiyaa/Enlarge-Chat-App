@@ -14,7 +14,6 @@ class GroupController extends GetxController{
   TextEditingController searchTextController = TextEditingController();
   final allUserList = <UserModel>[].obs;
   final selectUserList = <UserModel>[].obs;
-  // final usersResultsStream = StreamController<List<UserModel>>();
   Rx<UserModel> currentUser = UserModel(
           openRoomId: null,
           fcmToken: AppPreferences.getFcmToken(),
@@ -24,17 +23,9 @@ class GroupController extends GetxController{
           uid: AppPreferences.getUiId())
       .obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    getCurrentUser();
-    searchUsers();
-    // usersResultsStream.stream.listen((results) {
-    //   allUserList.assignAll(results);
-    // });
-  }
+
  
-  getCurrentUser() async {
+  Future getCurrentUser() async {
     currentUser.value =
         await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
             currentUser.value;
@@ -42,7 +33,6 @@ class GroupController extends GetxController{
 
   @override
   void onClose() {
-    // usersResultsStream.close();
     super.onClose();
   }
 
@@ -65,10 +55,7 @@ class GroupController extends GetxController{
           searchedUserList.add(searchedUser);
         }
       }
-
-
       allUserList.assignAll(searchedUserList);
-      // usersResultsStream.add(searchedUserList);
     });
   }
 }
