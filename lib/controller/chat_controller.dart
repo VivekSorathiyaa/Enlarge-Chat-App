@@ -71,7 +71,6 @@ class ChatController extends GetxController {
         chatRoomId: chatRoom.chatRoomId,
         createdAt: DateTime.now(),
         messageId: uuid.v1(),
-        senderSeen: false,
       );
       await CommonMethod.addMessage(newMessage);
       playMessageSentSound();

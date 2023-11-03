@@ -613,13 +613,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                       crossAxisAlignment:
                                                           CrossAxisAlignment
                                                               .end,
+                                                              
                                                       children: [
                                                         if (currentMessage
                                                             .text!.isNotEmpty)
                                                           textTypeMessageWidget(
                                                               currentMessage),
-                                                        messageTimeWidget(
-                                                            currentMessage)
+                                                  messageTimeWidget(
+                                                      currentMessage)
                                                       ],
                                                     ),
                                                   ),
@@ -627,17 +628,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                               ),
                                             ),
 
-                                            currentMessage.sender ==
-                                                    AppPreferences.getUiId()
-                                                ? Icon(
-                                                    Icons.done_all,
-                                                    color:
-                                                        currentMessage.seen ==
-                                                                true
-                                                            ? Colors.blue
-                                                            : Colors.grey,
-                                                  )
-                                                : SizedBox(),
+                                    
                                             // currentMessage.sender == AppPreferences.getUiId()
                                             //     ? Row(
                                             //   children: [
@@ -817,11 +808,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Widget messageTimeWidget(MessageModel currentMessage) {
     return Padding(
       padding: const EdgeInsets.only(left: 15),
-      child: Text(
-        CommonMethod.formatDateToTime(
-            currentMessage.createdAt ?? DateTime.now()),
-        style: AppTextStyle.normalRegular10
-            .copyWith(height: 0, color: primaryWhite.withOpacity(.7)),
+      child: Row(
+        children: [
+          Text(
+            CommonMethod.formatDateToTime(
+                currentMessage.createdAt ?? DateTime.now()),
+            style: AppTextStyle.normalRegular10
+                .copyWith(height: 0, color: primaryWhite.withOpacity(.7)),
+          ),
+          width05,
+          currentMessage.sender == AppPreferences.getUiId()
+              ? Icon(
+                  Icons.done_all,
+                  size: 18,
+                  color: currentMessage.seen == true
+                      ? lightBlueColor
+                      : primaryWhite.withOpacity(.7),
+                )
+              : SizedBox(),
+        ],
       ),
     );
   }

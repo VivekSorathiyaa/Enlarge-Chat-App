@@ -225,7 +225,6 @@ Future<void> removeUserFromChatroom(String chatroomID, UserModel user) async {
       chatRoomId: chatroomID,
       createdAt: DateTime.now(),
       messageId: uuid.v1(),
-      senderSeen: false,
     );
     await CommonMethod.addMessage(newMessage);
     Get.back();
@@ -255,7 +254,6 @@ Future<void> addUserToChatroom(String chatroomID, UserModel user) async {
       chatRoomId: chatroomID,
       createdAt: DateTime.now(),
       messageId: uuid.v1(),
-      senderSeen: false,
     );
     await CommonMethod.addMessage(newMessage);
     print('User ${user.fullName} added to the chatroom.');

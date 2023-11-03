@@ -7,8 +7,6 @@ class MessageModel {
   String? text;
   String? media; // Change the type to List<dynamic>
   bool? seen;
-  bool? senderSeen;
-
   int? messageType;
   DateTime? createdAt;
 
@@ -18,8 +16,6 @@ class MessageModel {
     required this.sender,
     required this.text,
     required this.seen,
-    required this.senderSeen,
-
     required this.createdAt,
     required this.messageType,
     required this.media,
@@ -32,7 +28,6 @@ class MessageModel {
     text = map["text"];
     media = map["media"]; // Convert to List<dynamic>
     seen = map["seen"];
-  senderSeen=map["senderSeen"];
     messageType = map["messageType"] ?? 0;
     createdAt = (map["createdAt"] as Timestamp).toDate();
   }
@@ -46,7 +41,6 @@ class MessageModel {
       "media": media,
       "messageType": messageType,
       "seen": seen,
-      "senderSeen":senderSeen,
       "createdAt": createdAt,
     };
   }
