@@ -1,4 +1,4 @@
-import 'package:chatapp/models/user_model.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatRoomModel {
@@ -37,6 +37,8 @@ class ChatRoomModel {
     lastSeen = map["lastSeen"] == null
         ? DateTime.now()
         : (map["lastSeen"] as Timestamp).toDate().toLocal();
+
+
   }
 
   Map<String, dynamic> toMap() {
@@ -49,6 +51,7 @@ class ChatRoomModel {
       "lastMessage": lastMessage,
       "usersIds": usersIds == null ? null : usersIds!.map((e) => e).toList(),
       "lastSeen": lastSeen == null ? null : lastSeen!.toUtc(),
+
     };
   }
 }

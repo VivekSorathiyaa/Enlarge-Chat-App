@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/common_method.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,11 +20,24 @@ class ChatController extends GetxController {
   TextEditingController messageController = TextEditingController();
   File? selectedFile;
   String? mediaUrl;
+    RxInt unreadMessageCount=0.obs;
+  final List<ChatRoomModel> chatRooms = [];
+  final List<int> chatRoomUnreadMessageCounts = [];
+  bool isChatActive = true;
+
+
   final RxList<MessageModel> messages = <MessageModel>[].obs;
 
-  void updateMessages(List<MessageModel> newMessages) {
+
+
+  void updateMessages(List<MessageModel> newMessages, ChatRoomModel chatRoom) {
+
     messages.assignAll(newMessages);
+
+
   }
+
+
 
   Future clearForm() async {
     messageController.clear();
@@ -46,64 +60,129 @@ class ChatController extends GetxController {
     );
     log('----------------------------recieve sound');
   }
+  // Future sendMessage({required ChatRoomModel chatRoom}) async {
+  //
+  //   CommonMethod.setOnlineStatus();
+  //
+  //   String msg = messageController.text.trim();
+  //   messageController.clear();
+  //   if (msg != "" || mediaUrl != null) {
+  //     MessageModel newMessage = MessageModel(
+  //         sender: AppPreferences.getUiId(),
+  //         text: msg,
+  //         messageType: selectedFile != null
+  //             ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
+  //                 ? 1
+  //                 : CommonMethod.detectFileType(selectedFile!.path) == 'video'
+  //                     ? 2
+  //                     : CommonMethod.detectFileType(selectedFile!.path) ==
+  //                             'audio'
+  //                         ? 3
+  //                         : 0
+  //             : 0,
+  //         media: mediaUrl,
+  //         seen: false,
+  //         chatRoomId: chatRoom.chatRoomId,
+  //         createdAt: DateTime.now(),
+  //         messageId: uuid.v1(), senderSeen: false,);
+  //     await CommonMethod.addMessage(newMessage);
+  //   //  ChatController().handleNewMessage(newMessage, chatRoom);
+  //     playMessageSentSound();
+  //     var lastMessage =
+  //         await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
+  //     CommonMethod.updateLastMessage(
+  //         chatRoomId: chatRoom.chatRoomId!,
+  //         lastMessage: (chatRoom.isGroup!
+  //                 ? "${AppPreferences.getFullName().toString()}: "
+  //                 : "") +
+  //             lastMessage);
+  //
+  //     // Check if the target user has opened the chat room
+  //     UserModel? targetUser = await CommonMethod.getUserModelById(chatRoom.usersIds![0]);
+  //     if (targetUser != null && targetUser.openRoomId != null && targetUser.openRoomId == chatRoom.chatRoomId) {
+  //       newMessage.seen = true;
+  //       await CommonMethod.updateMessage(newMessage);
+  //     }
+  //
+  //
+  //
+  //
+  //     // Update the message with the new 'seen' status
+  //     await CommonMethod.updateMessage(newMessage);
+  //     List<String> deviceTokenList = [];
+  //     for (var userId in chatRoom.usersIds!) {
+  //       if (userId != AppPreferences.getUiId()) {
+  //         UserModel? userStatus = await CommonMethod.getUserModelById(userId);
+  //         print("--- userStatus.openRoomId----${userStatus!.openRoomId}");
+  //         print("--- chatRoom.chatRoomId----${chatRoom.chatRoomId}");
+  //
+  //         if (userStatus != null &&
+  //                 userStatus.fcmToken != null &&
+  //                 (userStatus.openRoomId == null) ||
+  //             (userStatus!.openRoomId != chatRoom.chatRoomId)) {
+  //           deviceTokenList.add(userStatus.fcmToken!);
+  //         }
+  //       }
+  //       print('----deviceTokenList----${deviceTokenList.toString()}');
+  //     }
+  //     if (deviceTokenList.isNotEmpty) {
+  //       await sendNotification(
+  //         deviceTokens: deviceTokenList,
+  //         textMessage: lastMessage,
+  //         title: AppPreferences.getFullName() ?? 'Unknown',
+  //       );
+  //     }
+  //
+  //     clearForm();
+  //     log("Message Sent!");
+  //   }
+  // }
 
   Future sendMessage({required ChatRoomModel chatRoom}) async {
     CommonMethod.setOnlineStatus();
 
     String msg = messageController.text.trim();
     messageController.clear();
+
     if (msg != "" || mediaUrl != null) {
       MessageModel newMessage = MessageModel(
-          sender: AppPreferences.getUiId(),
-          text: msg,
-          messageType: selectedFile != null
-              ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
-                  ? 1
-                  : CommonMethod.detectFileType(selectedFile!.path) == 'video'
-                      ? 2
-                      : CommonMethod.detectFileType(selectedFile!.path) ==
-                              'audio'
-                          ? 3
-                          : 0
-              : 0,
-          media: mediaUrl,
-          seen: false,
-          chatRoomId: chatRoom.chatRoomId,
-          createdAt: DateTime.now(),
-          messageId: uuid.v1());
+        sender: AppPreferences.getUiId(),
+        text: msg,
+        messageType: selectedFile != null
+            ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
+            ? 1
+            : CommonMethod.detectFileType(selectedFile!.path) == 'video'
+            ? 2
+            : CommonMethod.detectFileType(selectedFile!.path) == 'audio'
+            ? 3
+            : 0
+            : 0,
+        media: mediaUrl,
+        seen: false,
+        chatRoomId: chatRoom.chatRoomId,
+        createdAt: DateTime.now(),
+        messageId: uuid.v1(),
+        senderSeen: false,
+      );
+
       await CommonMethod.addMessage(newMessage);
       playMessageSentSound();
-      var lastMessage =
-          await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
-      CommonMethod.updateLastMessage(
-          chatRoomId: chatRoom.chatRoomId!,
-          lastMessage: (chatRoom.isGroup!
-                  ? "${AppPreferences.getFullName().toString()}: "
-                  : "") +
-              lastMessage);
-      List<String> deviceTokenList = [];
-      for (var userId in chatRoom.usersIds!) {
-        if (userId != AppPreferences.getUiId()) {
-          UserModel? userStatus = await CommonMethod.getUserModelById(userId);
-          print("--- userStatus.openRoomId----${userStatus!.openRoomId}");
-          print("--- chatRoom.chatRoomId----${chatRoom.chatRoomId}");
 
-          if (userStatus != null &&
-                  userStatus.fcmToken != null &&
-                  (userStatus.openRoomId == null) ||
-              (userStatus!.openRoomId != chatRoom.chatRoomId)) {
-            deviceTokenList.add(userStatus.fcmToken!);
-          }
-        }
-        print('----deviceTokenList----${deviceTokenList.toString()}');
-      }
-      if (deviceTokenList.isNotEmpty) {
-        await sendNotification(
-          deviceTokens: deviceTokenList,
-          textMessage: lastMessage,
-          title: AppPreferences.getFullName() ?? 'Unknown',
-        );
-      }
+      var lastMessage =
+      await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
+      CommonMethod.updateLastMessage(
+        chatRoomId: chatRoom.chatRoomId!,
+        lastMessage: (chatRoom.isGroup!
+            ? "${AppPreferences.getFullName().toString()}: "
+            : "") +
+            lastMessage,
+      );
+
+
+
+      await CommonMethod.updateMessage(newMessage);
+
+
 
       clearForm();
       log("Message Sent!");

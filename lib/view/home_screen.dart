@@ -1,5 +1,7 @@
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
+import 'package:chatapp/controller/chat_controller.dart';
+import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,6 +16,7 @@ import '../componet/app_text_style.dart';
 import '../componet/network_image_widget.dart';
 import '../componet/shadow_container_widget.dart';
 import '../controller/home_controller.dart';
+import '../models/message_model.dart';
 import '../models/user_model.dart';
 import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
@@ -42,11 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-   // initPlatformState();
+    // initPlatformState();
     selectedLocale = savedLocale;
+
     super.initState();
   }
-  
 
   final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
@@ -63,47 +66,51 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  final ThemeController themeController = Get.put(ThemeController());
 
+  final ChatController chatController = Get.put(ChatController());
 
   @override
   void dispose() {
     super.dispose();
   }
 
-  final ThemeController themeController = Get.put(ThemeController());
   @override
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
     return Obx(() {
+      List<ChatRoomModel> chatRooms = controller.chatRooms;
+
       return Scaffold(
-        backgroundColor: themeController.isDark.value ? primaryBlack:primaryWhite,
+        backgroundColor:
+            themeController.isDark.value ? primaryBlack : primaryWhite,
         drawer: CustomDrawer(
-            logout: () {
-              MyAlertDialog.showLogoutDialog(context);
-            },
-            changeLang: () {
-              MyAlertDialog.showLanguageDialog(
-                context,
-                locale,
-                selectedLocale!,
-                (Locale newLocale) {
-                  updateLanguage(newLocale);
-                },
-              );
-            },
-            people: () => Get.to(() => SearchScreen()),
-            myAccount: () {
-              Get.to(() => EditProfile());
-            },
-            ),
+          logout: () {
+            MyAlertDialog.showLogoutDialog(context);
+          },
+          changeLang: () {
+            MyAlertDialog.showLanguageDialog(
+              context,
+              locale,
+              selectedLocale!,
+              (Locale newLocale) {
+                updateLanguage(newLocale);
+              },
+            );
+          },
+          people: () => Get.to(() => SearchScreen()),
+          myAccount: () {
+            Get.to(() => EditProfile());
+          },
+        ),
         appBar: AppBar(
-          backgroundColor: themeController.isDark.value ? blackThemeColor:primaryBlack,
+          backgroundColor:
+              themeController.isDark.value ? blackThemeColor : primaryBlack,
           centerTitle: true,
           title: Text("head".tr),
           actions: [
             IconButton(
               onPressed: () async {
-       
                 Get.to(() => CreateGroupScreen());
               },
               icon: Icon(Icons.group),
@@ -115,17 +122,37 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: controller.chatRooms.length,
             itemBuilder: (context, index) {
               final chatRoomModel = controller.chatRooms[index];
+              int count = 0;
+              FirebaseFirestore.instance
+                  .collection("chatrooms")
+                  .doc(chatRoomModel.chatRoomId)
+                  .collection("messages")
+                  .orderBy("createdAt", descending: true)
+                  .snapshots()
+                  .listen((querySnapshot) {
+                final newMessage = querySnapshot.docs.map((doc) {
+                  return MessageModel.fromMap(
+                      doc.data() as Map<String, dynamic>);
+                }).toList();
+                for (final message in newMessage) {
+                  if (message.chatRoomId == chatRoomModel.chatRoomId &&
+                      message.sender != AppPreferences.getUiId() &&
+                      message.seen == false) {
+                    count++;
+                  }
+                }
+              });
               return chatRoomModel.usersIds == null
                   ? SizedBox()
                   : FutureBuilder(
-                      future:
-                          CommonMethod.getTargetUserModel(
+                      future: CommonMethod.getTargetUserModel(
                           chatRoomModel.usersIds!),
                       builder: (context, snapshots) {
                         UserModel? targetUser;
                         if (snapshots.data != null) {
                           targetUser = snapshots.data as UserModel;
                         }
+
                         return targetUser == null
                             ? SizedBox()
                             : StreamBuilder<DocumentSnapshot>(
@@ -134,6 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     .doc(targetUser.uid)
                                     .snapshots(),
                                 builder: (context, snapshot) {
+                                  // controller.updateMessages(messages,widget.chatRoom );
+
                                   if (snapshot.hasError) {
                                     return Text('Error: ${snapshot.error}');
                                   }
@@ -170,11 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     : primaryWhite,
                                             onTap: () {
                                               Get.to(() => ChatRoomScreen(
-                                                  chatRoom: chatRoomModel,
-                                                  targetUser:
-                                                      chatRoomModel.isGroup!
-                                                          ? null
-                                                          : userData));
+                                                      chatRoom: chatRoomModel,
+                                                      targetUser:
+                                                          chatRoomModel.isGroup!
+                                                              ? null
+                                                              : userData))!
+                                                  .then((value) =>
+                                                      setState(() {}));
                                             },
                                             leading: NetworkImageWidget(
                                                 height: 50,
@@ -228,6 +259,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ),
                                             ]),
                                             title: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
                                                 Flexible(
                                                   child: Text(
@@ -244,6 +278,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           : AppTextStyle
                                                               .lightNormalBold16),
                                                 ),
+                                                if (count > 0)
+                                                  Container(
+                                                    padding: EdgeInsets.all(3),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors
+                                                          .green, // Choose your preferred badge background color
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              1.5),
+                                                      child: Text(
+                                                        count.toString(),
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
                                               ],
                                             ),
                                             subtitle: chatRoomModel
@@ -281,12 +335,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     },
                                                   )
                                                 : Text(
-                                              chatRoomModel.lastMessage ??
+                                                    chatRoomModel.lastMessage ??
                                                         "Say hi to your new friend!",
-                                              style: AppTextStyle
-                                                  .normalRegular12
-                                                  .copyWith(color: greyColor),
-                                            )),
+                                                    style: AppTextStyle
+                                                        .normalRegular12
+                                                        .copyWith(
+                                                            color: greyColor),
+                                                  )),
                                       );
                                     },
                                   );
@@ -299,7 +354,6 @@ class _HomeScreenState extends State<HomeScreen> {
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Get.to(() => SearchScreen());
-
           },
           child: Icon(Icons.search),
         ),

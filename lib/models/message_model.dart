@@ -5,20 +5,24 @@ class MessageModel {
   String? chatRoomId;
   String? sender;
   String? text;
- String? media; // Change the type to List<dynamic>
+  String? media; // Change the type to List<dynamic>
   bool? seen;
+  bool? senderSeen;
+
   int? messageType;
   DateTime? createdAt;
 
   MessageModel({
-  required  this.messageId,
-  required  this.chatRoomId,
+    required this.messageId,
+    required this.chatRoomId,
     required this.sender,
     required this.text,
     required this.seen,
+    required this.senderSeen,
+
     required this.createdAt,
-  required  this.messageType,
-   required this.media,
+    required this.messageType,
+    required this.media,
   });
 
   MessageModel.fromMap(Map<String, dynamic> map) {
@@ -26,21 +30,23 @@ class MessageModel {
     chatRoomId = map["chatRoomId"];
     sender = map["sender"];
     text = map["text"];
-    media = map["media"] ; // Convert to List<dynamic>
+    media = map["media"]; // Convert to List<dynamic>
     seen = map["seen"];
+  senderSeen=map["senderSeen"];
     messageType = map["messageType"] ?? 0;
-    createdAt = (map["createdAt"] as Timestamp).toDate();    
+    createdAt = (map["createdAt"] as Timestamp).toDate();
   }
 
   Map<String, dynamic> toMap() {
     return {
-      "messageId": messageId,      
-      "chatRoomId": chatRoomId,      
+      "messageId": messageId,
+      "chatRoomId": chatRoomId,
       "sender": sender,
       "text": text,
       "media": media,
       "messageType": messageType,
       "seen": seen,
+      "senderSeen":senderSeen,
       "createdAt": createdAt,
     };
   }

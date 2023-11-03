@@ -73,13 +73,38 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
   final ScrollController _scrollController = ScrollController();
+  Map<String, int> unreadMessageCounts = {};
+  String? userId = AppPreferences.getUiId();
 
   @override
   void initState() {
-    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
-    CommonMethod.setOnlineStatus();
-    checkMicrophoneAvailability();
+    log("==============target user open room id:${widget.targetUser!.openRoomId}");
+    initializeChatRoom();
     super.initState();
+  }
+
+  Future<void> initializeChatRoom() async {
+    log('-------userid=============${userId}');
+
+    try {
+      String chatRoomId =
+          widget.chatRoom.chatRoomId!; // Replace with the actual chat room ID
+
+      List<String> messageIdsWithSeenStatusFalse =
+          await CommonMethod.retrieveMessagesWithSeenStatusFalse(
+        chatRoomId,
+      );
+
+      CommonMethod.updateChatActiveStatus(chatRoomId);
+
+      await CommonMethod.updateMessagesToSeenStatusTrue(
+          chatRoomId, messageIdsWithSeenStatusFalse, userId!);
+
+      CommonMethod.setOnlineStatus();
+      checkMicrophoneAvailability();
+    } catch (e) {
+      print('Error initializing chat room: $e');
+    }
   }
 
   void checkMicrophoneAvailability() async {
@@ -157,7 +182,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
-    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
+    CommonMethod.updateChatActiveStatus(null);
+    setState(() {
+      controller.isChatActive == false;
+    });
+
     CommonMethod.setOnlineStatus();
     flutterTts.stop();
     super.dispose();
@@ -167,6 +196,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int unreadCount = unreadMessageCounts[widget.chatRoom.chatRoomId] ?? 0;
+
     Rx<UserModel> targetUser = UserModel(
             uid: null,
             fullName: null,
@@ -201,11 +232,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       final messages = querySnapshot.docs.map((doc) {
         return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
       }).toList();
-      controller.updateMessages(messages);
-      if (messages.last.sender != null &&
-          messages.last.sender != AppPreferences.getUiId()) {
-        controller.playMessageReceiveSound();
-      }
+      controller.updateMessages(messages, widget.chatRoom);
     });
 
     return Obx(() {
@@ -370,7 +397,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   final isCurrentUser = currentMessage.sender == null
                       ? false
                       : currentMessage.sender == AppPreferences.getUiId();
-
                   return currentMessage.sender == null
                       ? Center(
                           child: Padding(
@@ -465,7 +491,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 ? IconButton(
                                                     icon: Icon(
                                                         CupertinoIcons.waveform,
-                                                        color: primaryColor),
+                                                        color: themeController
+                                                                .isDark.value
+                                                            ? Colors
+                                                                .blueGrey[200]
+                                                            : primaryColor),
                                                     onPressed: () {},
                                                   )
                                                 : SizedBox()),
@@ -586,6 +616,30 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 ],
                                               ),
                                             ),
+
+                                            currentMessage.sender ==
+                                                    AppPreferences.getUiId()
+                                                ? Icon(
+                                                    Icons.done_all,
+                                                    color:
+                                                        currentMessage.seen ==
+                                                                true
+                                                            ? Colors.blue
+                                                            : Colors.grey,
+                                                  )
+                                                : SizedBox(),
+                                            // currentMessage.sender == AppPreferences.getUiId()
+                                            //     ? Row(
+                                            //   children: [
+                                            //     Icon(
+                                            //       Icons.done_all,
+                                            //       color:(color: currentMessage.seen ? Colors.blue : Colors.grey,)? Colors.blue : Colors.grey,
+                                            //     ),
+                                            //     if (controller.isChatActive)
+                                            //       Icon(Icons.check, color: Colors.blue), // Add checkmark when chat is active
+                                            // //   ],
+                                            // // )
+                                            // //     : SizedBox(),
                                           ],
                                         );
                                 },
