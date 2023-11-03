@@ -22,7 +22,7 @@ class UserModel {
     fullName = map["fullName"] ?? 'Unknown'; // Use the null-aware operator
     phone = map["phone"];
     profilePic = map["profilePic"] ??
-        'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHVzZXJ8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60';
+        'https://i.pravatar.cc/500';
     fcmToken = map["fcmToken"];
     status = map["status"];
     openRoomId = map["openRoomId"];

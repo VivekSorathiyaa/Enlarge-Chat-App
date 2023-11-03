@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'package:chatapp/componet/app_text_style.dart';
+import 'package:chatapp/main.dart';
+import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/login_screen.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
 import '../utils/colors.dart';
@@ -17,30 +21,42 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? timer;
+
   @override
   void initState() {
-    super.initState();
+    FirebaseMessaging.instance.getInitialMessage().then(
+      (value) {
+        print("---getInitialMessage----");
+      },
+    );
+
+    FirebaseMessaging.onMessage.listen(handleNotifications);
+    FirebaseMessaging.onMessageOpenedApp.listen(
+      (RemoteMessage message) {
+        print('----onMessageOpenedApp----');
+
+        listenCallEvent();
+      },
+    );
     startTime();
+    super.initState();
+
   }
 
   startTime() async {
-    return Timer(
-      const Duration(seconds: 2),
+    timer = Timer(
+      const Duration(milliseconds: 1000),
       () async {
-        navigationPage();
+        User? currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          Get.offAll(() => HomeScreen());
+        } else {
+          Get.offAll(() => LoginScreen());
+        }
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {});
       },
     );
-  }
-
-  void navigationPage() async {
-    User? currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      Get.offAll(() => HomeScreen());
-
-    } else {
-   
-      Get.offAll(() => LoginScreen());
-    }
   }
 
   @override

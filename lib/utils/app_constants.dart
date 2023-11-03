@@ -6,8 +6,13 @@ class AppConstants {
   // static String apiBaseURL = "http://192.168.29.54:8005/api/"; //gaurav
 
   static String apiBaseURL = "https://enlargesoftithub.com/scs-rajkot/api/"; //live
-  static const String googleMapAPIKey = 'YOUR_API_KEY_HERE';
+  static String fcmGoogleApiUrl = 'https://fcm.googleapis.com/fcm/send';
 
+  static const int zegocloudAppID = 1467607153;
+  static const String zegocloudAppSign =
+      'f4dc22c24b04327f6c1e62b061448b3986bdbb10461def8b39defbce67a48b13';
+  static const String firebaseServerKey =
+      'AAAAJj823eM:APA91bGYdfLlg9MJSVrJdk7gVPCtCxvCdT6-_qfa-Qb2sLbbb0tjaBKHs5wSgNq13QyWBUlsjIx4d6uXdR90jgCECZ6-3Mud8kemX2VRq9Jt14h32Iv3jwo9sAnWJq6yP_V9i8PcQw1N'; // Replace w
   // Customer
   static const String customerUserLogin = 'customer-login';
   static const String customerLogout = 'customer-logout';

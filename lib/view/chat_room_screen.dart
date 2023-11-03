@@ -17,6 +17,7 @@ import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
+import 'package:chatapp/view/video_conference_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -157,7 +158,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
-    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
+    CommonMethod.updateChatActiveStatus(null);
+    
     CommonMethod.setOnlineStatus();
     flutterTts.stop();
     super.dispose();
@@ -223,7 +225,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               Get.back();
             },
           ),
-          title: GestureDetector(
+          title: GestureDetector( 
             onTap: () {
               if (widget.chatRoom.isGroup!) {
                 Get.to(() => GroupInfoScreen(
@@ -307,6 +309,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ],
             ),
           ),
+        
+          actions: [
+            IconButton(
+              onPressed: () {
+                Get.to(() => VideoConferenceScreen(
+                      chatRoomModel: widget.chatRoom,
+                      chatRoomId: widget.chatRoom.chatRoomId,
+                    ));
+              },
+              icon: Icon(Icons.video_call),
+            ),
+            width10,
+          ],
         ),
         body: Column(
           children: [
@@ -437,17 +452,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 .sender!), // The future to wait for.
                                 builder: (BuildContext context,
                                     AsyncSnapshot<UserModel?> snapshot) {
-                                  var data = snapshot.data;
-                                  return data == null && !isCurrentUser
-                                      ? SizedBox()
-                                      : Row(
+                                  return Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            if (data != null &&
-                                                !isCurrentUser &&
-                                                widget.targetUser == null)
+                                      if (!isCurrentUser &&
+                                          widget.chatRoom.isGroup!)
                                               Padding(
                                                 padding: const EdgeInsets.only(
                                                     right: 8.0),
@@ -457,7 +468,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(30),
                                                   imageUrl:
-                                                      snapshot.data!.profilePic,
+                                                      snapshot.data != null
+                                                ? snapshot.data!.profilePic
+                                                    .toString()
+                                                : "",
                                                 ),
                                               ),
                                             Obx(() => currentSpeaking.value &&
@@ -508,9 +522,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                         : CrossAxisAlignment
                                                             .start,
                                                 children: [
-                                                  if (data != null &&
-                                                      !isCurrentUser &&
-                                                      widget.targetUser == null)
+                                            if (!isCurrentUser &&
+                                                widget.chatRoom.isGroup!)
                                                     Padding(
                                                       padding:
                                                           const EdgeInsets.only(
@@ -518,8 +531,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                               right: 10,
                                                               top: 10),
                                                       child: Text(
-                                                        data.fullName
-                                                            .toString(),
+                                                  snapshot.data != null
+                                                      ? snapshot.data!.fullName
+                                                          .toString()
+                                                      : "Unknown",
                                                         style: AppTextStyle
                                                             .regularBold
                                                             .copyWith(

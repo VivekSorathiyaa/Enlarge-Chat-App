@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
+import 'package:chatapp/utils/app_constants.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -10,6 +12,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -57,7 +61,7 @@ class CommonMethod {
           await FirebaseFirestore.instance
               .collection("users")
               .doc(currentUserId)
-              .update({'fcmtoken': token}).then((value) {
+              .update({'fcmToken': token}).then((value) {
             print("Fcm updated!");
           });
         }
@@ -92,6 +96,23 @@ class CommonMethod {
       log("Set Status Online!");
     });
   }
+
+  static Future<UserModel> getCurrentUser() async {
+    UserModel currentUser = UserModel(
+        openRoomId: null,
+        fcmToken: AppPreferences.getFcmToken(),
+        fullName: AppPreferences.getFullName(),
+        phone: AppPreferences.getPhone(),
+        profilePic: AppPreferences.getProfilePic(),
+        uid: AppPreferences.getUiId());
+
+    currentUser =
+        await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
+            currentUser;
+
+    return currentUser;
+  }
+
 
   static Future setOfflineStatus() async {
     await FirebaseFirestore.instance
@@ -160,7 +181,38 @@ class CommonMethod {
         .set(newMessage.toMap())
         .then((value) => log("Send Message"));
   }
+  static Future<void> sendNotification(
+      {required List<String> deviceTokens,
+      required String title,
+      required String roomId,
+      required String type,
+      required String body}) async {
+    var currentUser = await getCurrentUser();
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=${AppConstants.firebaseServerKey}',
+    };
+    final message = {
+      'registration_ids': deviceTokens,
+      'data': {
+        'title': title,
+        'body': body,
+        'type': type,
+        'user': currentUser.toMap(),
+        'roomId': roomId,
+        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+      },
+    };
+    final response = await http.post(Uri.parse(AppConstants.fcmGoogleApiUrl),
+        headers: headers, body: json.encode(message));
 
+    print('----response----${response.body.toString()}');
+    if (response.statusCode == 200) {
+      print('Notification sent successfully to multiple users');
+    } else {
+      print('Failed to send notification');
+    }
+  }
 
   static Future<UserModel?> getUserModelById(String uid) async {
     UserModel? userModel;
@@ -170,6 +222,17 @@ class CommonMethod {
       userModel = UserModel.fromMap(docSnap.data() as Map<String, dynamic>);
     }
     return userModel;
+  }
+  static Future<ChatRoomModel?> getChatRoomModelById(String roomId) async {
+    ChatRoomModel? chatRoomModel;
+    DocumentSnapshot docSnap = await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(roomId)
+        .get();
+    if (docSnap.data() != null) {
+      chatRoomModel = ChatRoomModel.fromMap(docSnap.data() as Map<String, dynamic>);
+    }
+    return chatRoomModel;
   }
 
 

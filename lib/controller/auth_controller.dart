@@ -19,7 +19,6 @@ class AuthController extends GetxController {
   TextEditingController phoneTxtController = new TextEditingController();
   TextEditingController otpTxtController = new TextEditingController();
   String _countryCode = '+91';
-  String? fcmtoken;
 
 
 
@@ -109,7 +108,9 @@ class AuthController extends GetxController {
             uid: uid,
             phone: phoneTxtController.text,
             fullName: null,
-            profilePic: null, fcmToken:fcmtoken, openRoomId: null);
+            profilePic: null,
+            fcmToken: null,
+            openRoomId: null);
         await CommonMethod.saveUserData(newUser);
 
         if (isRegistered) {
