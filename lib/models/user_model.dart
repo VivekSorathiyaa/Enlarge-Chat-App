@@ -7,6 +7,7 @@ class UserModel {
   String? status;
   String? openRoomId;
 
+
   UserModel({
     required this.uid,
     required this.fullName,
@@ -14,7 +15,8 @@ class UserModel {
     required this.profilePic,
     required this.fcmToken,
     required this.openRoomId,
-    this.status, 
+    this.status,
+
   });
 
   UserModel.fromMap(Map<String, dynamic> map) {
@@ -25,6 +27,7 @@ class UserModel {
         'https://i.pravatar.cc/500';
     fcmToken = map["fcmToken"];
     status = map["status"];
+
     openRoomId = map["openRoomId"];
   }
 
@@ -37,6 +40,7 @@ class UserModel {
       "fcmToken": fcmToken,
       "openRoomId": openRoomId,
       "status": status,
+
     };
   }
 }

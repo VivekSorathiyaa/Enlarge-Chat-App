@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/common_method.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../main.dart';
@@ -15,10 +17,12 @@ class ChatController extends GetxController {
   TextEditingController messageController = TextEditingController();
   File? selectedFile;
   String? mediaUrl;
+    RxInt unreadMessageCount=0.obs;
+  final List<ChatRoomModel> chatRooms = [];
+  final List<int> chatRoomUnreadMessageCounts = [];
+  // bool isChatActive = true;
   final RxList<MessageModel> messages = <MessageModel>[].obs;
-
-
-  void updateMessages(List<MessageModel> newMessages) {
+  void updateMessages(List<MessageModel> newMessages, ChatRoomModel chatRoom) {
     messages.assignAll(newMessages);
   }
 
@@ -31,10 +35,9 @@ class ChatController extends GetxController {
   AssetsAudioPlayer assetsAudioPlayer = AssetsAudioPlayer();
 
   playMessageSentSound() {
-    // assetsAudioPlayer.open(
-    //   Audio("assets/audio/sent_message.mp3"),
-    // );
-    // log('----------------------------play sound');
+    assetsAudioPlayer.open(
+      Audio("assets/audio/sent_message.mp3"),
+    );
   }
 
   playMessageReceiveSound() {
@@ -44,30 +47,32 @@ class ChatController extends GetxController {
     // log('----------------------------recieve sound');
   }
 
+
   Future sendMessage({required ChatRoomModel chatRoom}) async {
     CommonMethod.setOnlineStatus();
-
     String msg = messageController.text.trim();
     messageController.clear();
+
     if (msg != "" || mediaUrl != null) {
       MessageModel newMessage = MessageModel(
-          sender: AppPreferences.getUiId(),
-          text: msg,
-          messageType: selectedFile != null
-              ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
-                  ? 1
-                  : CommonMethod.detectFileType(selectedFile!.path) == 'video'
-                      ? 2
-                      : CommonMethod.detectFileType(selectedFile!.path) ==
-                              'audio'
-                          ? 3
-                          : 0
-              : 0,
-          media: mediaUrl,
-          seen: false,
-          chatRoomId: chatRoom.chatRoomId,
-          createdAt: DateTime.now(),
-          messageId: uuid.v1());
+        sender: AppPreferences.getUiId(),
+        text: msg,
+        messageType: selectedFile != null
+            ? CommonMethod.detectFileType(selectedFile!.path) == 'image'
+            ? 1
+            : CommonMethod.detectFileType(selectedFile!.path) == 'video'
+            ? 2
+            : CommonMethod.detectFileType(selectedFile!.path) == 'audio'
+            ? 3
+            : 0
+            : 0,
+        media: mediaUrl,
+        seen: false,
+        chatRoomId: chatRoom.chatRoomId,
+        createdAt: DateTime.now(),
+        messageId: uuid.v1(),
+        senderSeen: false,
+      );
       await CommonMethod.addMessage(newMessage);
       playMessageSentSound();
       var lastMessage =
@@ -99,6 +104,7 @@ class ChatController extends GetxController {
           roomId: chatRoom.chatRoomId.toString(),
         );
       }
+      await CommonMethod.updateMessage(newMessage);
       clearForm();
       log("Message Sent!");
     }

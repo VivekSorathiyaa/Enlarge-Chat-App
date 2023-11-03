@@ -1,3 +1,4 @@
+import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:chatapp/Drawer/drawer_item.dart';
@@ -104,15 +105,20 @@ class CustomDrawer extends StatelessWidget {
   Widget headerWidget(String profilePic, String fullName, String phone) {
     return Row(
       children: [
-        Container(
-          padding: EdgeInsets.all(3.0), // Adjust the padding as needed
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white, // Background color of the circle
-          ),
-          child: CircleAvatar(
-            radius: 40,
-            backgroundImage: NetworkImage(profilePic),
+        GestureDetector(
+          onTap: (){
+            Get.to(()=>EditProfile());
+          },
+          child: Container(
+            padding: EdgeInsets.all(3.0), // Adjust the padding as needed
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white, // Background color of the circle
+            ),
+            child: CircleAvatar(
+              radius: 40,
+              backgroundImage: NetworkImage(profilePic),
+            ),
           ),
         ),
         const SizedBox(width: 20,),

@@ -17,7 +17,7 @@ class DrawerItem extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: Colors.white,),
             const SizedBox(width: 40,),
-            Text(name, style: const TextStyle(fontSize: 18, color: Colors.white),)
+            Text(name, style: const TextStyle(fontSize: 15, color: Colors.white),)
           ],
         ),
       ),

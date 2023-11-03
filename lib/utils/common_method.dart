@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_constants.dart';
@@ -25,6 +26,7 @@ import '../models/chat_room_model.dart';
 import 'colors.dart';
 
 class CommonMethod {
+
   static getXSnackBar(String title, String message, Color? color) {
     Get.snackbar(
       title,
@@ -50,7 +52,7 @@ class CommonMethod {
     }
   }
 
-  
+
 
   static Future refreshToken() async {
     FirebaseMessaging.instance.getToken().then((token) async {
@@ -133,6 +135,9 @@ class CommonMethod {
     });
   }
 
+
+
+
   static Future<void> updateLastMessage({
     required String chatRoomId,
     required String lastMessage,
@@ -180,6 +185,58 @@ class CommonMethod {
         .doc(newMessage.messageId)
         .set(newMessage.toMap())
         .then((value) => log("Send Message"));
+
+
+
+
+  }
+
+  static Future<void> updateMessage(MessageModel message) async {
+    try {
+      final messageCollection = FirebaseFirestore.instance.collection('messages');
+
+      // Update the message document with the new data
+      await messageCollection.doc(message.messageId).update({
+        'text': message.text,
+        'media': message.media,
+        'seen': message.seen,
+
+
+        // Add other properties you want to update
+      });
+    } catch (e) {
+      print('Error updating message: $e');
+    }
+  }
+
+ static Future<bool> checkIfMessageIsSeenByTargetUser(String messageId, String targetUserId) async {
+    try {
+      final messageCollection = FirebaseFirestore.instance.collection('chatrooms');
+
+      // Query for the message with the specified ID in the chat room.
+      final messageDoc = await messageCollection
+          .doc(targetUserId)  // Replace with the chat room ID
+          .collection('messages')
+          .doc(messageId)
+          .get();
+
+      // Check if the message document exists.
+      if (messageDoc.exists) {
+        final messageData = messageDoc.data() as Map<String, dynamic>;
+
+        // Check if the message has a "seen" property.
+        if (messageData['seen'] != null) {
+          // Check if the target user has seen the message.
+          if (messageData['seen'][targetUserId] == true) {
+            return true;  // The message is seen by the target user.
+          }
+        }
+      }
+    } catch (e) {
+      print('Error checking if message is seen: $e');
+    }
+
+    return false;  // The message is not seen by the target user or there was an error.
   }
   static Future<void> sendNotification(
       {required List<String> deviceTokens,
@@ -236,7 +293,62 @@ class CommonMethod {
   }
 
 
-static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
+
+
+
+ static Future<List<String>> retrieveMessagesWithSeenStatusFalse(String chatRoomId,) async {
+
+
+    try {
+      final messageCollection = FirebaseFirestore.instance
+          .collection("chatrooms")
+          .doc(chatRoomId)
+          .collection("messages");
+
+      final querySnapshot = await messageCollection.where('seen', isEqualTo: false).get();
+
+      final List<String> messageIds = [];
+
+      for (final messageDoc in querySnapshot.docs) {
+        messageIds.add(messageDoc.id);
+
+      }
+      return messageIds;
+
+    } catch (e) {
+      print('Error retrieving messages with seen status false: $e');
+      return [];
+    }
+  }
+
+
+
+
+  static Future<void> updateMessagesToSeenStatusTrue(String chatRoomId, List<String> messageIds, String currentUserId) async {
+    try {
+      final messageCollection = FirebaseFirestore.instance
+          .collection("chatrooms")
+          .doc(chatRoomId)
+          .collection("messages");
+
+      for (final messageId in messageIds) {
+        final messageDoc = await messageCollection.doc(messageId).get();
+        final messageData = messageDoc.data() as Map<String, dynamic>;
+
+        // Check if the message sender is not the current user
+        if (messageData['sender'] != currentUserId) {
+          await messageCollection.doc(messageId).update({'seen': true});
+        }
+
+
+      }
+    } catch (e) {
+      print('Error updating message seen status to true: $e');
+    }
+  }
+
+
+  static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
   final List<QuerySnapshot> userSnapshots =
       await Future.wait(targetUserIds.map((userId) {
     return FirebaseFirestore.instance
@@ -269,6 +381,8 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
           isGroup: false,
           createdBy: AppPreferences.getUiId(),
           groupImage: null,
+
+
         );
       await FirebaseFirestore.instance
           .collection("chatrooms")
@@ -280,6 +394,10 @@ static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async
       return null;
     }
   }
+
+
+
+
 
   static Future<String?> uploadFile(
       BuildContext context, File selectedFile) async {

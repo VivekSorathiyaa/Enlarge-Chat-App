@@ -119,8 +119,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                                           '---controller.selectUserList.value----${controller.selectUserList.value}');
                                       for (var data
                                           in controller.selectUserList.value) {
-                                        addUserToChatroom(widget.chatRoomId,
-                                            data);
+                                        addUserToChatroom(
+                                            widget.chatRoomId, data);
                                       }
                                     });
                                   },
@@ -203,12 +203,11 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                         ),
                       ]),
           );
-        }
-    );
+        });
   }
 }
-Future<void> removeUserFromChatroom(
-    String chatroomID, UserModel user) async {
+
+Future<void> removeUserFromChatroom(String chatroomID, UserModel user) async {
   try {
     final chatroomRef =
         FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID);
@@ -217,15 +216,17 @@ Future<void> removeUserFromChatroom(
     });
 
     MessageModel newMessage = MessageModel(
-        sender: null,
-        text:
-            '${AppPreferences.getFullName()} has removed ${user.fullName} from this conversation',
-        messageType: 0,
-        media: null,
-        seen: false,
-        chatRoomId: chatroomID,
-        createdAt: DateTime.now(),
-        messageId: uuid.v1());
+      sender: null,
+      text:
+          '${AppPreferences.getFullName()} has removed ${user.fullName} from this conversation',
+      messageType: 0,
+      media: null,
+      seen: false,
+      chatRoomId: chatroomID,
+      createdAt: DateTime.now(),
+      messageId: uuid.v1(),
+      senderSeen: false,
+    );
     await CommonMethod.addMessage(newMessage);
     Get.back();
     print('User ${user.fullName} removed from the chatroom.');
@@ -245,15 +246,17 @@ Future<void> addUserToChatroom(String chatroomID, UserModel user) async {
     });
 
     MessageModel newMessage = MessageModel(
-        sender: null,
-        text:
-            '${AppPreferences.getFullName()} added ${user.fullName} to this conversation',
-        messageType: 0,
-        media: null,
-        seen: false,
-        chatRoomId: chatroomID,
-        createdAt: DateTime.now(),
-        messageId: uuid.v1());
+      sender: null,
+      text:
+          '${AppPreferences.getFullName()} added ${user.fullName} to this conversation',
+      messageType: 0,
+      media: null,
+      seen: false,
+      chatRoomId: chatroomID,
+      createdAt: DateTime.now(),
+      messageId: uuid.v1(),
+      senderSeen: false,
+    );
     await CommonMethod.addMessage(newMessage);
     print('User ${user.fullName} added to the chatroom.');
   } catch (e) {
