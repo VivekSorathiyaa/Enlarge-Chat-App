@@ -22,7 +22,7 @@ class ChatController extends GetxController {
   final List<int> chatRoomUnreadMessageCounts = [];
   // bool isChatActive = true;
   final RxList<MessageModel> messages = <MessageModel>[].obs;
-  void updateMessages(List<MessageModel> newMessages, ChatRoomModel chatRoom) {
+  Future updateMessages(List<MessageModel> newMessages, ChatRoomModel chatRoom) async {
     messages.assignAll(newMessages);
   }
 

@@ -76,37 +76,49 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final ScrollController _scrollController = ScrollController();
   Map<String, int> unreadMessageCounts = {};
   String? userId = AppPreferences.getUiId();
+StreamSubscription<QuerySnapshot>? _messageSubscription;
 
   @override
   void initState() {
     log("==============target user open room id:${widget.targetUser!.openRoomId}");
+    _messageSubscription = FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(widget.chatRoom.chatRoomId)
+        .collection("messages")
+        .orderBy("createdAt", descending: true)
+        .snapshots()
+        .listen((querySnapshot) {
+      final messages = querySnapshot.docs.map((doc) {
+        return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
+      controller.updateMessages(messages, widget.chatRoom);
+      refreshPage();
+    });
     initializeChatRoom();
     super.initState();
   }
 
+refreshPage() async {
+    print('-----refreshPage-----');
+    List<String> messageIdsWithSeenStatusFalse =
+          await CommonMethod.retrieveMessagesWithSeenStatusFalse(
+      widget.chatRoom.chatRoomId!,
+    );                                                                                                                                                                                                                   
+    await CommonMethod.updateMessagesToSeenStatusTrue(
+        widget.chatRoom.chatRoomId!, messageIdsWithSeenStatusFalse, userId!);
+  }
+
   Future<void> initializeChatRoom() async {
     log('-------userid=============${userId}');
-
     try {
-      String chatRoomId =
-          widget.chatRoom.chatRoomId!; // Replace with the actual chat room ID
-
-      List<String> messageIdsWithSeenStatusFalse =
-          await CommonMethod.retrieveMessagesWithSeenStatusFalse(
-        chatRoomId,
-      );
-
-      CommonMethod.updateChatActiveStatus(chatRoomId);
-
-      await CommonMethod.updateMessagesToSeenStatusTrue(
-          chatRoomId, messageIdsWithSeenStatusFalse, userId!);
-
+      CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
+      refreshPage();
       CommonMethod.setOnlineStatus();
       checkMicrophoneAvailability();
     } catch (e) {
       print('Error initializing chat room: $e');
     }
-  }
+  }                                                                            
 
   void checkMicrophoneAvailability() async {
     bool available = await speechToText.initialize();
@@ -183,6 +195,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
+    _messageSubscription!.cancel();
+
     CommonMethod.updateChatActiveStatus(null);
     CommonMethod.setOnlineStatus();
     flutterTts.stop();
@@ -193,7 +207,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int unreadCount = unreadMessageCounts[widget.chatRoom.chatRoomId] ?? 0;
+    // int unreadCount = unreadMessageCounts[widget.chatRoom.chatRoomId] ?? 0;
 
     Rx<UserModel> targetUser = UserModel(
             uid: null,
@@ -219,18 +233,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         }
       });
     }
-    FirebaseFirestore.instance
-        .collection("chatrooms")
-        .doc(widget.chatRoom.chatRoomId)
-        .collection("messages")
-        .orderBy("createdAt", descending: true)
-        .snapshots()
-        .listen((querySnapshot) {
-      final messages = querySnapshot.docs.map((doc) {
-        return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
-      }).toList();
-      controller.updateMessages(messages, widget.chatRoom);
-    });
+
 
     return Obx(() {
       return Scaffold(

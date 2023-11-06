@@ -57,7 +57,6 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await setupFlutterNotifications();
@@ -157,12 +156,12 @@ Future<void> showCallkitIncoming(
     duration: 30000,
     // extra: <String, dynamic>{'userId': '1a2b3c4d'},
     // headers: <String, dynamic>{'apiKey': 'Abc@123!', 'platform': 'flutter'},
-    android: const AndroidParams(
+    android: AndroidParams(
         isCustomNotification: true,
         isShowLogo: false,
         ringtonePath: 'system_ringtone_default',
         backgroundColor: '#0955fa',
-        backgroundUrl: 'https://i.pravatar.cc/500',
+        backgroundUrl: targetUser.profilePic,
         actionColor: '#4CAF50',
         incomingCallNotificationChannelName: "Incoming Call",
         missedCallNotificationChannelName: "Missed Call"),
