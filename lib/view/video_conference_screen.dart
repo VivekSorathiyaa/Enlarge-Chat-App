@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:zego_uikit_prebuilt_video_conference/zego_uikit_prebuilt_video_conference.dart';
 
 import '../models/message_model.dart';
-// Replace with the actual import path if it's different
 
 class VideoConferenceScreen extends StatefulWidget {
   final ChatRoomModel? chatRoomModel;

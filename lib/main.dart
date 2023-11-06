@@ -1,3 +1,6 @@
+
+//flutter build apk --split-per-abi
+
 import 'dart:convert';
 import 'dart:io';
 
