@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../utils/colors.dart';
 
 class NetworkImageWidget extends StatelessWidget {
+
   final String? imageUrl;
   final double? height;
   final double? width;

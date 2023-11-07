@@ -28,12 +28,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:flutter_glow/flutter_glow.dart';
 import 'package:get/get.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:translator/translator.dart';
 
+import '../controller/image_picker_controller.dart';
 import '../controller/theme_controller.dart';
 import '../componet/image_view_widget.dart';
 import '../componet/text_form_field_widget.dart';
@@ -179,7 +181,7 @@ refreshPage() async {
   Future<UserModel> getTargetUser() async {
     return widget.targetUser!;
   }
-
+  var imagePickerController = Get.put(ImagePickerController());
   @override
   void dispose() {
     _messageSubscription!.cancel();
@@ -588,6 +590,8 @@ refreshPage() async {
                                                           imageTypeMessageWidget(
                                                               currentMessage,
                                                               isCurrentUser)
+
+
                                                       ],
                                                     ),
                                                   Padding(
@@ -755,6 +759,7 @@ refreshPage() async {
                               controller.selectedFile =
                                   await CommonMethod.pickFile();
                               if (controller.selectedFile != null) {
+
                                 String? path = await CommonMethod.uploadFile(
                                     context, controller.selectedFile!);
                                 if (path != null) {
@@ -820,7 +825,20 @@ refreshPage() async {
       ),
     );
   }
+  Future<File?> cropImage(String imagePath) async {
+    ImageCropper imageCropper = ImageCropper();
+    final croppedFile = await imageCropper.cropImage(
+      sourcePath: imagePath, // Specify the source image path here
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 20,
+    );
 
+    if (croppedFile != null) {
+      return File(croppedFile.path);
+    }
+
+    return null;
+  }
   Widget textTypeMessageWidget(MessageModel currentMessage) {
     return Flexible(
       child: Text(
@@ -833,7 +851,8 @@ refreshPage() async {
   Widget imageTypeMessageWidget(
       MessageModel currentMessage, bool isCurrentUser) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async{
+
         Get.to(() => ImageViewWidget(
               imageUrl: currentMessage.media!,
               isFile: false,
@@ -847,9 +866,48 @@ refreshPage() async {
             bottomLeft: Radius.circular(10),
             topRight: isCurrentUser ? Radius.circular(0) : Radius.circular(10),
             bottomRight: Radius.circular(10)),
-        imageUrl: currentMessage.media,
+       imageUrl: currentMessage.media,
       ),
     );
+  }
+
+  // Widget imageTypeMessageWidget(
+  //     MessageModel currentMessage, bool isCurrentUser) {
+  //   return GestureDetector(
+  //     onTap: () async {
+  //       // Show the image cropping screen
+  //       File? croppedImage = await _cropImage(currentMessage.media!);
+  //       if (croppedImage != null) {
+  //         // After cropping, show the cropped image and provide an option to send it
+  //         Get.to(() => CropImageScreen(img: croppedImage));
+  //       }
+  //     },
+  //     child: NetworkImageWidget(
+  //       width: (Get.width / 2),
+  //       height: (Get.width / 2),
+  //       borderRadius: BorderRadius.only(
+  //           topLeft: isCurrentUser ? Radius.circular(10) : Radius.circular(0),
+  //           bottomLeft: Radius.circular(10),
+  //           topRight: isCurrentUser ? Radius.circular(0) : Radius.circular(10),
+  //           bottomRight: Radius.circular(10)),
+  //       imageUrl: currentMessage.media,
+  //     ),
+  //   );
+  // }
+
+  Future<File?> _cropImage(String imagePath) async {
+    ImageCropper imageCropper = ImageCropper();
+    final croppedFile = await imageCropper.cropImage(
+      sourcePath: imagePath,
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 20,
+    );
+
+    if (croppedFile != null) {
+      return File(croppedFile.path);
+    }
+
+    return null;
   }
 
   Widget audioTypeMessageWidget(
@@ -922,3 +980,16 @@ refreshPage() async {
     );
   }
 }
+
+class CropImageScreen extends StatelessWidget {
+  const CropImageScreen({Key? key, required this.img});
+  final File img;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+     body: Image.network(img as String),
+    );
+  }
+}
+
