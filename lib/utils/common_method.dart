@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -42,18 +43,50 @@ class CommonMethod {
     );
   }
 
+  // static Future<File?> pickFile() async {
+  //   List<File> files = [];
+  //   FilePickerResult? result =
+  //       await FilePicker.platform.pickFiles(allowMultiple: false);
+  //   if (result != null) {
+  //     files = await result.paths.map((path) => File(path!)).toList();
+  //     return files.first;
+  //   } else {
+  //     return null;
+  //   }
+  // }
   static Future<File?> pickFile() async {
-    List<File> files = [];
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(allowMultiple: false);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: false);
     if (result != null) {
-      files = await result.paths.map((path) => File(path!)).toList();
-      return files.first;
+      if (result.files.isNotEmpty) {
+        String? filePath = result.files.single.path;
+        if (filePath != null) {
+          File pickedFile = File(filePath);
+          if (CommonMethod.detectFileType(filePath) == 'image') {
+            // If the selected file is an image, open the crop image screen
+            final croppedImage = await CommonMethod().cropImage(filePath);
+            return croppedImage;
+
+          } else {
+            return pickedFile;
+          }
+        }
+      }
     } else {
       return null;
     }
   }
 
+
+  Future<File?> cropImage(String imagePath) async {
+    ImageCropper imageCropper = ImageCropper();
+    final croppedFile = await imageCropper.cropImage(
+      sourcePath: imagePath,
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 20,
+    );
+
+    return File(croppedFile!.path);
+  }
 
   static Future refreshToken() async {
     FirebaseMessaging.instance.getToken().then((token) async {
@@ -461,6 +494,7 @@ static Future<List<String>> fetchUnreadMessages(String roomID) async {
     List<String> videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
     List<String> audioExtensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'];
 
+
     // Check the file extension to determine the file type
     if (videoExtensions.contains(fileExtension)) {
       return 'video';
@@ -676,6 +710,10 @@ static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) as
 
     return deviceToken;
   }
+
+
+
+
 
 
 }
