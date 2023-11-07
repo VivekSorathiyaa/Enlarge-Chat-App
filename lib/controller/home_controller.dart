@@ -8,14 +8,15 @@ import '../utils/app_preferences.dart';
 import '../utils/common_method.dart';
 
 class HomeController extends GetxController {
-  final currentUserId = RxString('');
   final RxList<ChatRoomModel> chatRooms = RxList<ChatRoomModel>([]);
   StreamSubscription<QuerySnapshot>? chatRoomsStream;
 
-  @override
-  void onInit() {
-    super.onInit();
-    refreshPage();
+ 
+
+
+  Future<void> refreshPage() async {
+    CommonMethod.refreshToken();
+    CommonMethod.setOnlineStatus();
     chatRoomsStream = FirebaseFirestore.instance
         .collection("chatrooms")
         .snapshots()
@@ -28,23 +29,7 @@ class HomeController extends GetxController {
         }
         return null;
       }).whereType<ChatRoomModel>());
+      // chatRooms.refresh();
     });
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-  }
-
-  @override
-  void onClose() {
-    chatRoomsStream?.cancel();
-    super.onClose();
-  }
-
-  Future<void> refreshPage() async {
-    currentUserId.value = (await AppPreferences.getUiId()) ?? ''; // Handle null
-    CommonMethod.setOnlineStatus();
-    await CommonMethod.refreshToken();
   }
 }

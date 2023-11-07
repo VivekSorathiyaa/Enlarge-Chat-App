@@ -74,7 +74,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           .then((value) {
         log("Data uploaded!");
       //  Get.back();
-        Get.to(()=>HomeScreen());
+        Get.offAll(()=>HomeScreen());
       });
     }
   }

@@ -137,7 +137,7 @@ class _EditProfileState extends State<EditProfile> {
             .set(userModel.toMap())
             .then((value) {
           log("Data uploaded!");
-          Get.to(() => HomeScreen());
+          Get.offAll(() => HomeScreen());
         });
       } else {
         // No changes were made

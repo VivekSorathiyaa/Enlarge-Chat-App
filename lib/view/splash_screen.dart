@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/utils/common_method.dart';
@@ -39,10 +41,30 @@ class _SplashScreenState extends State<SplashScreen> {
         listenCallEvent();
       },
     );
+
     startTime();
     super.initState();
 
   }
+  Future getInitialMessage() async {
+    RemoteMessage? fcmMessage;
+
+
+    NotificationAppLaunchDetails? localMessage;
+    await flutterLocalNotificationsPlugin
+        .getNotificationAppLaunchDetails()
+        .then((value) {
+      localMessage = value;
+    });
+    if (
+        (localMessage?.didNotificationLaunchApp == false)) {
+          
+    } else {
+      onSelectNotification(json.encode(fcmMessage!.data));
+    }
+  }
+
+
 
   startTime() async {
     timer = Timer(

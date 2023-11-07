@@ -39,12 +39,13 @@
         android:required="true" />
 
             <application
-        android:label="VChatApp"
+        android:label="Property Talk"
          android:allowBackup="false" 
  android:fullBackupOnly="false"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
+android:hardwareAccelerated="false"
 
         android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:label, android:usesCleartextTraffic"

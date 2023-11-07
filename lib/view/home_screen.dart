@@ -40,15 +40,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   HomeController controller = Get.put(HomeController());
-  Locale? selectedLocale;
-  String? fullname = AppPreferences.getFullName();
-  String? phone = AppPreferences.getPhone();
-  String? profilePic = AppPreferences.getProfilePic();
-  Locale? savedLocale = AppPreferences().getLocaleFromPreferences();
+  ThemeController themeController = Get.put(ThemeController());
+  Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
 
   @override
   void initState() {
-    selectedLocale = savedLocale;
+    controller.refreshPage();
     super.initState();
   }
 
@@ -67,12 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  final ThemeController themeController = Get.put(ThemeController());
-
-  final ChatController chatController = Get.put(ChatController());
-
   @override
   void dispose() {
+    controller.chatRoomsStream?.cancel();
     super.dispose();
   }
 
@@ -80,8 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
     return Obx(() {
-      List<ChatRoomModel> chatRooms = controller.chatRooms;
-
       return Scaffold(
         backgroundColor:
             themeController.isDark.value ? primaryBlack : primaryWhite,
@@ -123,26 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: controller.chatRooms.length,
             itemBuilder: (context, index) {
               final chatRoomModel = controller.chatRooms[index];
-              int count = 0;
-              FirebaseFirestore.instance
-                  .collection("chatrooms")
-                  .doc(chatRoomModel.chatRoomId)
-                  .collection("messages")
-                  .orderBy("createdAt", descending: true)
-                  .snapshots()
-                  .listen((querySnapshot) {
-                final newMessage = querySnapshot.docs.map((doc) {
-                  return MessageModel.fromMap(
-                      doc.data() as Map<String, dynamic>);
-                }).toList();
-                for (final message in newMessage) {
-                  if (message.chatRoomId == chatRoomModel.chatRoomId &&
-                      message.sender != AppPreferences.getUiId() &&
-                      message.seen == false) {
-                    count++;
-                  }
-                }
-              });
               return chatRoomModel.usersIds == null
                   ? SizedBox()
                   : FutureBuilder(
@@ -153,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (snapshots.data != null) {
                           targetUser = snapshots.data as UserModel;
                         }
-
                         return targetUser == null
                             ? SizedBox()
                             : StreamBuilder<DocumentSnapshot>(
@@ -162,22 +133,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     .doc(targetUser.uid)
                                     .snapshots(),
                                 builder: (context, snapshot) {
-                                  // controller.updateMessages(messages,widget.chatRoom );
-
                                   if (snapshot.hasError) {
-                                    return Text('Error: ${snapshot.error}');
+                                    return SizedBox();
                                   }
-
                                   if (!snapshot.hasData ||
                                       !snapshot.data!.exists) {
                                     return SizedBox();
                                   }
-
                                   final userData = UserModel.fromMap(
                                       snapshot.data!.data()
                                           as Map<String, dynamic>);
-
-                                  // Use userData to display user details
                                   return Obx(
                                     () {
                                       return ShadowContainerWidget(
@@ -222,43 +187,93 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     ? chatRoomModel.groupImage
                                                     : userData.profilePic ??
                                                         ''),
-                                            trailing: Column(children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0),
-                                                child: Text(
-                                                  CommonMethod.formatDateTime(
-                                                      chatRoomModel.lastSeen ??
-                                                          DateTime.now()),
-                                                  style: AppTextStyle
-                                                      .normalRegular12
-                                                      .copyWith(
-                                                          color: greyColor),
-                                                ),
-                                              ),
-                                              height08,
-                                              if (chatRoomModel.isGroup ==
-                                                  false)
-                                                Text(
-                                                  userData.status == 'typing'
-                                                      ? "typing..."
-                                                      : userData.status ==
-                                                              "online"
-                                                          ? "online"
+                                            trailing: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                FutureBuilder<List<String>>(
+                                                    future: CommonMethod
+                                                        .fetchUnreadMessages(
+                                                            chatRoomModel
+                                                                .chatRoomId!),
+                                                    builder:
+                                                        (context, snapshot) {
+                                                      return snapshot.data !=
+                                                                  null &&
+                                                              snapshot.data!
+                                                                  .isNotEmpty
+                                                          ? Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Container(
+                                                                height: 30,
+                                                                width: 30,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                  color:
+                                                                      greenColor, // Choose your preferred badge background color
+                                                                ),
+                                                                child: Center(
+                                                                  child: Text(  
+                                                                    snapshot
+                                                                        .data!
+                                                                        .length
+                                                                        .toString(),
+                                                                    style: AppTextStyle
+                                                                        .normalSemiBold14
+                                                                        .copyWith(
+                                                                            color:
+                                                                                primaryWhite),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            )
+                                                          : SizedBox();
+                                                    }),
+                                                Column(children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 8.0),
+                                                    child: Text(
+                                                      CommonMethod.formatDateTime(
+                                                          chatRoomModel
+                                                                  .lastSeen ??
+                                                              DateTime.now()),
+                                                      style: AppTextStyle
+                                                          .normalRegular12
+                                                          .copyWith(
+                                                              color: greyColor),
+                                                    ),
+                                                  ),
+                                                  height08,
+                                                  if (chatRoomModel.isGroup ==
+                                                      false)
+                                                    Text(
+                                                      userData.status ==
+                                                              'typing'
+                                                          ? "typing..."
                                                           : userData.status ==
-                                                                  "offline"
-                                                              ? "offline"
-                                                              : '-',
-                                                  style: AppTextStyle
-                                                      .normalRegular12
-                                                      .copyWith(
-                                                          color:
-                                                              userData.status ==
+                                                                  "online"
+                                                              ? "online"
+                                                              : userData.status ==
+                                                                      "offline"
+                                                                  ? "offline"
+                                                                  : '-',
+                                                      style: AppTextStyle
+                                                          .normalRegular12
+                                                          .copyWith(
+                                                              color: userData
+                                                                          .status ==
                                                                       'offline'
                                                                   ? redColor
                                                                   : greenColor),
-                                                ),
-                                            ]),
+                                                    ),
+                                                ]),
+                                              ],
+                                            ),
                                             title: Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -279,26 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           : AppTextStyle
                                                               .lightNormalBold16),
                                                 ),
-                                                if (count > 0)
-                                                  Container(
-                                                    padding: EdgeInsets.all(3),
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      color: Colors
-                                                          .green, // Choose your preferred badge background color
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              1.5),
-                                                      child: Text(
-                                                        count.toString(),
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
                                               ],
                                             ),
                                             subtitle: chatRoomModel

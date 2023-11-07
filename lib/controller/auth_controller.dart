@@ -61,7 +61,7 @@ class AuthController extends GetxController {
 
             await CommonMethod.saveUserData(userModel);
             log("Log In Successful!");
-            Get.to(() => HomeScreen());
+            Get.offAll(() => HomeScreen());
 
           }
         },
@@ -118,7 +118,7 @@ class AuthController extends GetxController {
           if (userModel != null) {
             await CommonMethod.saveUserData(userModel);
             Get.back();
-            Get.to(() => HomeScreen());
+            Get.offAll(() => HomeScreen());
             return;
           }
         } else {

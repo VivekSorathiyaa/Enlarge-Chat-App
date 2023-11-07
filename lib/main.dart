@@ -4,8 +4,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:chatapp/models/chat_room_model.dart';
+import 'package:chatapp/models/message_model.dart';
+import 'package:chatapp/utils/app_notification.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/app.dart';
+import 'package:chatapp/view/chat_room_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart'; // Import Cupertino package
@@ -19,53 +24,55 @@ import 'package:zego_uikit/zego_uikit.dart';
 import 'models/user_model.dart';
 import 'utils/common_method.dart';
 import 'view/video_conference_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print(
       '-----_firebaseMessagingBackgroundHandler-----${message.toMap().toString()}');
   await Firebase.initializeApp();
-  await setupFlutterNotifications();
+  // await setupFlutterNotifications();
   handleNotifications(message);
   print('Handling a background message ${message.messageId}');
 }
 
-late AndroidNotificationChannel channel;
-late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+// late AndroidNotificationChannel channel;
+// late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
-Future<void> setupFlutterNotifications() async {
-  channel = const AndroidNotificationChannel(
-    'high_importance_channel', // id
-    'High Importance Notifications', // title
-    description:
-        'This channel is used for important notifications.', // description
-    importance: Importance.high,
-  );
-  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-}
+// Future<void> setupFlutterNotifications() async {
+//   channel = const AndroidNotificationChannel(
+//     'high_importance_channel', // id
+//     'High Importance Notifications', // title
+//     description:
+//         'This channel is used for important notifications.', // description
+//     importance: Importance.high,
+//   );
+//   flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+//   await flutterLocalNotificationsPlugin
+//       .resolvePlatformSpecificImplementation<
+//           AndroidFlutterLocalNotificationsPlugin>()
+//       ?.createNotificationChannel(channel);
+//   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+//     alert: true,
+//     badge: true,
+//     sound: true,
+//   );
+// }
 
 
 var uuid = Uuid();
-
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await setupFlutterNotifications();
-
+  // await setupFlutterNotifications();
   await AppPreferences.init();
-  // AppNotification().initNotification();
+  AppNotification().initNotification();
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
@@ -106,7 +113,18 @@ Future handleNotifications(RemoteMessage message) async {
   print("---data--- ${data.toString()}");
   UserModel targetUser = new UserModel.fromMap(json.decode(data['user']));
   if (data['type'] == "message") {
-    showNotification(data);
+    // showNotification(
+    //     title: data['title'],
+    //     message: data['body'],
+    //     payload: json.encode(message.data),
+    //     targetUser: targetUser);
+
+    showOrUpdateGroupedMessageNotification(
+      roomID: data['roomId'],
+      groupTitle: data['title'],
+      payload: json.encode(message.data),
+      targetUser: targetUser, message:  data['body'],
+    );
   } else if (data['type'] == "videoCall") {
     showCallkitIncoming(
       targetUser: targetUser,
@@ -117,30 +135,111 @@ Future handleNotifications(RemoteMessage message) async {
   }
   listenCallEvent();
 }
+int id = 0;
 
-void showNotification(data) async {
-  final android = const AndroidNotificationDetails(
+showNotification(
+    {required String title,
+    required String message,
+    required UserModel targetUser,
+    dynamic payload}) async {
+  final String largeIconPath = await _downloadAndSaveFile(
+      targetUser.profilePic ?? 'https://dummyimage.com/128x128/00FF00/000000',
+      'largeIcon');
+  var android = AndroidNotificationDetails(
     'channel id',
     'channel NAME',
     channelDescription: 'CHANNEL DESCRIPTION',
     priority: Priority.high,
     importance: Importance.max,
     playSound: true,
+    largeIcon: FilePathAndroidBitmap(largeIconPath),
+    styleInformation: const MediaStyleInformation(),
+
   );
-  final iOS = const DarwinNotificationDetails();
-  final platform = NotificationDetails(iOS: iOS, android: android);
+  var iOS = const DarwinNotificationDetails();
+  var platform = NotificationDetails(iOS: iOS, android: android);
   await flutterLocalNotificationsPlugin.show(
-    0,
-    data['title'],
-    data['body'],
+    id++,
+    title,
+    message,
     platform,
+    payload: payload,
   );
+}
+
+Map<String, int> notificationIdMap = {};
+Future<void> showOrUpdateGroupedMessageNotification({
+  required String roomID,
+  required String groupTitle,
+  required String message,
+  required dynamic payload,
+  required UserModel targetUser,
+}) async {
+  final existingNotificationId = notificationIdMap[roomID];
+  final String largeIconPath = await _downloadAndSaveFile(
+      targetUser.profilePic ?? 'https://dummyimage.com/128x128/00FF00/000000',
+      'largeIcon');
+  List<String> unReadMessages = await CommonMethod.fetchUnreadMessages(roomID);
+  final inboxStyle = InboxStyleInformation(
+    unReadMessages.map((message) => message).toList(),
+    contentTitle:unReadMessages.isEmpty? message: '${unReadMessages.length} new messages',
+    summaryText: 'New messages from $groupTitle',
+  );
+
+  final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    'your_channel_id',
+    'your_channel_name',
+    channelDescription: 'your_channel_description',
+    styleInformation: inboxStyle,
+    priority: Priority.high,
+    playSound: true,
+    largeIcon: FilePathAndroidBitmap(largeIconPath),
+    importance: Importance.max,
+    groupKey: roomID,
+    setAsGroupSummary: true,
+  );
+
+  final platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+  if (existingNotificationId != null) {
+    // Update the existing notification
+    await flutterLocalNotificationsPlugin.show(
+      existingNotificationId,
+      groupTitle,
+      'New messages from $groupTitle',
+      platformChannelSpecifics,
+      payload: payload,
+    );
+  } else {
+    // Create a new notification
+    final notificationId = notificationIdMap.length;
+    notificationIdMap[roomID] = notificationId;
+    await flutterLocalNotificationsPlugin.show(
+      notificationId,
+      groupTitle,
+      unReadMessages.length == 1
+          ? unReadMessages.first
+          : 'New messages from $groupTitle',
+      platformChannelSpecifics,
+      payload: payload,
+    );
+
+  }
+}
+
+Future<String> _downloadAndSaveFile(String url, String fileName) async {
+  final Directory directory = await getApplicationDocumentsDirectory();
+  final String filePath = '${directory.path}/$fileName';
+  final http.Response response = await http.get(Uri.parse(url));
+  final File file = File(filePath);
+  await file.writeAsBytes(response.bodyBytes);
+  return filePath;
 }
 
 Future<void> showCallkitIncoming(
     {required UserModel targetUser, required String id}) async {
   listenCallEvent();
-
   CallKitParams callKitParams = CallKitParams(
     id: id,
     nameCaller: targetUser.fullName,
@@ -187,6 +286,25 @@ Future<void> showCallkitIncoming(
   );
   await FlutterCallkitIncoming.showCallkitIncoming(callKitParams);
 }
+
+Future onSelectNotification(String? payLoadData) async {
+  if (payLoadData != null) {
+    dynamic payload = await json.decode(payLoadData);
+    if (payload['roomId'] != null) {
+      ChatRoomModel? chatRoomModel =
+          await CommonMethod.getChatRoomModelById(payload['roomId']);
+      UserModel? targetUser =
+          new UserModel.fromMap(json.decode(payload['user']));
+
+      if (chatRoomModel != null && targetUser != null) {
+        Get.to(() =>
+            ChatRoomScreen(chatRoom: chatRoomModel, targetUser: targetUser));
+      }
+    }
+  }
+  print("----onSelectNotification----$payLoadData");
+}
+
 
 Future listenCallEvent() async {
   FlutterCallkitIncoming.onEvent.listen((CallEvent? event) async {

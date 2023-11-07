@@ -347,6 +347,26 @@ class CommonMethod {
     }
   }
 
+static Future<List<String>> fetchUnreadMessages(String roomID) async {
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection("chatrooms")
+      .doc(roomID)
+      .collection("messages")
+      .orderBy("createdAt", descending: true)
+      .get(); // Use get() instead of snapshots() to wait for the query to complete
+  final newMessages = querySnapshot.docs.map((doc) {
+    return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+  }).toList();
+  final messages = <String>[];
+  for (final message in newMessages) {
+    if (message.chatRoomId == roomID &&
+        message.sender != AppPreferences.getUiId() &&
+        message.seen == false) {
+      messages.add(message.text.toString());
+    }
+  }
+  return messages;
+}
 
   static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
   final List<QuerySnapshot> userSnapshots =
