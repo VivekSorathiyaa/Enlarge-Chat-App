@@ -59,28 +59,19 @@ class ChatRoomScreen extends StatefulWidget {
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   SpeechToText speechToText = SpeechToText();
-  String _text = '';
-  String msg = '';
-  String? localeId;
-
   Locale? locale = AppPreferences().getLocaleFromPreferences();
   bool isListening = false;
-  int maxDurationInSeconds = 10;
-  Timer? timer;
-
   final FlutterTts flutterTts = FlutterTts();
   RxBool currentSpeaking = false.obs;
   RxInt selectedIndex = 0.obs;
-  AppPreferences preferences = AppPreferences();
   var controller = Get.put(ChatController());
   final ScrollController _scrollController = ScrollController();
-  Map<String, int> unreadMessageCounts = {};
-  String? userId = AppPreferences.getUiId();
 StreamSubscription<QuerySnapshot>? _messageSubscription;
 
   @override
   void initState() {
-    log("==============target user open room id:${widget.targetUser!.openRoomId}");
+    initializeChatRoom();
+
     _messageSubscription = FirebaseFirestore.instance
         .collection("chatrooms")
         .doc(widget.chatRoom.chatRoomId)
@@ -94,30 +85,26 @@ StreamSubscription<QuerySnapshot>? _messageSubscription;
       controller.updateMessages(messages, widget.chatRoom);
       refreshPage();
     });
-    initializeChatRoom();
     super.initState();
   }
 
 refreshPage() async {
-    print('-----refreshPage-----');
+    CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     List<String> messageIdsWithSeenStatusFalse =
           await CommonMethod.retrieveMessagesWithSeenStatusFalse(
       widget.chatRoom.chatRoomId!,
     );                                                                                                                                                                                                                   
     await CommonMethod.updateMessagesToSeenStatusTrue(
-        widget.chatRoom.chatRoomId!, messageIdsWithSeenStatusFalse, userId!);
+        widget.chatRoom.chatRoomId!,
+        messageIdsWithSeenStatusFalse,
+        AppPreferences.getUiId()!);
   }
 
   Future<void> initializeChatRoom() async {
-    log('-------userid=============${userId}');
-    try {
-      CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
       refreshPage();
       CommonMethod.setOnlineStatus();
       checkMicrophoneAvailability();
-    } catch (e) {
-      print('Error initializing chat room: $e');
-    }
+
   }                                                                            
 
   void checkMicrophoneAvailability() async {

@@ -89,7 +89,10 @@ class ChatController extends GetxController {
           if (userStatus != null &&
                   userStatus.fcmToken != null &&
                   (userStatus.openRoomId == null) ||
-              (userStatus!.openRoomId != chatRoom.chatRoomId)) {
+              (userStatus!.openRoomId != null &&
+                  userStatus.openRoomId != chatRoom.chatRoomId)) {
+            print("----userStatus.openRoomId---${userStatus.openRoomId}");
+            print("----userStatus.chatRoomId---${chatRoom.chatRoomId}");
             deviceTokenList.add(userStatus.fcmToken!);
           }
         }

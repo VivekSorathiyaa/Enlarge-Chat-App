@@ -104,13 +104,6 @@ class AuthController extends GetxController {
         String uid = credential.user!.uid;
         bool isRegistered =
             await CommonMethod.isPhoneNumberRegistered(phoneTxtController.text);
-
-
-
-
-
-
-
         UserModel newUser = UserModel(
             uid: uid,
             phone: phoneTxtController.text,
@@ -120,20 +113,28 @@ class AuthController extends GetxController {
             openRoomId: null, deviceToken:deviceToken,
         );
 
-        await updateDeviceToken(uid, deviceToken);
         await CommonMethod.saveUserData(newUser);
+        await updateActiveDevice(uid, deviceToken);
 
         if (isRegistered) {
-          await updateActiveDevice(uid, deviceToken);
           UserModel? userModel = await CommonMethod.getUserModelById(uid);
           if (userModel != null) {
             await CommonMethod.saveUserData(userModel);
+            if (userModel.deviceToken != null &&
+                userModel.deviceToken != deviceToken) {
+              CommonMethod.sendNotification(
+                  deviceTokens: [userModel.fcmToken!],
+                  title: 'Account Security Alert',
+                  roomId: '',
+                  type: 'logIn',
+                  body:
+                      'Someone has logged into your account from another device. If this wasn\'t you, please take immediate action to secure your account.');
+            }
             Get.back();
             Get.offAll(() => HomeScreen());
             return;
           }
         } else {
-          await setActiveDevice(uid, deviceToken);
           UserModel newUser = UserModel(
               uid: uid,
               fcmToken:null,
@@ -160,11 +161,7 @@ class AuthController extends GetxController {
   }
 
 
-  Future<void> setActiveDevice(String uid, String deviceToken) async {
-    await FirebaseFirestore.instance.collection("users").doc(uid).set({
-      'deviceToken': deviceToken,
-    }, SetOptions(merge: true));
-  }
+
 
   Future<void> updateActiveDevice(String uid, String deviceToken) async {
     await FirebaseFirestore.instance.collection("users").doc(uid).update({
@@ -172,17 +169,17 @@ class AuthController extends GetxController {
     });
   }
 
-  Future<void> updateDeviceToken(String uid, String newDeviceToken) async {
-    try {
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'deviceToken': newDeviceToken,
-      });
-      log('==========Device token updated successfully.');
-    } catch (e) {
-      // Handle any potential errors, e.g., network issues or permission problems
-      print('Error updating device token: $e');
-    }
-  }
+  // Future<void> updateDeviceToken(String uid, String newDeviceToken) async {
+  //   try {
+  //     await FirebaseFirestore.instance.collection('users').doc(uid).update({
+  //       'deviceToken': newDeviceToken,
+  //     });
+  //     log('==========Device token updated successfully.');
+  //   } catch (e) {
+  //     // Handle any potential errors, e.g., network issues or permission problems
+  //     print('Error updating device token: $e');
+  //   }
+  // }
 
 
 }

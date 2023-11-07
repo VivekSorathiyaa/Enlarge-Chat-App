@@ -39,11 +39,9 @@ class MyAlertDialog {
             : MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
       ),
       onPressed: () async {
-        await FirebaseAuth.instance.signOut();
         authController.phoneTxtController.text = '';
         authController.otpTxtController.text = '';
-
-        Get.to(() => LoginScreen());
+CommonMethod.logoutUser();
       },
       child: Text(
         'continue'.tr,

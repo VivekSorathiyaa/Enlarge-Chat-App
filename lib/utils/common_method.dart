@@ -7,9 +7,11 @@ import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_constants.dart';
 import 'package:chatapp/utils/app_preferences.dart';
+import 'package:chatapp/view/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -53,7 +55,11 @@ class CommonMethod {
       return null;
     }
   }
-
+  static Future logoutUser() async {
+    await FirebaseAuth.instance.signOut();
+    AppPreferences.clear();
+    Get.offAll(() => LoginScreen());
+  }
 
   static Future refreshToken() async {
     FirebaseMessaging.instance.getToken().then((token) async {
@@ -105,7 +111,6 @@ class CommonMethod {
         .collection("users")
         .doc(AppPreferences.getUiId())
         .update({'openRoomId': openRoomId}).then((value) {
-      log("Fcm updated!");
     });
   }
 

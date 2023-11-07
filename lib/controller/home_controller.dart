@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:chatapp/view/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 import '../models/chat_room_model.dart';
@@ -29,7 +31,14 @@ class HomeController extends GetxController {
         }
         return null;
       }).whereType<ChatRoomModel>());
-      // chatRooms.refresh();
     });
+    String? deviceToken = await AppPreferences.getDeviceToken();
+    bool deviceTokenChanged = await CommonMethod.checkDeviceTokenChange(
+        AppPreferences.getUiId()!, deviceToken);
+    if (deviceTokenChanged) {
+     CommonMethod.logoutUser();
+
+    }
   }
+  
 }
