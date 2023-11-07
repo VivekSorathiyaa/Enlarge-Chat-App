@@ -1,3 +1,5 @@
+import 'package:chatapp/controller/auth_controller.dart';
+import 'package:chatapp/utils/common_method.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,19 +9,21 @@ import '../utils/colors.dart';
 import '../view/login_screen.dart';
 
 class MyAlertDialog {
-
   static void showLogoutDialog(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final authController = Get.put(AuthController());
 
     Widget cancelButton = ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: themeController.isDark.value ?MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.8)):MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.5)),
+        backgroundColor: themeController.isDark.value
+            ? MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.8))
+            : MaterialStateProperty.all<Color>(primaryWhite.withOpacity(0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(
           'cancel'.tr,
-          style: TextStyle( color: greyColor, fontWeight: FontWeight.w500),
+          style: TextStyle(color: greyColor, fontWeight: FontWeight.w500),
         ),
       ),
       onPressed: () {
@@ -29,13 +33,17 @@ class MyAlertDialog {
 
     Widget continueButton = ElevatedButton(
       style: ButtonStyle(
-        backgroundColor:  themeController.isDark.value ?MaterialStateProperty.all<Color>(Colors.blue[900]!.withOpacity(0.9)):MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
+        backgroundColor: themeController.isDark.value
+            ? MaterialStateProperty.all<Color>(
+                Colors.blue[900]!.withOpacity(0.9))
+            : MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
       ),
       onPressed: () async {
         await FirebaseAuth.instance.signOut();
-Get.to(() => LoginScreen());
+        authController.phoneTxtController.text = '';
+        authController.otpTxtController.text = '';
 
-      
+        Get.to(() => LoginScreen());
       },
       child: Text(
         'continue'.tr,
@@ -44,13 +52,16 @@ Get.to(() => LoginScreen());
     );
 
     AlertDialog alert = AlertDialog(
-      backgroundColor: themeController.isDark.value ? blackThemeColor : primaryWhite,
+      backgroundColor:
+          themeController.isDark.value ? blackThemeColor : primaryWhite,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0), // Adjust the border radius as needed
+        borderRadius:
+            BorderRadius.circular(8.0), // Adjust the border radius as needed
       ),
       alignment: Alignment.center,
       content: Text("logout_desc".tr),
-      contentTextStyle:TextStyle(color:  themeController.isDark.value ?primaryWhite:primaryBlack),
+      contentTextStyle: TextStyle(
+          color: themeController.isDark.value ? primaryWhite : primaryBlack),
       actions: [
         cancelButton,
         continueButton,
@@ -66,14 +77,19 @@ Get.to(() => LoginScreen());
     );
   }
 
-  static void showLanguageDialog(BuildContext context, List<Map<String, dynamic>> locale, Locale selectedLocale, Function(Locale) updateLanguage) {
+  static void showLanguageDialog(
+      BuildContext context,
+      List<Map<String, dynamic>> locale,
+      Locale selectedLocale,
+      Function(Locale) updateLanguage) {
     final themeController = Get.find<ThemeController>();
 
     showDialog(
       context: context,
       builder: (builder) {
         return AlertDialog(
-          backgroundColor: themeController.isDark.value ?blackThemeColor:primaryWhite ,
+          backgroundColor:
+              themeController.isDark.value ? blackThemeColor : primaryWhite,
           actionsAlignment: MainAxisAlignment.start,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
@@ -85,7 +101,12 @@ Get.to(() => LoginScreen());
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: themeController.isDark.value?[Colors.blue[900]!, Colors.black.withOpacity(0.7)]:[primaryBlack.withOpacity(0.9), greyColor.withOpacity(0.7)],
+                colors: themeController.isDark.value
+                    ? [Colors.blue[900]!, Colors.black.withOpacity(0.7)]
+                    : [
+                        primaryBlack.withOpacity(0.9),
+                        greyColor.withOpacity(0.7)
+                      ],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -102,21 +123,25 @@ Get.to(() => LoginScreen());
             children: List<Widget>.generate(locale.length, (index) {
               return Theme(
                 data: ThemeData(
-                  unselectedWidgetColor: themeController.isDark.value?primaryWhite:primaryBlack,
-
+                  unselectedWidgetColor: themeController.isDark.value
+                      ? primaryWhite
+                      : primaryBlack,
                 ),
                 child: ListTile(
                   title: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(locale[index]['name'],style: TextStyle(color: themeController.isDark.value? primaryWhite:primaryBlack),),
+                    child: Text(
+                      locale[index]['name'],
+                      style: TextStyle(
+                          color: themeController.isDark.value
+                              ? primaryWhite
+                              : primaryBlack),
+                    ),
                   ),
-
                   leading: Radio<Locale>(
-
-
-
-                    activeColor:themeController.isDark.value? primaryWhite:primaryBlack,
-
+                    activeColor: themeController.isDark.value
+                        ? primaryWhite
+                        : primaryBlack,
                     value: locale[index]['locale'],
                     groupValue: selectedLocale,
                     onChanged: (value) {
@@ -137,8 +162,4 @@ Get.to(() => LoginScreen());
       },
     );
   }
-
-
-
 }
-

@@ -215,7 +215,7 @@ refreshPage() async {
             phone: null,
             profilePic: null,
             fcmToken: null,
-            openRoomId: null)
+            openRoomId: null, deviceToken: null)
         .obs;
     if (widget.targetUser != null) {
       targetUser = widget.targetUser!.obs;

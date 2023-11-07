@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/main.dart';
@@ -5,7 +6,10 @@ import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
+import 'package:chatapp/view/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +50,28 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     controller.refreshPage();
-    super.initState();
+    Locale? selectedLocale;
+    String? fullname = AppPreferences.getFullName();
+    String? phone = AppPreferences.getPhone();
+    String? profilePic = AppPreferences.getProfilePic();
+    Locale? savedLocale = AppPreferences().getLocaleFromPreferences();
+    Timer? timer;
+    @override
+    void initState() {
+      selectedLocale = savedLocale;
+      super.initState();
+      instialize();
+    }
+  }
+
+  void instialize() async {
+    String? deviceToken = await AppPreferences.getDeviceToken();
+    bool deviceTokenChanged = await CommonMethod.checkDeviceTokenChange(
+        AppPreferences.getUiId()!, deviceToken);
+    if (deviceTokenChanged) {
+      FirebaseAuth.instance.signOut();
+      Get.offAll(() => LoginScreen());
+    }
   }
 
   final List<Map<String, dynamic>> locale = [
@@ -73,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
+    instialize();
     return Obx(() {
       return Scaffold(
         backgroundColor:
@@ -216,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                                       greenColor, // Choose your preferred badge background color
                                                                 ),
                                                                 child: Center(
-                                                                  child: Text(  
+                                                                  child: Text(
                                                                     snapshot
                                                                         .data!
                                                                         .length

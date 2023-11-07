@@ -14,13 +14,14 @@ class GroupController extends GetxController{
   TextEditingController searchTextController = TextEditingController();
   final allUserList = <UserModel>[].obs;
   final selectUserList = <UserModel>[].obs;
+
   Rx<UserModel> currentUser = UserModel(
           openRoomId: null,
           fcmToken: AppPreferences.getFcmToken(),
           fullName: AppPreferences.getFullName(),
           phone: AppPreferences.getPhone(),
           profilePic: AppPreferences.getProfilePic(),
-          uid: AppPreferences.getUiId())
+          uid: AppPreferences.getUiId(), deviceToken: AppPreferences.getDeviceToken()as String)
       .obs;
 
 

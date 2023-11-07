@@ -1,4 +1,7 @@
 
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +13,7 @@ class AppPreferences {
   static final String _keyPhone = '_keyPhone';
   static final String _keyProfilePic = '_keyProfilePic';
   static final String _keyFcmToken = '_keyFcmToken';
+  static final String _keyDeviceToken='_keyDeviceToken';
   static final String _keyLocal = '_keyLocal';
   static final String _languageKey = '_languageKey';
   static final String _countryCodeKey = '_countryCodeKey';
@@ -39,7 +43,9 @@ class AppPreferences {
   static String? getFcmToken() {
     return _prefs!.getString(_keyFcmToken);
   }
-
+  // static String? getDeviceToken() {
+  //   return _prefs!.getString(_keyDeviceToken);
+  // }
   Locale? getLocaleFromPreferences() {
     final languageCode = _prefs!.getString(_languageKey);
     final countryCode = _prefs!.getString(_countryCodeKey);
@@ -75,6 +81,33 @@ class AppPreferences {
   static Future<void> setFcmToken(String fcmToken) async {
     await _prefs!.setString(_keyFcmToken, fcmToken);
   }
+
+  // static Future<void> setDeviceToken(String deviceToken) async {
+  //   await _prefs!.setString(_keyDeviceToken, deviceToken);
+  // }
+ static Future<String> getDeviceToken() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String deviceToken = '';
+
+    // Get the device information
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      deviceToken = androidInfo.product; // This is the device token for Android
+    } else if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      deviceToken = iosInfo.identifierForVendor!; // This is the device token for iOS
+    }
+
+    // Save the device token
+    await setDeviceToken(deviceToken);
+
+    return deviceToken;
+  }
+
+  static Future<void> setDeviceToken(String deviceToken) async {
+    await _prefs!.setString(_keyDeviceToken, deviceToken);
+  }
+
 
   static Future<void> clear() async {
     await _prefs!.clear();

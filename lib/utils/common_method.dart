@@ -8,9 +8,11 @@ import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/app_constants.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/utils/utils.dart';
@@ -53,11 +55,11 @@ class CommonMethod {
   }
 
 
-
   static Future refreshToken() async {
     FirebaseMessaging.instance.getToken().then((token) async {
       if (token != null) {
         await AppPreferences.setFcmToken(token);
+
         String? currentUserId = await AppPreferences.getUiId();
         if (currentUserId != null) {
           await FirebaseFirestore.instance
@@ -71,7 +73,24 @@ class CommonMethod {
       print('FCM Token: $token');
     });
   }
+  static Future refreshDeviceToken() async {
+    FirebaseMessaging.instance.getToken().then((token) async {
+      if (token != null) {
+        await AppPreferences.setFcmToken(token);
 
+        String? currentUserId = await AppPreferences.getUiId();
+        if (currentUserId != null) {
+          await FirebaseFirestore.instance
+              .collection("users")
+              .doc(currentUserId)
+              .update({'fcmToken': token}).then((value) {
+            print("Fcm updated!");
+          });
+        }
+      }
+      print('FCM Token: $token');
+    });
+  }
   static Future updateUserOnlineStatus(bool status) async {
     await FirebaseFirestore.instance
         .collection("users")
@@ -106,7 +125,7 @@ class CommonMethod {
         fullName: AppPreferences.getFullName(),
         phone: AppPreferences.getPhone(),
         profilePic: AppPreferences.getProfilePic(),
-        uid: AppPreferences.getUiId());
+        uid: AppPreferences.getUiId(), deviceToken: '');
 
     currentUser =
         await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
@@ -550,7 +569,27 @@ static Future<ChatRoomModel?> createGroup(
       await AppPreferences.setFcmToken(userModel.fcmToken!);
     }
   }
+static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) async {
+  // Query your database to retrieve the user's current device token
+  // This can vary depending on your database structure (Firestore, Realtime Database, etc.)
 
+  // For example, if you are using Firestore, you can do something like this:
+  try {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      final currentDeviceToken = userDoc.data()?['deviceToken'];
+
+      // Compare the current device token with the new device token
+      return currentDeviceToken != newDeviceToken;
+    }
+  } catch (e) {
+    // Handle any potential database errors
+    print('Error checking device token change: $e');
+  }
+
+  // Return true by default if there was an error or the user doesn't exist in the database
+  return true;
+}
   static Future<bool> isPhoneNumberRegistered(String phoneNumber) async {
     final QuerySnapshot result = await FirebaseFirestore.instance
         .collection('users')
@@ -619,6 +658,23 @@ static Future<ChatRoomModel?> createGroup(
       imageFormat: ImageFormat.PNG,
     );
     return fileName!;
+  }
+
+
+  Future<String> getDeviceToken() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String deviceToken = '';
+
+    // Get the device information
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      deviceToken = androidInfo.id; // This is the device token for Android
+    } else if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      deviceToken = iosInfo.identifierForVendor!; // This is the device token for iOS
+    }
+
+    return deviceToken;
   }
 
 

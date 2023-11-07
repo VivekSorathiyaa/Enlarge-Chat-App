@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/complete_profile_screen.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -40,7 +41,6 @@ class AuthController extends GetxController {
   static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
 
 
-  
   Future verifyPhoneNumber(BuildContext context) async {
     CustomDialog.showLoadingDialog(context, "OTP Send..");
     try {
@@ -48,7 +48,7 @@ class AuthController extends GetxController {
         phoneNumber: phoneTxtController.text,
         verificationCompleted: (PhoneAuthCredential phoneAuthCredential) async {
           UserCredential? credential =
-              await auth.signInWithCredential(phoneAuthCredential);
+          await auth.signInWithCredential(phoneAuthCredential);
           if (credential != null) {
             log('Phone number verified');
             String uid = credential.user!.uid;
@@ -57,7 +57,7 @@ class AuthController extends GetxController {
                 .doc(uid)
                 .get();
             UserModel userModel =
-                UserModel.fromMap(userData.data() as Map<String, dynamic>);
+            UserModel.fromMap(userData.data() as Map<String, dynamic>);
 
             await CommonMethod.saveUserData(userModel);
             log("Log In Successful!");
@@ -89,6 +89,7 @@ class AuthController extends GetxController {
       BuildContext context, String verificationId,) async {
     CustomDialog.showLoadingDialog(context, "Verify SMS Code..");
 
+    String? deviceToken=await AppPreferences.getDeviceToken() ;
 
     try {
 
@@ -96,7 +97,6 @@ class AuthController extends GetxController {
         verificationId: verificationId,
         smsCode: otpTxtController.text,
       );
-
       UserCredential? credential =
           await FirebaseAuth.instance.signInWithCredential(phoneAuthCredential);
       if (credential != null) {
@@ -104,16 +104,27 @@ class AuthController extends GetxController {
         String uid = credential.user!.uid;
         bool isRegistered =
             await CommonMethod.isPhoneNumberRegistered(phoneTxtController.text);
+
+
+
+
+
+
+
         UserModel newUser = UserModel(
             uid: uid,
             phone: phoneTxtController.text,
             fullName: null,
             profilePic: null,
             fcmToken: null,
-            openRoomId: null);
+            openRoomId: null, deviceToken:deviceToken,
+        );
+
+        await updateDeviceToken(uid, deviceToken);
         await CommonMethod.saveUserData(newUser);
 
         if (isRegistered) {
+          await updateActiveDevice(uid, deviceToken);
           UserModel? userModel = await CommonMethod.getUserModelById(uid);
           if (userModel != null) {
             await CommonMethod.saveUserData(userModel);
@@ -122,12 +133,13 @@ class AuthController extends GetxController {
             return;
           }
         } else {
+          await setActiveDevice(uid, deviceToken);
           UserModel newUser = UserModel(
               uid: uid,
               fcmToken:null,
               phone: phoneTxtController.text,
               fullName: null,
-              profilePic: null, openRoomId: null);
+              profilePic: null, openRoomId: null, deviceToken: deviceToken);
           await CommonMethod.saveUserData(newUser);
           await FirebaseFirestore.instance
               .collection("users")
@@ -146,4 +158,32 @@ class AuthController extends GetxController {
       log('Sign in with SMS code error: $ex');
     }
   }
+
+
+  Future<void> setActiveDevice(String uid, String deviceToken) async {
+    await FirebaseFirestore.instance.collection("users").doc(uid).set({
+      'deviceToken': deviceToken,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateActiveDevice(String uid, String deviceToken) async {
+    await FirebaseFirestore.instance.collection("users").doc(uid).update({
+      'deviceToken': deviceToken,
+    });
+  }
+
+  Future<void> updateDeviceToken(String uid, String newDeviceToken) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'deviceToken': newDeviceToken,
+      });
+      log('==========Device token updated successfully.');
+    } catch (e) {
+      // Handle any potential errors, e.g., network issues or permission problems
+      print('Error updating device token: $e');
+    }
+  }
+
+
 }
+
