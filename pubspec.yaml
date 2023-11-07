@@ -64,6 +64,7 @@ dependencies:
   just_audio: ^0.9.35
   zego_uikit_prebuilt_video_conference: ^2.6.1
   flutter_callkit_incoming: ^2.0.0+2
+  device_info_plus: ^9.1.0
 
   # flutter_translate: ^4.0.4
 dependency_overrides:

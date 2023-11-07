@@ -51,6 +51,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     String? uid = await AppPreferences.getUiId();
     String? phone = await AppPreferences.getPhone();
     String? fcmToken = await AppPreferences.getFcmToken();
+    String? deviceToken = await AppPreferences.getDeviceToken();
 
     if (uid != null) {
       CustomDialog.showLoadingDialog(context, "Uploading image..");
@@ -65,7 +66,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
           phone: phone,
           fullName: fullNameController.text.trim(),
           profilePic: imageUrl,
-          fcmToken: fcmToken, openRoomId: null);
+          fcmToken: fcmToken, openRoomId: null, deviceToken: deviceToken);
       await CommonMethod.saveUserData(userModel);
       await FirebaseFirestore.instance
           .collection("users")

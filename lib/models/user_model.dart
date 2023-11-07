@@ -6,6 +6,7 @@ class UserModel {
   String? fcmToken;
   String? status;
   String? openRoomId;
+  String? deviceToken;
 
 
   UserModel({
@@ -15,6 +16,7 @@ class UserModel {
     required this.profilePic,
     required this.fcmToken,
     required this.openRoomId,
+    required this.deviceToken,
     this.status,
 
   });
@@ -26,6 +28,7 @@ class UserModel {
     profilePic = map["profilePic"] ??
         'https://i.pravatar.cc/500';
     fcmToken = map["fcmToken"];
+    deviceToken = map["deviceToken"];
     status = map["status"];
 
     openRoomId = map["openRoomId"];
@@ -38,6 +41,7 @@ class UserModel {
       "phone": phone,
       "profilePic": profilePic,
       "fcmToken": fcmToken,
+      "deviceToken":deviceToken,
       "openRoomId": openRoomId,
       "status": status,
 

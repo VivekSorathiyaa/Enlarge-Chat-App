@@ -12,7 +12,7 @@ class CustomDrawer extends StatelessWidget {
   final Function() myAccount;
 
   final Function() changeLang;
-  final Function() logout;
+  final  Function() logout;
 
 
   CustomDrawer({

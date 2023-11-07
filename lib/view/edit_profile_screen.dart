@@ -99,6 +99,7 @@ class _EditProfileState extends State<EditProfile> {
   Future uploadData() async {
     String? uid = await AppPreferences.getUiId();
     String? phone = await AppPreferences.getPhone();
+    String? deviceToken=await AppPreferences.getDeviceToken();
 
     String? fcmToken = await AppPreferences.getFcmToken();
 
@@ -125,7 +126,7 @@ class _EditProfileState extends State<EditProfile> {
           fullName: fullNameController.text.trim(),
           profilePic: imageUrl,
           fcmToken: fcmToken,
-          openRoomId: null,
+          openRoomId: null, deviceToken: deviceToken,
         );
         await CommonMethod.saveUserData(userModel);
         await AppPreferences.setFullName(fullNameController.text.trim());
