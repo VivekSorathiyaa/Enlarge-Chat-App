@@ -1,23 +1,13 @@
-import 'dart:async';
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/componet/common_app_bar.dart';
-import 'package:chatapp/main.dart';
-import 'package:chatapp/controller/chat_controller.dart';
-import 'package:chatapp/models/chat_room_model.dart';
+import 'package:chatapp/componet/image_view_widget.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
-import 'package:chatapp/view/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import '../componet/common_showAlert.dart';
 import '../controller/theme_controller.dart';
 import '../componet/app_text_style.dart';
@@ -192,22 +182,75 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .then((value) =>
                                                       setState(() {}));
                                             },
-                                            leading: NetworkImageWidget(
-                                                height: 50,
-                                                width: 50,
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                errorIcon: chatRoomModel
-                                                        .isGroup!
-                                                    ? CupertinoIcons.group_solid
-                                                    : CupertinoIcons
-                                                        .profile_circled,
-                                                imageUrl: chatRoomModel.isGroup!
-                                                    ? chatRoomModel
-                                                            .groupImage ??
-                                                        'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                    : userData.profilePic ??
-                                                        ''),
+                                            // leading: 
+                                            // NetworkImageWidget(
+                                            //     height: 50,
+                                            //     width: 50,
+                                            //     borderRadius:
+                                            //         BorderRadius.circular(50),
+                                            //     errorIcon: chatRoomModel
+                                            //             .isGroup!
+                                            //         ? CupertinoIcons.group_solid
+                                            //         : CupertinoIcons
+                                            //             .profile_circled,
+                                            //     imageUrl: chatRoomModel.isGroup!
+                                            //         ? chatRoomModel
+                                            //                 .groupImage ??
+                                            //             'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                            //         : userData.profilePic ??
+                                            //             ''),
+                                            leading: GestureDetector(
+                                              onTap: (){
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10.0),
+                                                      ),
+                                                      backgroundColor: Colors.transparent,
+                                                      content: Hero(
+                                                        transitionOnUserGestures: true,
+
+                                                        tag: 'userProfile',
+                                                        child:GestureDetector(
+                                                          onTap: (){
+                                                            Get.back();
+                                                    Get.to(()=>ImageViewWidget(imageUrl:  chatRoomModel.isGroup! ? chatRoomModel.groupImage ?? 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                        : userData.profilePic ?? '',profileImg: true, isFile: false,text:chatRoomModel.isGroup!
+                                                        ? chatRoomModel
+                                                        .groupName ??
+                                                        "Group"
+                                                        : userData.fullName
+                                                        .toString(),),);
+
+                                                          },
+                                                          child: Image.network(
+
+                                                                chatRoomModel.isGroup! ? chatRoomModel.groupImage ??   'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                : userData.profilePic ?? '',
+                                                          ),
+                                                        )
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: NetworkImageWidget(
+                                                  height: 50,
+                                                  width: 50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(50),
+                                                  errorIcon: chatRoomModel
+                                                          .isGroup!
+                                                      ? CupertinoIcons.group_solid
+                                                      : CupertinoIcons
+                                                          .profile_circled,
+                                                  imageUrl: chatRoomModel.isGroup!
+                                                      ? chatRoomModel.groupImage
+                                                      : userData.profilePic ??
+                                                          ''),
+                                            ),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [

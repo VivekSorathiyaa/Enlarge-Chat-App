@@ -2,6 +2,7 @@
 class AppAsset {
   AppAsset._();
 
+  static const defaultGroupImage='assets/images/defaultGroup.png';
   static const logo = 'assets/images/logo.png';
   static const intro = 'assets/images/intro.png';
   static const profileEdit = 'assets/images/profile_edit.png';
