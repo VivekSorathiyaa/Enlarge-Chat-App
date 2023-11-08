@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
+import 'package:chatapp/componet/image_view_widget.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/models/chat_room_model.dart';
@@ -15,8 +16,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:photo_view/photo_view.dart';
 import '../componet/common_showAlert.dart';
 import '../controller/theme_controller.dart';
 import '../componet/app_text_style.dart';
@@ -25,6 +28,7 @@ import '../componet/shadow_container_widget.dart';
 import '../controller/home_controller.dart';
 import '../models/message_model.dart';
 import '../models/user_model.dart';
+import '../utils/app_asset.dart';
 import '../utils/app_preferences.dart';
 import '../utils/colors.dart';
 import '../utils/static_decoration.dart';
@@ -199,20 +203,58 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .then((value) =>
                                                       setState(() {}));
                                             },
-                                            leading: NetworkImageWidget(
-                                                height: 50,
-                                                width: 50,
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                errorIcon: chatRoomModel
-                                                        .isGroup!
-                                                    ? CupertinoIcons.group_solid
-                                                    : CupertinoIcons
-                                                        .profile_circled,
-                                                imageUrl: chatRoomModel.isGroup!
-                                                    ? chatRoomModel.groupImage
-                                                    : userData.profilePic ??
-                                                        ''),
+                                            leading: GestureDetector(
+                                              onTap: (){
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10.0),
+                                                      ),
+                                                      backgroundColor: Colors.transparent,
+                                                      content: Hero(
+                                                        transitionOnUserGestures: true,
+
+                                                        tag: 'userProfile',
+                                                        child:GestureDetector(
+                                                          onTap: (){
+                                                            Get.back();
+                                                    Get.to(()=>ImageViewWidget(imageUrl:  chatRoomModel.isGroup! ? chatRoomModel.groupImage ?? 'https://cdn.pixabay.com/photo/2020/05/29/13/26/icons-5235125_1280.png'
+                                                        : userData.profilePic ?? '',profileImg: true, isFile: false,text:chatRoomModel.isGroup!
+                                                        ? chatRoomModel
+                                                        .groupName ??
+                                                        "Group"
+                                                        : userData.fullName
+                                                        .toString(),),);
+
+                                                          },
+                                                          child: Image.network(
+
+                                                                chatRoomModel.isGroup! ? chatRoomModel.groupImage ?? 'https://cdn.pixabay.com/photo/2020/05/29/13/26/icons-5235125_1280.png'
+                                                                : userData.profilePic ?? '',
+                                                          ),
+                                                        )
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: NetworkImageWidget(
+                                                  height: 50,
+                                                  width: 50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(50),
+                                                  errorIcon: chatRoomModel
+                                                          .isGroup!
+                                                      ? CupertinoIcons.group_solid
+                                                      : CupertinoIcons
+                                                          .profile_circled,
+                                                  imageUrl: chatRoomModel.isGroup!
+                                                      ? chatRoomModel.groupImage
+                                                      : userData.profilePic ??
+                                                          ''),
+                                            ),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
