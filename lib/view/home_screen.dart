@@ -54,29 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     controller.refreshPage();
-    Locale? selectedLocale;
-    String? fullname = AppPreferences.getFullName();
-    String? phone = AppPreferences.getPhone();
-    String? profilePic = AppPreferences.getProfilePic();
-    Locale? savedLocale = AppPreferences().getLocaleFromPreferences();
-    Timer? timer;
-    @override
-    void initState() {
-      selectedLocale = savedLocale;
-      super.initState();
-      instialize();
-    }
+
+
+      super.initState();    
   }
 
-  void instialize() async {
-    String? deviceToken = await AppPreferences.getDeviceToken();
-    bool deviceTokenChanged = await CommonMethod.checkDeviceTokenChange(
-        AppPreferences.getUiId()!, deviceToken);
-    if (deviceTokenChanged) {
-      FirebaseAuth.instance.signOut();
-      Get.offAll(() => LoginScreen());
-    }
-  }
 
   final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
@@ -102,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     log('---currentUserId---${AppPreferences.getUiId()}');
-    instialize();
     return Obx(() {
       return Scaffold(
         backgroundColor:

@@ -1,4 +1,3 @@
-
 //flutter build apk --split-per-abi
 
 import 'dart:convert';
@@ -10,7 +9,9 @@ import 'package:chatapp/utils/app_notification.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/app.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
+import 'package:chatapp/view/login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart'; // Import Cupertino package
@@ -60,7 +61,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 //   );
 // }
 
-
 var uuid = Uuid();
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -99,6 +99,7 @@ class MyWidgetsBindingObserver extends WidgetsBindingObserver {
     }
   }
 }
+
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
@@ -112,18 +113,13 @@ Future handleNotifications(RemoteMessage message) async {
   var data = message.data;
   print("---data--- ${data.toString()}");
   UserModel targetUser = new UserModel.fromMap(json.decode(data['user']));
-  if (data['type'] == "message") {
-    // showNotification(
-    //     title: data['title'],
-    //     message: data['body'],
-    //     payload: json.encode(message.data),
-    //     targetUser: targetUser);
-
+  if (data['type'] == "message" && data['roomId'] != '') {
     showOrUpdateGroupedMessageNotification(
       roomID: data['roomId'],
       groupTitle: data['title'],
       payload: json.encode(message.data),
-      targetUser: targetUser, message:  data['body'],
+      targetUser: targetUser,
+      message: data['body'],
     );
   } else if (data['type'] == "videoCall") {
     showCallkitIncoming(
@@ -132,19 +128,21 @@ Future handleNotifications(RemoteMessage message) async {
     );
   } else if (data['type'] == "videoCallCut") {
     await FlutterCallkitIncoming.endCall(data['roomId']);
+  } else if (data['type'] == "logIn") {
+    showNotification(
+      title: data['title'],
+      message: data['body'],
+      payload: json.encode(message.data),
+    );
+    CommonMethod.logoutUser();
   }
   listenCallEvent();
 }
-int id = 0;
 
 showNotification(
     {required String title,
     required String message,
-    required UserModel targetUser,
-    dynamic payload}) async {
-  final String largeIconPath = await _downloadAndSaveFile(
-      targetUser.profilePic ?? 'https://dummyimage.com/128x128/00FF00/000000',
-      'largeIcon');
+    required dynamic payload}) async {
   var android = AndroidNotificationDetails(
     'channel id',
     'channel NAME',
@@ -152,14 +150,11 @@ showNotification(
     priority: Priority.high,
     importance: Importance.max,
     playSound: true,
-    largeIcon: FilePathAndroidBitmap(largeIconPath),
-    styleInformation: const MediaStyleInformation(),
-
   );
   var iOS = const DarwinNotificationDetails();
   var platform = NotificationDetails(iOS: iOS, android: android);
   await flutterLocalNotificationsPlugin.show(
-    id++,
+    0,
     title,
     message,
     platform,
@@ -182,7 +177,9 @@ Future<void> showOrUpdateGroupedMessageNotification({
   List<String> unReadMessages = await CommonMethod.fetchUnreadMessages(roomID);
   final inboxStyle = InboxStyleInformation(
     unReadMessages.map((message) => message).toList(),
-    contentTitle:unReadMessages.isEmpty? message: '${unReadMessages.length} new messages',
+    contentTitle: unReadMessages.isEmpty
+        ? message
+        : '${unReadMessages.length} new messages',
     summaryText: 'New messages from $groupTitle',
   );
 
@@ -224,7 +221,6 @@ Future<void> showOrUpdateGroupedMessageNotification({
       platformChannelSpecifics,
       payload: payload,
     );
-
   }
 }
 
@@ -300,11 +296,12 @@ Future onSelectNotification(String? payLoadData) async {
         Get.to(() =>
             ChatRoomScreen(chatRoom: chatRoomModel, targetUser: targetUser));
       }
+    } else {
+      CommonMethod.logoutUser();
     }
   }
   print("----onSelectNotification----$payLoadData");
 }
-
 
 Future listenCallEvent() async {
   FlutterCallkitIncoming.onEvent.listen((CallEvent? event) async {
