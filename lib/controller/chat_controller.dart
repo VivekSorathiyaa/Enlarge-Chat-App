@@ -75,12 +75,11 @@ class ChatController extends GetxController {
       await CommonMethod.addMessage(newMessage);
       playMessageSentSound();
       var lastMessage =
-          await CommonMethod.getLastMessage(newMessage.messageType ?? 0, msg);
+          await CommonMethod.getLastMessage(
+          newMessage.messageType ?? 0, msg, chatRoom);
       CommonMethod.updateLastMessage(
           chatRoomId: chatRoom.chatRoomId!,
-          lastMessage: (chatRoom.isGroup!
-                  ? "${AppPreferences.getFullName().toString()}: "
-                  : "") +
+          lastMessage: 
               lastMessage);
       List<String> deviceTokenList = [];
       for (var userId in chatRoom.usersIds!) {
@@ -98,10 +97,14 @@ class ChatController extends GetxController {
         }
       }
       if (deviceTokenList.isNotEmpty) {
+        print('----lastMessage----${lastMessage}');
+
         await CommonMethod.sendNotification(
           deviceTokens: deviceTokenList,
           body: lastMessage,
-          title: AppPreferences.getFullName() ?? 'Unknown',
+          title: chatRoom.isGroup!
+              ? chatRoom.groupName.toString()
+              : AppPreferences.getFullName() ?? 'Unknown',
           type: 'message',
           roomId: chatRoom.chatRoomId.toString(),
         );

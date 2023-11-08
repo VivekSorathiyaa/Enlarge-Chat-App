@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
+import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/controller/chat_controller.dart';
 import 'package:chatapp/models/chat_room_model.dart';
@@ -50,8 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     controller.refreshPage();
-
-
       super.initState();    
   }
 
@@ -103,11 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Get.to(() => EditProfile());
           },
         ),
-        appBar: AppBar(
-          backgroundColor:
-              themeController.isDark.value ? blackThemeColor : primaryBlack,
-          centerTitle: true,
-          title: Text("head".tr),
+        appBar: CommonAppBar(
+          title: "head".tr,
+          hideLeadingIcon: true,
           actions: [
             IconButton(
               onPressed: () async {
@@ -117,6 +114,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+
+        //  AppBar(
+        // backgroundColor:
+        //     themeController.isDark.value ? blackThemeColor : primaryBlack,
+        //   centerTitle: true,
+        //   title: Text("head".tr),
+        //   actions: [
+        // IconButton(
+        //   onPressed: () async {
+        //     Get.to(() => CreateGroupScreen());
+        //   },
+        //   icon: Icon(Icons.group),
+        // ),
+        //   ],
+        // ),
         body: SafeArea(
           child: ListView.builder(
             itemCount: controller.chatRooms.length,
@@ -191,13 +203,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     : CupertinoIcons
                                                         .profile_circled,
                                                 imageUrl: chatRoomModel.isGroup!
-                                                    ? chatRoomModel.groupImage
+                                                    ? chatRoomModel
+                                                            .groupImage ??
+                                                        'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
                                                     : userData.profilePic ??
                                                         ''),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                FutureBuilder<List<String>>(
+                                                FutureBuilder<
+                                                        List<MessageModel>>(
                                                     future: CommonMethod
                                                         .fetchUnreadMessages(
                                                             chatRoomModel

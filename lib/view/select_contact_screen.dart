@@ -41,7 +41,8 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
     return Scaffold(
       appBar: CommonAppBar(
         title: 'Select Contacts',
-        actionWidget: Obx(
+        actions: [
+        Obx(
           () => groupController.selectUserList.value.length ==
                   groupController.allUserList.value.length
               ? IconButton(
@@ -60,6 +61,7 @@ class _SelectContactScreenState extends State<SelectContactScreen> {
                   },
                 ),
         ),
+      ]
       ),
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(

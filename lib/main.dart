@@ -1,17 +1,12 @@
 //flutter build apk --split-per-abi
-
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:chatapp/models/chat_room_model.dart';
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/utils/app_notification.dart';
 import 'package:chatapp/utils/app_preferences.dart';
 import 'package:chatapp/view/app.dart';
 import 'package:chatapp/view/chat_room_screen.dart';
-import 'package:chatapp/view/login_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart'; // Import Cupertino package
@@ -33,33 +28,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print(
       '-----_firebaseMessagingBackgroundHandler-----${message.toMap().toString()}');
   await Firebase.initializeApp();
-  // await setupFlutterNotifications();
   handleNotifications(message);
-  print('Handling a background message ${message.messageId}');
 }
-
-// late AndroidNotificationChannel channel;
-// late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-
-// Future<void> setupFlutterNotifications() async {
-//   channel = const AndroidNotificationChannel(
-//     'high_importance_channel', // id
-//     'High Importance Notifications', // title
-//     description:
-//         'This channel is used for important notifications.', // description
-//     importance: Importance.high,
-//   );
-//   flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-//   await flutterLocalNotificationsPlugin
-//       .resolvePlatformSpecificImplementation<
-//           AndroidFlutterLocalNotificationsPlugin>()
-//       ?.createNotificationChannel(channel);
-//   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-//     alert: true,
-//     badge: true,
-//     sound: true,
-//   );
-// }
 
 var uuid = Uuid();
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -70,7 +40,6 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // await setupFlutterNotifications();
   await AppPreferences.init();
   AppNotification().initNotification();
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -87,7 +56,6 @@ void main() async {
 class MyWidgetsBindingObserver extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print("-----state----- ${state.toString()}");
     if (state == AppLifecycleState.inactive) {
       CommonMethod.setOfflineStatus();
     } else if (state == AppLifecycleState.resumed) {
@@ -111,15 +79,18 @@ class MyHttpOverrides extends HttpOverrides {
 
 Future handleNotifications(RemoteMessage message) async {
   var data = message.data;
-  print("---data--- ${data.toString()}");
+  print("----data----${data.toString()}");
   UserModel targetUser = new UserModel.fromMap(json.decode(data['user']));
   if (data['type'] == "message" && data['roomId'] != '') {
+    ChatRoomModel? chatRoomModel =
+        await CommonMethod.getChatRoomModelById(data['roomId']);
     showOrUpdateGroupedMessageNotification(
       roomID: data['roomId'],
       groupTitle: data['title'],
       payload: json.encode(message.data),
       targetUser: targetUser,
       message: data['body'],
+      chatRoomModel: chatRoomModel!,
     );
   } else if (data['type'] == "videoCall") {
     showCallkitIncoming(
@@ -169,18 +140,23 @@ Future<void> showOrUpdateGroupedMessageNotification({
   required String message,
   required dynamic payload,
   required UserModel targetUser,
+  required ChatRoomModel chatRoomModel,
 }) async {
   final existingNotificationId = notificationIdMap[roomID];
   final String largeIconPath = await _downloadAndSaveFile(
       targetUser.profilePic ?? 'https://dummyimage.com/128x128/00FF00/000000',
       'largeIcon');
-  List<String> unReadMessages = await CommonMethod.fetchUnreadMessages(roomID);
+  List<MessageModel> unReadMessages =
+      await CommonMethod.fetchUnreadMessages(roomID);
+  List<String> lines = await CommonMethod.getMessageLines(
+      unReadMessages: unReadMessages, chatRoomModel: chatRoomModel);
+
   final inboxStyle = InboxStyleInformation(
-    unReadMessages.map((message) => message).toList(),
-    contentTitle: unReadMessages.isEmpty
-        ? message
-        : '${unReadMessages.length} new messages',
-    summaryText: 'New messages from $groupTitle',
+   lines
+      // contentTitle: unReadMessages.isEmpty
+      //     ? message
+      //     : '${unReadMessages.length} new messages',
+      // summaryText: '$groupTitle',
   );
 
   final androidPlatformChannelSpecifics = AndroidNotificationDetails(
@@ -195,28 +171,24 @@ Future<void> showOrUpdateGroupedMessageNotification({
     groupKey: roomID,
     setAsGroupSummary: true,
   );
-
   final platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
-
+      NotificationDetails(android: androidPlatformChannelSpecifics);   
   if (existingNotificationId != null) {
-    // Update the existing notification
     await flutterLocalNotificationsPlugin.show(
       existingNotificationId,
       groupTitle,
       'New messages from $groupTitle',
-      platformChannelSpecifics,
+      platformChannelSpecifics,  
       payload: payload,
     );
   } else {
-    // Create a new notification
     final notificationId = notificationIdMap.length;
     notificationIdMap[roomID] = notificationId;
     await flutterLocalNotificationsPlugin.show(
       notificationId,
       groupTitle,
       unReadMessages.length == 1
-          ? unReadMessages.first
+          ? unReadMessages.first.text
           : 'New messages from $groupTitle',
       platformChannelSpecifics,
       payload: payload,
@@ -252,8 +224,6 @@ Future<void> showCallkitIncoming(
       callbackText: 'Call back',
     ),
     duration: 30000,
-    // extra: <String, dynamic>{'userId': '1a2b3c4d'},
-    // headers: <String, dynamic>{'apiKey': 'Abc@123!', 'platform': 'flutter'},
     android: AndroidParams(
         isCustomNotification: true,
         isShowLogo: false,
@@ -308,11 +278,8 @@ Future listenCallEvent() async {
     print('-----event-----${event.toString()}');
     switch (event!.event) {
       case Event.actionCallIncoming:
-        // TODO: received an incoming call
         break;
       case Event.actionCallStart:
-        // TODO: started an outgoing call
-        // TODO: show screen calling in Flutter
         break;
       case Event.actionCallAccept:
         Get.to(() => VideoConferenceScreen(
@@ -322,7 +289,6 @@ Future listenCallEvent() async {
         break;
       case Event.actionCallDecline:
         await FlutterCallkitIncoming.endCall(event.body['id']);
-
         break;
       case Event.actionCallEnded:
         break;
@@ -337,16 +303,12 @@ Future listenCallEvent() async {
       case Event.actionCallToggleDmtf:
         break;
       case Event.actionCallToggleGroup:
-        // TODO: only iOS
         break;
       case Event.actionCallToggleAudioSession:
-        // TODO: only iOS
         break;
       case Event.actionDidUpdateDevicePushTokenVoip:
-        // TODO: only iOS
         break;
       case Event.actionCallCustom:
-        // TODO: for custom action
         break;
     }
   });

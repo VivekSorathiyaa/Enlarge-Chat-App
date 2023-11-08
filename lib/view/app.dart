@@ -24,7 +24,6 @@ class ReceivedNotification {
     required this.body,
     required this.payload,
   });
-
   final int id;
   final String? title;
   final String? body;
@@ -33,12 +32,10 @@ class ReceivedNotification {
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse notificationResponse) {
-  // ignore: avoid_print
   print('notification(${notificationResponse.id}) action tapped: '
       '${notificationResponse.actionId} with'
       ' payload: ${notificationResponse.payload}');
   if (notificationResponse.input?.isNotEmpty ?? false) {
-    // ignore: avoid_print
     print(
         'notification action tapped with input: ${notificationResponse.input}');
   }
@@ -46,14 +43,12 @@ void notificationTapBackground(NotificationResponse notificationResponse) {
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
-
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final ThemeController themeController = Get.put(ThemeController());
-
   final AndroidInitializationSettings initializationSettingsAndroid =
       const AndroidInitializationSettings('@mipmap/ic_launcher');
   final DarwinInitializationSettings initializationSettingsIOS =
@@ -82,20 +77,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
-
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) {
-        print("-----flutterLocalNotificationsPlugin.initialize----");
         switch (notificationResponse.notificationResponseType) {
           case NotificationResponseType.selectedNotification:
             selectNotificationStream.add(notificationResponse.payload);
             break;
           case NotificationResponseType.selectedNotificationAction:
-            // if (notificationResponse.actionId == navigationActionId) {
             selectNotificationStream.add(notificationResponse.payload);
-            // }
             break;
         }
       },
@@ -110,7 +101,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     FirebaseMessaging.onMessageOpenedApp.listen(
       (RemoteMessage message) {
-        // onSelectNotification(json.encode(message.data));
         selectNotificationStream.add(json.encode(message.data));
       },
     );
@@ -118,7 +108,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   void _configureSelectNotificationSubject() {
     selectNotificationStream.stream.listen((String? payLoadData) async {
-      print("-------_configureSelectNotificationSubject----");
       onSelectNotification(payLoadData);
     });
   }
@@ -127,7 +116,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     selectNotificationStream.close();
-
     super.dispose();
   }
 

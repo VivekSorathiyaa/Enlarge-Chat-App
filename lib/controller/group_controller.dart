@@ -15,27 +15,31 @@ class GroupController extends GetxController{
   final allUserList = <UserModel>[].obs;
   final selectUserList = <UserModel>[].obs;
 
-  Rx<UserModel> currentUser = UserModel(
-          openRoomId: null,
-          fcmToken: AppPreferences.getFcmToken(),
-          fullName: AppPreferences.getFullName(),
-          phone: AppPreferences.getPhone(),
-          profilePic: AppPreferences.getProfilePic(),
-          uid: AppPreferences.getUiId(), deviceToken: AppPreferences.getDeviceToken()as String)
-      .obs;
+Rx<UserModel?> currentUser = Rx<UserModel?>(null);
 
 
  
   Future getCurrentUser() async {
+    final fcmToken = await AppPreferences.getFcmToken();
+    final fullName = await AppPreferences.getFullName();
+    final phone = await AppPreferences.getPhone();
+    final profilePic = await AppPreferences.getProfilePic();
+    final uid = await AppPreferences.getUiId();
+    final deviceToken = await AppPreferences.getDeviceToken();
+
+    currentUser.value = UserModel(
+      openRoomId: null,
+      fcmToken: fcmToken,
+      fullName: fullName,
+      phone: phone,
+      profilePic: profilePic,
+      uid: uid,
+      deviceToken: deviceToken as String,
+    );
     currentUser.value =
-        await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
-            currentUser.value;
+        await CommonMethod.getUserModelById(await AppPreferences.getUiId()!);
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 
   Future<void> searchUsers() async {
     final searchText = searchTextController.text.toLowerCase();

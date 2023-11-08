@@ -1,3 +1,4 @@
+import 'package:chatapp/componet/network_image_widget.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,28 +13,22 @@ class CustomDrawer extends StatelessWidget {
   final Function() myAccount;
 
   final Function() changeLang;
-  final  Function() logout;
-
+  final Function() logout;
 
   CustomDrawer({
     required this.people,
     required this.myAccount,
-
-
     required this.changeLang,
     required this.logout,
   });
-
-
 
   String? profilepic = AppPreferences.getProfilePic();
   String? fullname = AppPreferences.getFullName();
   String? phone = AppPreferences.getPhone();
 
   @override
-  Widget build(BuildContext context) { final ThemeController themeController = Get.find();
-
-
+  Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find();
 
     return Drawer(
       child: Material(
@@ -43,27 +38,37 @@ class CustomDrawer extends StatelessWidget {
           child: Column(
             children: [
               headerWidget(profilepic!, fullname!, phone!),
-              const SizedBox(height: 40,),
-              const Divider(thickness: 1, height: 10, color: Colors.grey,),
-              const SizedBox(height: 40,),
+              const SizedBox(
+                height: 40,
+              ),
+              const Divider(
+                thickness: 1,
+                height: 10,
+                color: Colors.grey,
+              ),
+              const SizedBox(
+                height: 40,
+              ),
               DrawerItem(
                 name: 'people'.tr,
                 icon: Icons.people,
                 onPressed: people,
               ),
-              const SizedBox(height: 30,),
+              const SizedBox(
+                height: 30,
+              ),
               DrawerItem(
                 name: 'myProfile'.tr,
                 icon: Icons.account_box_rounded,
                 onPressed: myAccount,
               ),
-              const SizedBox(height: 30,),
-
-
-
-
+              const SizedBox(
+                height: 30,
+              ),
               Obx(() {
-                final themeIcon = themeController.isDark.value ? Icons.dark_mode : Icons.light_mode;
+                final themeIcon = themeController.isDark.value
+                    ? Icons.dark_mode
+                    : Icons.light_mode;
 
                 return DrawerItem(
                   name: 'theme'.tr,
@@ -75,21 +80,28 @@ class CustomDrawer extends StatelessWidget {
                         : themeController.lightTheme;
 
                     Get.changeTheme(newTheme);
-
                   },
                 );
               }),
-              const SizedBox(height: 30,),
-
-
-              const Divider(thickness: 1, height: 10, color: Colors.grey,),
-              const SizedBox(height: 30,),
+              const SizedBox(
+                height: 30,
+              ),
+              const Divider(
+                thickness: 1,
+                height: 10,
+                color: Colors.grey,
+              ),
+              const SizedBox(
+                height: 30,
+              ),
               DrawerItem(
                 name: 'changeLang'.tr,
                 icon: Icons.language,
                 onPressed: changeLang,
               ),
-              const SizedBox(height: 30,),
+              const SizedBox(
+                height: 30,
+              ),
               DrawerItem(
                 name: 'logOut'.tr,
                 icon: Icons.logout,
@@ -106,27 +118,26 @@ class CustomDrawer extends StatelessWidget {
     return Row(
       children: [
         GestureDetector(
-          onTap: (){
-            Get.to(()=>EditProfile());
+          onTap: () {
+            Get.to(() => EditProfile());
           },
-          child: Container(
-            padding: EdgeInsets.all(3.0), // Adjust the padding as needed
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white, // Background color of the circle
-            ),
-            child: CircleAvatar(
-              radius: 40,
-              backgroundImage: NetworkImage(profilePic),
-            ),
+          child: NetworkImageWidget(
+            width: 50,
+            height: 50,
+            borderRadius: BorderRadius.circular(80),
+            imageUrl: profilePic,
           ),
         ),
-        const SizedBox(width: 20,),
+        const SizedBox(
+          width: 20,
+        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(fullName, style: TextStyle(fontSize: 14, color: Colors.white)),
-            SizedBox(height: 10,),
+            SizedBox(
+              height: 10,
+            ),
             Text(phone, style: TextStyle(fontSize: 14, color: Colors.white))
           ],
         )

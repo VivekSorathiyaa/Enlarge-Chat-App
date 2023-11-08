@@ -33,6 +33,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   var imagePickerController = Get.put(ImagePickerController());
 
   @override
+  void initState() {
+    groupController.getCurrentUser();
+
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ThemeController themeController=Get.put(ThemeController());
     return Scaffold(
@@ -160,8 +167,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 child: Obx(
-                  () => UserWidget(
-                    user: groupController.currentUser.value,
+                  () => groupController.currentUser.value == null
+                      ? SizedBox()
+                      : UserWidget(
+                          user: groupController.currentUser.value!,
                     trailing: IconButton(
                         onPressed: () {},
                         icon: Text(
@@ -226,7 +235,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         AppPreferences.getUiId().toString(),
                         ...idList
                       ],
-                      groupImage: mediaUrl);
+                      groupImage: mediaUrl ??
+                          "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3");
                   Get.back();
                 }
               }),

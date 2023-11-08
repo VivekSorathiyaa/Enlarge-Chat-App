@@ -220,7 +220,7 @@ class CommonMethod {
     });
   }
 
-  static Future<String> getLastMessage(int messageType, String msg) async {
+  static Future<String> getLastMessage(int messageType, String msg, ChatRoomModel chatRoom) async {
     var message = messageType == 3
         ? ': 🔊 audio'
         : messageType == 2
@@ -231,7 +231,9 @@ class CommonMethod {
                     ? msg
                     : '*';
     log('--message---$message');
-    return message;
+    return  ((chatRoom.isGroup!
+                  ? "${AppPreferences.getFullName().toString()}: "
+                  : "") +message);
   }
 
   static Future addMessage(MessageModel newMessage) async {
@@ -404,7 +406,7 @@ class CommonMethod {
     }
   }
 
-static Future<List<String>> fetchUnreadMessages(String roomID) async {
+static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
   final querySnapshot = await FirebaseFirestore.instance
       .collection("chatrooms")
       .doc(roomID)
@@ -414,15 +416,29 @@ static Future<List<String>> fetchUnreadMessages(String roomID) async {
   final newMessages = querySnapshot.docs.map((doc) {
     return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
   }).toList();
-  final messages = <String>[];
+  final messages = <MessageModel>[];
   for (final message in newMessages) {
     if (message.chatRoomId == roomID &&
         message.sender != AppPreferences.getUiId() &&
         message.seen == false) {
-      messages.add(message.text.toString());
+      messages.add(message);
     }
   }
   return messages;
+}
+
+static Future<List<String>> getMessageLines({required List<MessageModel> unReadMessages,required ChatRoomModel chatRoomModel }) async {
+  List<String> lines = [];
+  for (var message in unReadMessages) {
+    UserModel? senderUser = await CommonMethod.getUserModelById(message.sender!);
+    String line = (chatRoomModel.isGroup! && senderUser != null
+        ? "${senderUser.fullName}: "
+        : "") +
+        message.text.toString();
+
+    lines.add(line);
+  }
+  return lines;
 }
 
   static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
