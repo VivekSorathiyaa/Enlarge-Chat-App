@@ -138,7 +138,7 @@ class CommonMethod {
         .collection("users")
         .doc(AppPreferences.getUiId())
         .update({'online': status}).then((value) {
-      log("Fcm updated!");
+      print("Fcm updated!");
     });
   }
 
@@ -154,7 +154,7 @@ class CommonMethod {
         .collection("users")
         .doc(AppPreferences.getUiId())
         .update({'status': 'online'}).then((value) {
-      log("Set Status Online!");
+      print("Set Status Online!");
     });
   }
 
@@ -181,7 +181,7 @@ class CommonMethod {
         .doc(AppPreferences.getUiId())
         .update({'status': 'offline'}).then((value) {
       updateChatActiveStatus(null);
-      log("Set Status Offline!");
+      print("Set Status Offline!");
     });
   }
 
@@ -190,7 +190,7 @@ class CommonMethod {
         .collection("users")
         .doc(AppPreferences.getUiId())
         .update({'status': 'typing'}).then((value) {
-      log("Set Status Typing!");
+      print("Set Status Typing!");
     });
   }
 
@@ -207,15 +207,15 @@ class CommonMethod {
           'lastMessage': lastMessage,
           'lastSeen': DateTime.now(),
         }).then((_) {
-          log("LastMessage updated! $lastMessage");
+          print("LastMessage updated! $lastMessage");
         }).catchError((error) {
-          log("Error updating lastMessage: $error");
+          print("Error updating lastMessage: $error");
         });
       } else {
-        log("User document does not exist.");
+        print("User document does not exist.");
       }
     }).catchError((error) {
-      log("Error fetching user document: $error");
+      print("Error fetching user document: $error");
     });
   }
 
@@ -230,7 +230,7 @@ class CommonMethod {
                 : messageType == 0
                     ? msg
                     : '*';
-    log('--message---$message');
+    print('--message---$message');
     return ((chatRoom.isGroup!
             ? "${AppPreferences.getFullName().toString()}: "
             : "") +
@@ -244,7 +244,7 @@ class CommonMethod {
         .collection("messages")
         .doc(newMessage.messageId)
         .set(newMessage.toMap())
-        .then((value) => log("Send Message"));
+        .then((value) => print("Send Message"));
   }
 
   static Future<void> updateMessage(MessageModel message) async {
@@ -784,7 +784,7 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 
  static Future<void> deleteChatRoom(String chatRoomId) async {
     try {
-      log('chatroom id:$chatRoomId');
+      print('chatroom id:$chatRoomId');
       await FirebaseFirestore.instance
           .collection('chatRooms')
           .doc(chatRoomId)
@@ -802,7 +802,7 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 
 
     } catch (e) {
-      log('========================Error deleting chat room: $e');
+      print('========================Error deleting chat room: $e');
       // Handle any error that occurs during deletion.
     }
   }
