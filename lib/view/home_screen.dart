@@ -2,9 +2,11 @@ import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/image_view_widget.dart';
+import 'package:chatapp/controller/auth_controller.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -41,9 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     controller.refreshPage();
-      super.initState();    
+    super.initState();
   }
-
 
   final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
@@ -68,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var authController=Get.put(AuthController());
     log('---currentUserId---${AppPreferences.getUiId()}');
     return Obx(() {
       return Scaffold(
@@ -75,7 +77,15 @@ class _HomeScreenState extends State<HomeScreen> {
             themeController.isDark.value ? primaryBlack : primaryWhite,
         drawer: CustomDrawer(
           logout: () {
-            MyAlertDialog.showLogoutDialog(context);
+            // MyAlertDialog.showLogoutDialog(context);
+            MyAlertDialog.showDialogWithOption(context, 'Continue'.tr, 'Cancel'.tr, () {
+              authController.phoneTxtController.text = '';
+              authController.otpTxtController.text = '';
+              CommonMethod.logoutUser();
+
+            }, () {
+              Get.back();
+            },'logout_desc'.tr);
           },
           changeLang: () {
             MyAlertDialog.showLanguageDialog(
@@ -172,7 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 themeController.isDark.value
                                                     ? primaryBlack
                                                     : primaryWhite,
-                                            onTap: () {
+                                            onTap: () async{
+                                              log('====ontap');
                                               Get.to(() => ChatRoomScreen(
                                                       chatRoom: chatRoomModel,
                                                       targetUser:
@@ -181,57 +192,81 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               : userData))!
                                                   .then((value) =>
                                                       setState(() {}));
+
+
+
                                             },
-                                            // leading: 
-                                            // NetworkImageWidget(
-                                            //     height: 50,
-                                            //     width: 50,
-                                            //     borderRadius:
-                                            //         BorderRadius.circular(50),
-                                            //     errorIcon: chatRoomModel
-                                            //             .isGroup!
-                                            //         ? CupertinoIcons.group_solid
-                                            //         : CupertinoIcons
-                                            //             .profile_circled,
-                                            //     imageUrl: chatRoomModel.isGroup!
-                                            //         ? chatRoomModel
-                                            //                 .groupImage ??
-                                            //             'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                            //         : userData.profilePic ??
-                                            //             ''),
+                                            onLongPress: (){
+
+                                              MyAlertDialog.showDialogWithOption(context, 'continue'.tr, 'cancel'.tr, () {
+                                                CommonMethod.deleteChatroom(chatRoomModel.chatRoomId!);
+                                                log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
+
+                                              }, () {
+                                                Get.back();
+                                              },'delete_desc'.tr);
+
+                                            },
+
                                             leading: GestureDetector(
-                                              onTap: (){
+                                              onTap: () {
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) {
                                                     return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10.0),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10.0),
                                                       ),
-                                                      backgroundColor: Colors.transparent,
+                                                      backgroundColor:
+                                                          Colors.transparent,
                                                       content: Hero(
-                                                        transitionOnUserGestures: true,
-
-                                                        tag: 'userProfile',
-                                                        child:GestureDetector(
-                                                          onTap: (){
-                                                            Get.back();
-                                                    Get.to(()=>ImageViewWidget(imageUrl:  chatRoomModel.isGroup! ? chatRoomModel.groupImage ?? 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                        : userData.profilePic ?? '',profileImg: true, isFile: false,text:chatRoomModel.isGroup!
-                                                        ? chatRoomModel
-                                                        .groupName ??
-                                                        "Group"
-                                                        : userData.fullName
-                                                        .toString(),),);
-
-                                                          },
-                                                          child: Image.network(
-
-                                                                chatRoomModel.isGroup! ? chatRoomModel.groupImage ??   'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                                : userData.profilePic ?? '',
-                                                          ),
-                                                        )
-                                                      ),
+                                                          transitionOnUserGestures:
+                                                              true,
+                                                          tag: 'userProfile',
+                                                          child:
+                                                              GestureDetector(
+                                                            onTap: () {
+                                                              Get.back();
+                                                              Get.to(
+                                                                () =>
+                                                                    ImageViewWidget(
+                                                                  imageUrl: chatRoomModel
+                                                                          .isGroup!
+                                                                      ? chatRoomModel
+                                                                              .groupImage ??
+                                                                          'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                      : userData
+                                                                              .profilePic ??
+                                                                          '',
+                                                                  profileImg:
+                                                                      true,
+                                                                  isFile: false,
+                                                                  text: chatRoomModel
+                                                                          .isGroup!
+                                                                      ? chatRoomModel
+                                                                              .groupName ??
+                                                                          "Group"
+                                                                      : userData
+                                                                          .fullName
+                                                                          .toString(),
+                                                                ),
+                                                              );
+                                                            },
+                                                            child:
+                                                                Image.network(
+                                                              chatRoomModel
+                                                                      .isGroup!
+                                                                  ? chatRoomModel
+                                                                          .groupImage ??
+                                                                      'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                  : userData
+                                                                          .profilePic ??
+                                                                      '',
+                                                            ),
+                                                          )),
                                                     );
                                                   },
                                                 );
@@ -241,12 +276,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   width: 50,
                                                   borderRadius:
                                                       BorderRadius.circular(50),
-                                                  errorIcon: chatRoomModel
+                                                  errorIcon:
+                                                      chatRoomModel.isGroup!
+                                                          ? CupertinoIcons
+                                                              .group_solid
+                                                          : CupertinoIcons
+                                                              .profile_circled,
+                                                  imageUrl: chatRoomModel
                                                           .isGroup!
-                                                      ? CupertinoIcons.group_solid
-                                                      : CupertinoIcons
-                                                          .profile_circled,
-                                                  imageUrl: chatRoomModel.isGroup!
                                                       ? chatRoomModel.groupImage
                                                       : userData.profilePic ??
                                                           ''),

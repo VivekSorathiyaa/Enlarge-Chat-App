@@ -9,9 +9,9 @@ import '../utils/colors.dart';
 import '../view/login_screen.dart';
 
 class MyAlertDialog {
-  static void showLogoutDialog(BuildContext context) {
+
+  static void showDialogWithOption(BuildContext context,String okText,String cancelText,void Function() okAction,void Function() cancelAction,String desc) {
     final themeController = Get.find<ThemeController>();
-    final authController = Get.put(AuthController());
 
     Widget cancelButton = ElevatedButton(
       style: ButtonStyle(
@@ -22,42 +22,37 @@ class MyAlertDialog {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(
-          'cancel'.tr,
+       cancelText,
           style: TextStyle(color: greyColor, fontWeight: FontWeight.w500),
         ),
       ),
-      onPressed: () {
-        Get.back();
-      },
+      onPressed: cancelAction,
     );
 
     Widget continueButton = ElevatedButton(
       style: ButtonStyle(
         backgroundColor: themeController.isDark.value
             ? MaterialStateProperty.all<Color>(
-                Colors.blue[900]!.withOpacity(0.9))
+            Colors.blue[900]!.withOpacity(0.9))
             : MaterialStateProperty.all<Color>(primaryBlack.withOpacity(0.9)),
       ),
-      onPressed: () async {
-        authController.phoneTxtController.text = '';
-        authController.otpTxtController.text = '';
-CommonMethod.logoutUser();
-      },
+
+      onPressed: okAction,
       child: Text(
-        'continue'.tr,
+        okText,
         style: TextStyle(color: primaryWhite, fontWeight: FontWeight.w500),
       ),
     );
 
     AlertDialog alert = AlertDialog(
       backgroundColor:
-          themeController.isDark.value ? blackThemeColor : primaryWhite,
+      themeController.isDark.value ? blackThemeColor : primaryWhite,
       shape: RoundedRectangleBorder(
         borderRadius:
-            BorderRadius.circular(8.0), // Adjust the border radius as needed
+        BorderRadius.circular(8.0), // Adjust the border radius as needed
       ),
       alignment: Alignment.center,
-      content: Text("logout_desc".tr),
+      content:Text(desc),
       contentTextStyle: TextStyle(
           color: themeController.isDark.value ? primaryWhite : primaryBlack),
       actions: [
@@ -74,7 +69,6 @@ CommonMethod.logoutUser();
       },
     );
   }
-
   static void showLanguageDialog(
       BuildContext context,
       List<Map<String, dynamic>> locale,

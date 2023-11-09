@@ -151,13 +151,7 @@ Future<void> showOrUpdateGroupedMessageNotification({
   List<String> lines = await CommonMethod.getMessageLines(
       unReadMessages: unReadMessages, chatRoomModel: chatRoomModel);
 
-  final inboxStyle = InboxStyleInformation(
-   lines
-      // contentTitle: unReadMessages.isEmpty
-      //     ? message
-      //     : '${unReadMessages.length} new messages',
-      // summaryText: '$groupTitle',
-  );
+  final inboxStyle = InboxStyleInformation(lines);
 
   final androidPlatformChannelSpecifics = AndroidNotificationDetails(
     'your_channel_id',
@@ -172,13 +166,13 @@ Future<void> showOrUpdateGroupedMessageNotification({
     setAsGroupSummary: true,
   );
   final platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);   
+      NotificationDetails(android: androidPlatformChannelSpecifics);
   if (existingNotificationId != null) {
     await flutterLocalNotificationsPlugin.show(
       existingNotificationId,
       groupTitle,
       'New messages from $groupTitle',
-      platformChannelSpecifics,  
+      platformChannelSpecifics,
       payload: payload,
     );
   } else {
