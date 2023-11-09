@@ -98,7 +98,6 @@ class ChatController extends GetxController {
       }
       if (deviceTokenList.isNotEmpty) {
         print('----lastMessage----${lastMessage}');
-
         await CommonMethod.sendNotification(
           deviceTokens: deviceTokenList,
           body: lastMessage,

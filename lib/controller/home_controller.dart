@@ -21,6 +21,7 @@ class HomeController extends GetxController {
     CommonMethod.setOnlineStatus();
     chatRoomsStream = FirebaseFirestore.instance
         .collection("chatrooms")
+        .orderBy("lastSeen", descending: true)
         .snapshots()
         .listen((querySnapshot) {
       chatRooms.assignAll(querySnapshot.docs.map((doc) {

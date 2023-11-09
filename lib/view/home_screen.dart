@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/componet/common_app_bar.dart';
@@ -37,13 +38,16 @@ class _HomeScreenState extends State<HomeScreen> {
   HomeController controller = Get.put(HomeController());
   ThemeController themeController = Get.put(ThemeController());
   Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
+StreamController<List<MessageModel>> _unreadMessagesStreamController =
+      StreamController<List<MessageModel>>.broadcast();
 
+Stream<List<MessageModel>> get unreadMessagesStream =>
+      _unreadMessagesStreamController.stream;
   @override
   void initState() {
     controller.refreshPage();
-      super.initState();    
+    super.initState();
   }
-
 
   final List<Map<String, dynamic>> locale = [
     {'name': 'ENGLISH', 'locale': Locale('en', 'US')},
@@ -104,21 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-
-        //  AppBar(
-        // backgroundColor:
-        //     themeController.isDark.value ? blackThemeColor : primaryBlack,
-        //   centerTitle: true,
-        //   title: Text("head".tr),
-        //   actions: [
-        // IconButton(
-        //   onPressed: () async {
-        //     Get.to(() => CreateGroupScreen());
-        //   },
-        //   icon: Icon(Icons.group),
-        // ),
-        //   ],
-        // ),
         body: SafeArea(
           child: ListView.builder(
             itemCount: controller.chatRooms.length,
@@ -162,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: themeController.isDark.value
                                             ? primaryBlack
                                             : primaryWhite,
+                                            
                                         shadowColor: themeController
                                                 .isDark.value
                                             ? Colors.transparent
@@ -174,64 +164,72 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     : primaryWhite,
                                             onTap: () {
                                               Get.to(() => ChatRoomScreen(
-                                                      chatRoom: chatRoomModel,
-                                                      targetUser:
-                                                          chatRoomModel.isGroup!
-                                                              ? null
-                                                              : userData))!
-                                                  .then((value) =>
-                                                      setState(() {}));
+                                                  chatRoom: chatRoomModel,
+                                                  targetUser:
+                                                      chatRoomModel.isGroup!
+                                                          ? null
+                                                          : userData));
                                             },
-                                            // leading: 
-                                            // NetworkImageWidget(
-                                            //     height: 50,
-                                            //     width: 50,
-                                            //     borderRadius:
-                                            //         BorderRadius.circular(50),
-                                            //     errorIcon: chatRoomModel
-                                            //             .isGroup!
-                                            //         ? CupertinoIcons.group_solid
-                                            //         : CupertinoIcons
-                                            //             .profile_circled,
-                                            //     imageUrl: chatRoomModel.isGroup!
-                                            //         ? chatRoomModel
-                                            //                 .groupImage ??
-                                            //             'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                            //         : userData.profilePic ??
-                                            //             ''),
+                                      
                                             leading: GestureDetector(
-                                              onTap: (){
+                                              onTap: () {
                                                 showDialog(
                                                   context: context,
                                                   builder: (context) {
                                                     return AlertDialog(
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10.0),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10.0),
                                                       ),
-                                                      backgroundColor: Colors.transparent,
+                                                      backgroundColor:
+                                                          Colors.transparent,
                                                       content: Hero(
-                                                        transitionOnUserGestures: true,
-
-                                                        tag: 'userProfile',
-                                                        child:GestureDetector(
-                                                          onTap: (){
-                                                            Get.back();
-                                                    Get.to(()=>ImageViewWidget(imageUrl:  chatRoomModel.isGroup! ? chatRoomModel.groupImage ?? 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                        : userData.profilePic ?? '',profileImg: true, isFile: false,text:chatRoomModel.isGroup!
-                                                        ? chatRoomModel
-                                                        .groupName ??
-                                                        "Group"
-                                                        : userData.fullName
-                                                        .toString(),),);
-
-                                                          },
-                                                          child: Image.network(
-
-                                                                chatRoomModel.isGroup! ? chatRoomModel.groupImage ??   'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                                : userData.profilePic ?? '',
-                                                          ),
-                                                        )
-                                                      ),
+                                                          transitionOnUserGestures:
+                                                              true,
+                                                          tag: 'userProfile',
+                                                          child:
+                                                              GestureDetector(
+                                                            onTap: () {
+                                                              Get.back();
+                                                              Get.to(
+                                                                () =>
+                                                                    ImageViewWidget(
+                                                                  imageUrl: chatRoomModel
+                                                                          .isGroup!
+                                                                      ? chatRoomModel
+                                                                              .groupImage ??
+                                                                          'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                      : userData
+                                                                              .profilePic ??
+                                                                          '',
+                                                                  profileImg:
+                                                                      true,
+                                                                  isFile: false,
+                                                                  text: chatRoomModel
+                                                                          .isGroup!
+                                                                      ? chatRoomModel
+                                                                              .groupName ??
+                                                                          "Group"
+                                                                      : userData
+                                                                          .fullName
+                                                                          .toString(),
+                                                                ),
+                                                              );
+                                                            },
+                                                            child:
+                                                                Image.network(
+                                                              chatRoomModel
+                                                                      .isGroup!
+                                                                  ? chatRoomModel
+                                                                          .groupImage ??
+                                                                      'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                  : userData
+                                                                          .profilePic ??
+                                                                      '',
+                                                            ),
+                                                          )),
                                                     );
                                                   },
                                                 );
@@ -241,12 +239,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   width: 50,
                                                   borderRadius:
                                                       BorderRadius.circular(50),
-                                                  errorIcon: chatRoomModel
+                                                  errorIcon:
+                                                      chatRoomModel.isGroup!
+                                                          ? CupertinoIcons
+                                                              .group_solid
+                                                          : CupertinoIcons
+                                                              .profile_circled,
+                                                  imageUrl: chatRoomModel
                                                           .isGroup!
-                                                      ? CupertinoIcons.group_solid
-                                                      : CupertinoIcons
-                                                          .profile_circled,
-                                                  imageUrl: chatRoomModel.isGroup!
                                                       ? chatRoomModel.groupImage
                                                       : userData.profilePic ??
                                                           ''),
@@ -254,15 +254,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                FutureBuilder<
-                                                        List<MessageModel>>(
-                                                    future: CommonMethod
-                                                        .fetchUnreadMessages(
-                                                            chatRoomModel
-                                                                .chatRoomId!),
-                                                    builder:
-                                                        (context, snapshot) {
-                                                      return snapshot.data !=
+                                                
+                                                StreamBuilder<
+                                                    List<MessageModel>>(
+                                                  stream: CommonMethod
+                                                      .unreadMessagesStream(
+                                                          chatRoomModel
+                                                              .chatRoomId!),
+                                                  builder: (context, snapshot) {
+                                                    return snapshot.data !=
                                                                   null &&
                                                               snapshot.data!
                                                                   .isNotEmpty
@@ -296,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               ),
                                                             )
                                                           : SizedBox();
-                                                    }),
+                                                  },
+                                                ),
+                                               
                                                 Column(children: [
                                                   Padding(
                                                     padding:
@@ -372,16 +374,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                                 .usersIds!),
                                                     builder:
                                                         (context, snapshot) {
-                                                      if (snapshot
-                                                              .connectionState ==
-                                                          ConnectionState
-                                                              .waiting) {
-                                                        return SizedBox(); // Display a loading indicator.
-                                                      } else if (snapshot
-                                                          .hasError) {
-                                                        return SizedBox();
-                                                      } else {
-                                                        return Text(
+                                                 
+                                                      return snapshot != null &&
+                                                              snapshot.data !=
+                                                                  null
+                                                          ? Text(
                                                           '${snapshot.data}',
                                                           style: AppTextStyle
                                                               .normalRegular12
@@ -391,8 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
-                                                        );
-                                                      }
+                                                            )
+                                                          : SizedBox();
+                                                      
                                                     },
                                                   )
                                                 : Text(
@@ -401,7 +399,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     style: AppTextStyle
                                                         .normalRegular12
                                                         .copyWith(
+                                                          
                                                             color: greyColor),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   )),
                                       );
                                     },

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/main.dart';
 import 'package:chatapp/utils/common_method.dart';
+import 'package:chatapp/view/create_group_screen.dart';
 import 'package:chatapp/view/login_screen.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,17 +39,17 @@ class _SplashScreenState extends State<SplashScreen> {
       (RemoteMessage message) {
         print('----onMessageOpenedApp----');
 
+Get.to(()=>CreateGroupScreen());
         listenCallEvent();
       },
     );
 
     startTime();
     super.initState();
-
   }
+
   Future getInitialMessage() async {
     RemoteMessage? fcmMessage;
-
 
     NotificationAppLaunchDetails? localMessage;
     await flutterLocalNotificationsPlugin
@@ -56,15 +57,13 @@ class _SplashScreenState extends State<SplashScreen> {
         .then((value) {
       localMessage = value;
     });
-    if (
-        (localMessage?.didNotificationLaunchApp == false)) {
-          
+    print('-----localMessage?.didNotificationLaunchApp------');
+    if ((localMessage?.didNotificationLaunchApp == false)) {
     } else {
+      print("---onSelectNotification(json.encode(fcmMessage!.data))----");
       onSelectNotification(json.encode(fcmMessage!.data));
     }
   }
-
-
 
   startTime() async {
     timer = Timer(

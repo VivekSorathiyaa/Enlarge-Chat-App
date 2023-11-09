@@ -31,7 +31,6 @@ import '../models/chat_room_model.dart';
 import 'colors.dart';
 
 class CommonMethod {
-
   static getXSnackBar(String title, String message, Color? color) {
     Get.snackbar(
       title,
@@ -57,7 +56,8 @@ class CommonMethod {
   //   }
   // }
   static Future<File?> pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: false);
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(allowMultiple: false);
     if (result != null) {
       if (result.files.isNotEmpty) {
         String? filePath = result.files.single.path;
@@ -67,7 +67,6 @@ class CommonMethod {
             // If the selected file is an image, open the crop image screen
             final croppedImage = await CommonMethod().cropImage(filePath);
             return croppedImage;
-
           } else {
             return pickedFile;
           }
@@ -77,6 +76,7 @@ class CommonMethod {
       return null;
     }
   }
+
   static Future logoutUser() async {
     await FirebaseAuth.instance.signOut();
     AppPreferences.clear();
@@ -112,6 +112,7 @@ class CommonMethod {
       print('FCM Token: $token');
     });
   }
+
   static Future refreshDeviceToken() async {
     FirebaseMessaging.instance.getToken().then((token) async {
       if (token != null) {
@@ -130,6 +131,7 @@ class CommonMethod {
       print('FCM Token: $token');
     });
   }
+
   static Future updateUserOnlineStatus(bool status) async {
     await FirebaseFirestore.instance
         .collection("users")
@@ -143,8 +145,7 @@ class CommonMethod {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(AppPreferences.getUiId())
-        .update({'openRoomId': openRoomId}).then((value) {
-    });
+        .update({'openRoomId': openRoomId}).then((value) {});
   }
 
   static Future setOnlineStatus() async {
@@ -163,7 +164,8 @@ class CommonMethod {
         fullName: AppPreferences.getFullName(),
         phone: AppPreferences.getPhone(),
         profilePic: AppPreferences.getProfilePic(),
-        uid: AppPreferences.getUiId(), deviceToken: '');
+        uid: AppPreferences.getUiId(),
+        deviceToken: '');
 
     currentUser =
         await CommonMethod.getUserModelById(AppPreferences.getUiId()!) ??
@@ -171,7 +173,6 @@ class CommonMethod {
 
     return currentUser;
   }
-
 
   static Future setOfflineStatus() async {
     await FirebaseFirestore.instance
@@ -191,9 +192,6 @@ class CommonMethod {
       log("Set Status Typing!");
     });
   }
-
-
-
 
   static Future<void> updateLastMessage({
     required String chatRoomId,
@@ -220,7 +218,8 @@ class CommonMethod {
     });
   }
 
-  static Future<String> getLastMessage(int messageType, String msg, ChatRoomModel chatRoom) async {
+  static Future<String> getLastMessage(
+      int messageType, String msg, ChatRoomModel chatRoom) async {
     var message = messageType == 3
         ? ': 🔊 audio'
         : messageType == 2
@@ -231,9 +230,10 @@ class CommonMethod {
                     ? msg
                     : '*';
     log('--message---$message');
-    return  ((chatRoom.isGroup!
-                  ? "${AppPreferences.getFullName().toString()}: "
-                  : "") +message);
+    return ((chatRoom.isGroup!
+            ? "${AppPreferences.getFullName().toString()}: "
+            : "") +
+        message);
   }
 
   static Future addMessage(MessageModel newMessage) async {
@@ -244,22 +244,18 @@ class CommonMethod {
         .doc(newMessage.messageId)
         .set(newMessage.toMap())
         .then((value) => log("Send Message"));
-
-
-
-
   }
 
   static Future<void> updateMessage(MessageModel message) async {
     try {
-      final messageCollection = FirebaseFirestore.instance.collection('messages');
+      final messageCollection =
+          FirebaseFirestore.instance.collection('messages');
 
       // Update the message document with the new data
       await messageCollection.doc(message.messageId).update({
         'text': message.text,
         'media': message.media,
         'seen': message.seen,
-
 
         // Add other properties you want to update
       });
@@ -268,13 +264,15 @@ class CommonMethod {
     }
   }
 
- static Future<bool> checkIfMessageIsSeenByTargetUser(String messageId, String targetUserId) async {
+  static Future<bool> checkIfMessageIsSeenByTargetUser(
+      String messageId, String targetUserId) async {
     try {
-      final messageCollection = FirebaseFirestore.instance.collection('chatrooms');
+      final messageCollection =
+          FirebaseFirestore.instance.collection('chatrooms');
 
       // Query for the message with the specified ID in the chat room.
       final messageDoc = await messageCollection
-          .doc(targetUserId)  // Replace with the chat room ID
+          .doc(targetUserId) // Replace with the chat room ID
           .collection('messages')
           .doc(messageId)
           .get();
@@ -287,7 +285,7 @@ class CommonMethod {
         if (messageData['seen'] != null) {
           // Check if the target user has seen the message.
           if (messageData['seen'][targetUserId] == true) {
-            return true;  // The message is seen by the target user.
+            return true; // The message is seen by the target user.
           }
         }
       }
@@ -295,8 +293,9 @@ class CommonMethod {
       print('Error checking if message is seen: $e');
     }
 
-    return false;  // The message is not seen by the target user or there was an error.
+    return false; // The message is not seen by the target user or there was an error.
   }
+
   static Future<void> sendNotification(
       {required List<String> deviceTokens,
       required String title,
@@ -339,6 +338,7 @@ class CommonMethod {
     }
     return userModel;
   }
+
   static Future<ChatRoomModel?> getChatRoomModelById(String roomId) async {
     ChatRoomModel? chatRoomModel;
     DocumentSnapshot docSnap = await FirebaseFirestore.instance
@@ -346,44 +346,38 @@ class CommonMethod {
         .doc(roomId)
         .get();
     if (docSnap.data() != null) {
-      chatRoomModel = ChatRoomModel.fromMap(docSnap.data() as Map<String, dynamic>);
+      chatRoomModel =
+          ChatRoomModel.fromMap(docSnap.data() as Map<String, dynamic>);
     }
     return chatRoomModel;
   }
 
-
-
-
-
- static Future<List<String>> retrieveMessagesWithSeenStatusFalse(String chatRoomId,) async {
-
-
+  static Future<List<String>> retrieveMessagesWithSeenStatusFalse(
+    String chatRoomId,
+  ) async {
     try {
       final messageCollection = FirebaseFirestore.instance
           .collection("chatrooms")
           .doc(chatRoomId)
           .collection("messages");
 
-      final querySnapshot = await messageCollection.where('seen', isEqualTo: false).get();
+      final querySnapshot =
+          await messageCollection.where('seen', isEqualTo: false).get();
 
       final List<String> messageIds = [];
 
       for (final messageDoc in querySnapshot.docs) {
         messageIds.add(messageDoc.id);
-
       }
       return messageIds;
-
     } catch (e) {
       print('Error retrieving messages with seen status false: $e');
       return [];
     }
   }
 
-
-
-
-  static Future<void> updateMessagesToSeenStatusTrue(String chatRoomId, List<String> messageIds, String currentUserId) async {
+  static Future<void> updateMessagesToSeenStatusTrue(
+      String chatRoomId, List<String> messageIds, String currentUserId) async {
     try {
       final messageCollection = FirebaseFirestore.instance
           .collection("chatrooms")
@@ -398,8 +392,6 @@ class CommonMethod {
         if (messageData['sender'] != currentUserId) {
           await messageCollection.doc(messageId).update({'seen': true});
         }
-
-
       }
     } catch (e) {
       print('Error updating message seen status to true: $e');
@@ -419,7 +411,7 @@ static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
   final messages = <MessageModel>[];
   for (final message in newMessages) {
     if (message.chatRoomId == roomID &&
-        message.sender != AppPreferences.getUiId() &&
+          message.sender != await AppPreferences.getUiId() &&
         message.seen == false) {
       messages.add(message);
     }
@@ -427,70 +419,125 @@ static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
   return messages;
 }
 
-static Future<List<String>> getMessageLines({required List<MessageModel> unReadMessages,required ChatRoomModel chatRoomModel }) async {
-  List<String> lines = [];
-  for (var message in unReadMessages) {
-    UserModel? senderUser = await CommonMethod.getUserModelById(message.sender!);
-    String line = (chatRoomModel.isGroup! && senderUser != null
-        ? "${senderUser.fullName}: "
-        : "") +
-        message.text.toString();
+static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
+  final querySnapshot = await FirebaseFirestore.instance
+      .collection("chatrooms")
+      .doc(roomID)
+      .collection("messages")
+      .orderBy("createdAt", descending: true)
+      .snapshots();
 
-    lines.add(line);
+  await for (QuerySnapshot snapshot in querySnapshot) {
+    final newMessages = snapshot.docs.map((doc) {
+      return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+    }).toList();
+    
+    final uiId = await AppPreferences.getUiId();
+    final messages = newMessages.where((message) =>
+        message.chatRoomId == roomID &&
+        message.sender != uiId &&
+        message.seen ==false).toList();
+
+    yield messages;
   }
-  return lines;
 }
 
-  static Future<ChatRoomModel?> getChatRoomModel(List<String> targetUserIds) async {
-  final List<QuerySnapshot> userSnapshots =
-      await Future.wait(targetUserIds.map((userId) {
-    return FirebaseFirestore.instance
-        .collection("users")
-        .where("uid", isEqualTo: userId)
-        .get();
+// static StreamController<List<MessageModel>> unreadMessagesStreamController =
+//       StreamController<List<MessageModel>>.broadcast();
+
+//   static Stream<List<MessageModel>> get unreadMessagesStream =>
+//       unreadMessagesStreamController.stream;
+//   static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
+//     final querySnapshot = await FirebaseFirestore.instance
+//         .collection("chatrooms")
+//         .doc(roomID)
+//         .collection("messages")
+//         .orderBy("createdAt", descending: true)
+//         .get();
+
+//     final newMessages = querySnapshot.docs.map((doc) {
+//       return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+//     }).toList();
+
+//     final messages = <MessageModel>[];
+//     final uiId = await AppPreferences.getUiId();
+
+//     for (final message in newMessages) {
+//       if (message.chatRoomId == roomID &&
+//           message.sender != uiId &&
+//           message.seen == false) {
+//         messages.add(message);
+//       }
+//     }
+//     // Add the new unread messages to the stream
+//     unreadMessagesStreamController.add(messages);
+//     return messages;
+//   }
+
+
+
+  static Future<List<String>> getMessageLines(
+      {required List<MessageModel> unReadMessages,
+      required ChatRoomModel chatRoomModel}) async {
+    List<String> lines = [];
+    for (var message in unReadMessages) {
+      UserModel? senderUser =
+          await CommonMethod.getUserModelById(message.sender!);
+      String line = (chatRoomModel.isGroup! && senderUser != null
+              ? "${senderUser.fullName}: "
+              : "") +
+          message.text.toString();
+
+      lines.add(line);
+    }
+    return lines;
+  }
+
+  static Future<ChatRoomModel?> getChatRoomModel(
+      List<String> targetUserIds) async {
+    final List<QuerySnapshot> userSnapshots =
+        await Future.wait(targetUserIds.map((userId) {
+      return FirebaseFirestore.instance
+          .collection("users")
+          .where("uid", isEqualTo: userId)
+          .get();
     }));
     if (userSnapshots.every((snapshot) => snapshot.docs.isNotEmpty)) {
       // final userMap = userSnapshots
       //     .map((snapshot) => UserModel.fromMap(
       //         snapshot.docs.first.data() as Map<String, dynamic>))
       //       .toList();
-    final chatRoomSnapshot = await FirebaseFirestore.instance
-        .collection("chatrooms")
+      final chatRoomSnapshot = await FirebaseFirestore.instance
+          .collection("chatrooms")
           .where('usersIds', isEqualTo: targetUserIds.map((e) => e).toList())
           //  userMap.map((user) => user.toMap()).toList())
-        .get();
+          .get();
 
       if (chatRoomSnapshot.docs.isNotEmpty) {
-      final chatRoomData =
-          chatRoomSnapshot.docs.first.data() as Map<String, dynamic>;
-      return ChatRoomModel.fromMap(chatRoomData);
+        final chatRoomData =
+            chatRoomSnapshot.docs.first.data() as Map<String, dynamic>;
+        return ChatRoomModel.fromMap(chatRoomData);
       } else {
-      final newChatroom = ChatRoomModel(
-        chatRoomId: uuid.v1(),
-        lastMessage: null,
-        lastSeen: null,
+        final newChatroom = ChatRoomModel(
+          chatRoomId: uuid.v1(),
+          lastMessage: null,
+          lastSeen: null,
           usersIds: targetUserIds,
           groupName: null,
           isGroup: false,
           createdBy: AppPreferences.getUiId(),
           groupImage: null,
-
-
         );
-      await FirebaseFirestore.instance
-          .collection("chatrooms")
-          .doc(newChatroom.chatRoomId!)
+        await FirebaseFirestore.instance
+            .collection("chatrooms")
+            .doc(newChatroom.chatRoomId!)
             .set(newChatroom.toMap());
-      return newChatroom;
-    }
-  } else {
+        return newChatroom;
+      }
+    } else {
       return null;
     }
   }
-
-
-
-
 
   static Future<String?> uploadFile(
       BuildContext context, File selectedFile) async {
@@ -515,7 +562,6 @@ static Future<List<String>> getMessageLines({required List<MessageModel> unReadM
     List<String> videoExtensions = ['mp4', 'avi', 'mkv', 'mov', 'wmv'];
     List<String> audioExtensions = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'];
 
-
     // Check the file extension to determine the file type
     if (videoExtensions.contains(fileExtension)) {
       return 'video';
@@ -536,15 +582,13 @@ static Future<List<String>> getMessageLines({required List<MessageModel> unReadM
     }
   }
 
-
-
- static DateTime currentUtcTime(String utcTime) {
+  static DateTime currentUtcTime(String utcTime) {
     DateTime utcDateTime = DateTime.parse(utcTime.toString()).toUtc().toLocal();
     String formattedDateTime = utcDateTime.toString();
     return DateTime.parse(formattedDateTime);
   }
 
-static Future<String> getMembersName(List<String> usersIds) async {
+  static Future<String> getMembersName(List<String> usersIds) async {
     List<UserModel> users = [];
     for (String userId in usersIds) {
       UserModel? user = await getUserModelById(userId);
@@ -567,8 +611,7 @@ static Future<String> getMembersName(List<String> usersIds) async {
     return concatenatedNames;
   }
 
-
-static Future<ChatRoomModel?> createGroup(
+  static Future<ChatRoomModel?> createGroup(
       {required String groupName,
       required List<String>? usersIds,
       required String? groupImage}) async {
@@ -588,6 +631,7 @@ static Future<ChatRoomModel?> createGroup(
         .set(newChatroom.toMap());
     return newChatroom;
   }
+
   static Future<UserModel?> getTargetUserModel(List<String> usersIds) async {
     for (var uid in usersIds) {
       if (uid != AppPreferences.getUiId()!) {
@@ -596,6 +640,7 @@ static Future<ChatRoomModel?> createGroup(
     }
     return null;
   }
+
   static Future<List<UserModel>> getUserListByIds(List<String> usersIds) async {
     List<UserModel> list = [];
     for (var uid in usersIds) {
@@ -604,7 +649,6 @@ static Future<ChatRoomModel?> createGroup(
     }
     return list;
   }
-
 
   static Future saveUserData(UserModel userModel) async {
     if (userModel.uid != null) {
@@ -624,27 +668,31 @@ static Future<ChatRoomModel?> createGroup(
       await AppPreferences.setFcmToken(userModel.fcmToken!);
     }
   }
-static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) async {
-  // Query your database to retrieve the user's current device token
-  // This can vary depending on your database structure (Firestore, Realtime Database, etc.)
 
-  // For example, if you are using Firestore, you can do something like this:
-  try {
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-      final currentDeviceToken = userDoc.data()?['deviceToken'];
+  static Future<bool> checkDeviceTokenChange(
+      String uid, String newDeviceToken) async {
+    // Query your database to retrieve the user's current device token
+    // This can vary depending on your database structure (Firestore, Realtime Database, etc.)
 
-      // Compare the current device token with the new device token
-      return currentDeviceToken != newDeviceToken;
+    // For example, if you are using Firestore, you can do something like this:
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        final currentDeviceToken = userDoc.data()?['deviceToken'];
+
+        // Compare the current device token with the new device token
+        return currentDeviceToken != newDeviceToken;
+      }
+    } catch (e) {
+      // Handle any potential database errors
+      print('Error checking device token change: $e');
     }
-  } catch (e) {
-    // Handle any potential database errors
-    print('Error checking device token change: $e');
+
+    // Return true by default if there was an error or the user doesn't exist in the database
+    return true;
   }
 
-  // Return true by default if there was an error or the user doesn't exist in the database
-  return true;
-}
   static Future<bool> isPhoneNumberRegistered(String phoneNumber) async {
     final QuerySnapshot result = await FirebaseFirestore.instance
         .collection('users')
@@ -676,12 +724,12 @@ static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) as
   }
 
   static String getFileNameFromUrl(String url) {
-  List<String> urlSegments = url.split('/');
-  String fileName = urlSegments.last;
-  return Uri.decodeFull(fileName);
-}
+    List<String> urlSegments = url.split('/');
+    String fileName = urlSegments.last;
+    return Uri.decodeFull(fileName);
+  }
 
- static Future<String> generateThumbnail(String url) async {
+  static Future<String> generateThumbnail(String url) async {
     Completer<String> comp = Completer();
     final String name = url.split("/").last.split(".").first;
     if (name.contains(' ')) {
@@ -706,7 +754,7 @@ static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) as
     }
   }
 
- static Future<String> genThumbnailFile(String path) async {
+  static Future<String> genThumbnailFile(String path) async {
     final fileName = await VideoThumbnail.thumbnailFile(
       video: path,
       thumbnailPath: (await getTemporaryDirectory()).path,
@@ -714,7 +762,6 @@ static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) as
     );
     return fileName!;
   }
-
 
   Future<String> getDeviceToken() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
@@ -726,15 +773,10 @@ static Future<bool> checkDeviceTokenChange(String uid, String newDeviceToken) as
       deviceToken = androidInfo.id; // This is the device token for Android
     } else if (Platform.isIOS) {
       IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      deviceToken = iosInfo.identifierForVendor!; // This is the device token for iOS
+      deviceToken =
+          iosInfo.identifierForVendor!; // This is the device token for iOS
     }
 
     return deviceToken;
   }
-
-
-
-
-
-
 }

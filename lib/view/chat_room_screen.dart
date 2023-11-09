@@ -90,7 +90,7 @@ StreamSubscription<QuerySnapshot>? _messageSubscription;
     super.initState();
   }
 
-refreshPage() async {
+Future refreshPage() async {
     CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     List<String> messageIdsWithSeenStatusFalse =
           await CommonMethod.retrieveMessagesWithSeenStatusFalse(
@@ -103,7 +103,7 @@ refreshPage() async {
   }
 
   Future<void> initializeChatRoom() async {
-      refreshPage();
+    await refreshPage();
       CommonMethod.setOnlineStatus();
       checkMicrophoneAvailability();
 
@@ -184,6 +184,7 @@ refreshPage() async {
   var imagePickerController = Get.put(ImagePickerController());
   @override
   void dispose() {
+    refreshPage();
     _messageSubscription!.cancel();
 
     CommonMethod.updateChatActiveStatus(null);

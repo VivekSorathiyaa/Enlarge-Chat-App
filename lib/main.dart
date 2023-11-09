@@ -78,12 +78,14 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 Future handleNotifications(RemoteMessage message) async {
+  AppPreferences.init();
   var data = message.data;
   print("----data----${data.toString()}");
   UserModel targetUser = new UserModel.fromMap(json.decode(data['user']));
   if (data['type'] == "message" && data['roomId'] != '') {
     ChatRoomModel? chatRoomModel =
         await CommonMethod.getChatRoomModelById(data['roomId']);
+
     showOrUpdateGroupedMessageNotification(
       roomID: data['roomId'],
       groupTitle: data['title'],
@@ -143,21 +145,18 @@ Future<void> showOrUpdateGroupedMessageNotification({
   required ChatRoomModel chatRoomModel,
 }) async {
   final existingNotificationId = notificationIdMap[roomID];
+
   final String largeIconPath = await _downloadAndSaveFile(
       targetUser.profilePic ?? 'https://dummyimage.com/128x128/00FF00/000000',
       'largeIcon');
+
   List<MessageModel> unReadMessages =
       await CommonMethod.fetchUnreadMessages(roomID);
+
   List<String> lines = await CommonMethod.getMessageLines(
       unReadMessages: unReadMessages, chatRoomModel: chatRoomModel);
 
-  final inboxStyle = InboxStyleInformation(
-   lines
-      // contentTitle: unReadMessages.isEmpty
-      //     ? message
-      //     : '${unReadMessages.length} new messages',
-      // summaryText: '$groupTitle',
-  );
+  final inboxStyle = InboxStyleInformation(lines);
 
   final androidPlatformChannelSpecifics = AndroidNotificationDetails(
     'your_channel_id',
@@ -171,14 +170,15 @@ Future<void> showOrUpdateGroupedMessageNotification({
     groupKey: roomID,
     setAsGroupSummary: true,
   );
+
   final platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);   
+      NotificationDetails(android: androidPlatformChannelSpecifics);
   if (existingNotificationId != null) {
     await flutterLocalNotificationsPlugin.show(
       existingNotificationId,
       groupTitle,
       'New messages from $groupTitle',
-      platformChannelSpecifics,  
+      platformChannelSpecifics,
       payload: payload,
     );
   } else {
@@ -263,8 +263,9 @@ Future onSelectNotification(String? payLoadData) async {
           new UserModel.fromMap(json.decode(payload['user']));
 
       if (chatRoomModel != null && targetUser != null) {
-        Get.to(() =>
-            ChatRoomScreen(chatRoom: chatRoomModel, targetUser: targetUser));
+        Get.to(() => ChatRoomScreen(
+            chatRoom: chatRoomModel,
+            targetUser: chatRoomModel.isGroup! ? null : targetUser));
       }
     } else {
       CommonMethod.logoutUser();

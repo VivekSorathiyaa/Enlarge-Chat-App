@@ -71,6 +71,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _configureSelectNotificationSubject();
   }
 
+  
+
   notificationConfiguration() async {
     final InitializationSettings initializationSettings =
         InitializationSettings(
@@ -93,14 +95,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) async {
-        handleNotifications(message);
-      },
-    );
+    // FirebaseMessaging.onMessage.listen(
+    //   (RemoteMessage message) async {
+    //     handleNotifications(message);
+    //   },
+    // );
 
     FirebaseMessaging.onMessageOpenedApp.listen(
       (RemoteMessage message) {
+        print("-----onMessageOpenedApp----");
         selectNotificationStream.add(json.encode(message.data));
       },
     );
