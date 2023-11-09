@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -569,7 +570,7 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
       return 'audio';
     } else if (fileExtension == 'jpg' ||
         fileExtension == 'png' ||
-        fileExtension == 'gif') {
+        fileExtension == 'gif'||fileExtension == 'jpeg') {
       return 'image';
     } else if (fileExtension == 'pdf') {
       return 'pdf';
@@ -779,4 +780,62 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 
     return deviceToken;
   }
+
+
+ static Future<void> deleteChatRoom(String chatRoomId) async {
+    try {
+      log('chatroom id:$chatRoomId');
+      await FirebaseFirestore.instance
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .delete();
+
+      await FirebaseFirestore.instance
+          .collection('chatMessages')
+          .where('chatRoomId', isEqualTo: chatRoomId)
+          .get()
+          .then((value) {
+        value.docs.forEach((element) {
+          element.reference.delete();
+        });
+      });
+
+
+    } catch (e) {
+      log('========================Error deleting chat room: $e');
+      // Handle any error that occurs during deletion.
+    }
+  }
+
+
+ static Future  <void> deleteChatroom(String chatroomId) async {
+    // Initialize Firebase if not already initialized
+    await Firebase.initializeApp();
+
+    // Get a reference to the Firestore instance
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Reference to the chatroom document you want to delete
+      DocumentReference chatroomRef = firestore.collection('chatrooms').doc(chatroomId);
+
+      // Delete the chatroom document
+      await chatroomRef.delete();
+
+      await FirebaseFirestore.instance
+          .collection('chatMessages')
+          .where('chatRoomId', isEqualTo: chatroomId)
+          .get()
+          .then((value) {
+        value.docs.forEach((element) {
+          element.reference.delete();
+        });
+      });
+
+      print('Chatroom with ID $chatroomId deleted successfully.');
+    } catch (e) {
+      print('Error deleting chatroom: $e');
+    }
+  }
+
 }

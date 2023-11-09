@@ -3,9 +3,11 @@ import 'dart:developer';
 import 'package:chatapp/Drawer/navigation_drawer.dart';
 import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/image_view_widget.dart';
+import 'package:chatapp/controller/auth_controller.dart';
 import 'package:chatapp/utils/common_method.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,10 +40,10 @@ class _HomeScreenState extends State<HomeScreen> {
   HomeController controller = Get.put(HomeController());
   ThemeController themeController = Get.put(ThemeController());
   Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
-StreamController<List<MessageModel>> _unreadMessagesStreamController =
+  StreamController<List<MessageModel>> _unreadMessagesStreamController =
       StreamController<List<MessageModel>>.broadcast();
 
-Stream<List<MessageModel>> get unreadMessagesStream =>
+  Stream<List<MessageModel>> get unreadMessagesStream =>
       _unreadMessagesStreamController.stream;
   @override
   void initState() {
@@ -72,6 +74,7 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
 
   @override
   Widget build(BuildContext context) {
+    var authController = Get.put(AuthController());
     log('---currentUserId---${AppPreferences.getUiId()}');
     return Obx(() {
       return Scaffold(
@@ -79,7 +82,15 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
             themeController.isDark.value ? primaryBlack : primaryWhite,
         drawer: CustomDrawer(
           logout: () {
-            MyAlertDialog.showLogoutDialog(context);
+            // MyAlertDialog.showLogoutDialog(context);
+            MyAlertDialog.showDialogWithOption(
+                context, 'Continue'.tr, 'Cancel'.tr, () {
+              authController.phoneTxtController.text = '';
+              authController.otpTxtController.text = '';
+              CommonMethod.logoutUser();
+            }, () {
+              Get.back();
+            }, 'logout_desc'.tr);
           },
           changeLang: () {
             MyAlertDialog.showLanguageDialog(
@@ -151,7 +162,6 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                         color: themeController.isDark.value
                                             ? primaryBlack
                                             : primaryWhite,
-                                            
                                         shadowColor: themeController
                                                 .isDark.value
                                             ? Colors.transparent
@@ -162,7 +172,8 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                                 themeController.isDark.value
                                                     ? primaryBlack
                                                     : primaryWhite,
-                                            onTap: () {
+                                            onTap: () async {
+                                              log('====ontap');
                                               Get.to(() => ChatRoomScreen(
                                                   chatRoom: chatRoomModel,
                                                   targetUser:
@@ -170,7 +181,19 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                                           ? null
                                                           : userData));
                                             },
-                                      
+                                            onLongPress: () {
+                                              MyAlertDialog
+                                                  .showDialogWithOption(
+                                                      context,
+                                                      'continue'.tr,
+                                                      'cancel'.tr, () {
+                                                CommonMethod.deleteChatroom(
+                                                    chatRoomModel.chatRoomId!);
+                                                log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
+                                              }, () {
+                                                Get.back();
+                                              }, 'delete_desc'.tr);
+                                            },
                                             leading: GestureDetector(
                                               onTap: () {
                                                 showDialog(
@@ -254,7 +277,6 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                
                                                 StreamBuilder<
                                                     List<MessageModel>>(
                                                   stream: CommonMethod
@@ -263,42 +285,40 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                                               .chatRoomId!),
                                                   builder: (context, snapshot) {
                                                     return snapshot.data !=
-                                                                  null &&
-                                                              snapshot.data!
-                                                                  .isNotEmpty
-                                                          ? Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(8.0),
-                                                              child: Container(
-                                                                height: 30,
-                                                                width: 30,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color:
-                                                                      greenColor, // Choose your preferred badge background color
-                                                                ),
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    snapshot
-                                                                        .data!
-                                                                        .length
-                                                                        .toString(),
-                                                                    style: AppTextStyle
-                                                                        .normalSemiBold14
-                                                                        .copyWith(
-                                                                            color:
-                                                                                primaryWhite),
-                                                                  ),
+                                                                null &&
+                                                            snapshot.data!
+                                                                .isNotEmpty
+                                                        ? Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(8.0),
+                                                            child: Container(
+                                                              height: 30,
+                                                              width: 30,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                                color:
+                                                                    greenColor, // Choose your preferred badge background color
+                                                              ),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  snapshot.data!
+                                                                      .length
+                                                                      .toString(),
+                                                                  style: AppTextStyle
+                                                                      .normalSemiBold14
+                                                                      .copyWith(
+                                                                          color:
+                                                                              primaryWhite),
                                                                 ),
                                                               ),
-                                                            )
-                                                          : SizedBox();
+                                                            ),
+                                                          )
+                                                        : SizedBox();
                                                   },
                                                 ),
-                                               
                                                 Column(children: [
                                                   Padding(
                                                     padding:
@@ -374,23 +394,22 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                                                 .usersIds!),
                                                     builder:
                                                         (context, snapshot) {
-                                                 
                                                       return snapshot != null &&
                                                               snapshot.data !=
                                                                   null
                                                           ? Text(
-                                                          '${snapshot.data}',
-                                                          style: AppTextStyle
-                                                              .normalRegular12
-                                                              .copyWith(
-                                                                  color:
-                                                                      greyColor),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
+                                                              '${snapshot.data}',
+                                                              style: AppTextStyle
+                                                                  .normalRegular12
+                                                                  .copyWith(
+                                                                      color:
+                                                                          greyColor),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
                                                             )
                                                           : SizedBox();
-                                                      
                                                     },
                                                   )
                                                 : Text(
@@ -399,7 +418,6 @@ Stream<List<MessageModel>> get unreadMessagesStream =>
                                                     style: AppTextStyle
                                                         .normalRegular12
                                                         .copyWith(
-                                                          
                                                             color: greyColor),
                                                     maxLines: 1,
                                                     overflow:

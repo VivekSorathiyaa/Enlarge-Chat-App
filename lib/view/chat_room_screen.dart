@@ -17,6 +17,7 @@ import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/models/user_model.dart';
 import 'package:chatapp/utils/colors.dart';
 import 'package:chatapp/utils/static_decoration.dart';
+import 'package:chatapp/view/profile_info_screen.dart';
 import 'package:chatapp/view/video_conference_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -246,6 +247,12 @@ Future refreshPage() async {
                 Get.to(() => GroupInfoScreen(
                       chatRoomId: widget.chatRoom.chatRoomId!,
                     ));
+              }
+              else{
+                Get.to(() => ProfileInfoScreen(
+                  name:  targetUser.value.fullName.toString(), img: targetUser.value.profilePic.toString(), phone: targetUser.value.phone.toString(),
+                  chatRoomModel: widget.chatRoom,chatRoomId: widget.chatRoom.chatRoomId,
+                ));
               }
             },
             child: Row(
@@ -608,7 +615,7 @@ Future refreshPage() async {
                                                       crossAxisAlignment:
                                                           CrossAxisAlignment
                                                               .end,
-                                                              
+
                                                       children: [
                                                         if (currentMessage
                                                             .text!.isNotEmpty)
@@ -623,7 +630,7 @@ Future refreshPage() async {
                                               ),
                                             ),
 
-                                    
+
                                             // currentMessage.sender == AppPreferences.getUiId()
                                             //     ? Row(
                                             //   children: [
@@ -896,20 +903,7 @@ Future refreshPage() async {
   //   );
   // }
 
-  Future<File?> _cropImage(String imagePath) async {
-    ImageCropper imageCropper = ImageCropper();
-    final croppedFile = await imageCropper.cropImage(
-      sourcePath: imagePath,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 20,
-    );
 
-    if (croppedFile != null) {
-      return File(croppedFile.path);
-    }
-
-    return null;
-  }
 
   Widget audioTypeMessageWidget(
       MessageModel currentMessage, bool isCurrentUser) {
