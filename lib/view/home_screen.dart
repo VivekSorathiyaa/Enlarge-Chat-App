@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
   StreamController<List<MessageModel>> _unreadMessagesStreamController =
       StreamController<List<MessageModel>>.broadcast();
+  String? userId=AppPreferences.getUiId();
 
   Stream<List<MessageModel>> get unreadMessagesStream =>
       _unreadMessagesStreamController.stream;
@@ -120,316 +121,489 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         body: SafeArea(
-          child: ListView.builder(
-            itemCount: controller.chatRooms.length,
-            itemBuilder: (context, index) {
-              final chatRoomModel = controller.chatRooms[index];
-              return chatRoomModel.usersIds == null
-                  ? SizedBox()
-                  : FutureBuilder(
-                      future: CommonMethod.getTargetUserModel(
-                          chatRoomModel.usersIds!),
-                      builder: (context, snapshots) {
-                        UserModel? targetUser;
-                        if (snapshots.data != null) {
-                          targetUser = snapshots.data as UserModel;
-                        }
-                        return targetUser == null
-                            ? SizedBox()
-                            : StreamBuilder<DocumentSnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(targetUser.uid)
-                                    .snapshots(),
-                                builder: (context, snapshot) {
-                                  if (snapshot.hasError) {
-                                    return SizedBox();
-                                  }
-                                  if (!snapshot.hasData ||
-                                      !snapshot.data!.exists) {
-                                    return SizedBox();
-                                  }
-                                  final userData = UserModel.fromMap(
-                                      snapshot.data!.data()
-                                          as Map<String, dynamic>);
-                                  return Obx(
-                                    () {
-                                      return ShadowContainerWidget(
-                                        borderColor:
-                                            themeController.isDark.value
-                                                ? primaryBlack
-                                                : greyBorderColor,
-                                        color: themeController.isDark.value
-                                            ? primaryBlack
-                                            : primaryWhite,
-                                        shadowColor: themeController
-                                                .isDark.value
-                                            ? Colors.transparent
-                                            : greyBorderColor.withOpacity(.5),
-                                        padding: 0,
-                                        widget: ListTile(
-                                            tileColor:
-                                                themeController.isDark.value
-                                                    ? primaryBlack
-                                                    : primaryWhite,
-                                            onTap: () async {
-                                              log('====ontap');
-                                              Get.to(() => ChatRoomScreen(
-                                                  chatRoom: chatRoomModel,
-                                                  targetUser:
-                                                      chatRoomModel.isGroup!
-                                                          ? null
-                                                          : userData));
-                                            },
-                                            onLongPress: () {
-                                              MyAlertDialog
-                                                  .showDialogWithOption(
-                                                      context,
-                                                      'continue'.tr,
-                                                      'cancel'.tr, () {
-                                                CommonMethod.deleteChatroom(
-                                                    chatRoomModel.chatRoomId!);
-                                                log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
-                                              }, () {
-                                                Get.back();
-                                              }, 'delete_desc'.tr);
-                                            },
-                                            leading: GestureDetector(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) {
-                                                    return AlertDialog(
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10.0),
-                                                      ),
-                                                      backgroundColor:
-                                                          Colors.transparent,
-                                                      content: Hero(
-                                                          transitionOnUserGestures:
-                                                              true,
-                                                          tag: 'userProfile',
-                                                          child:
-                                                              GestureDetector(
-                                                            onTap: () {
-                                                              Get.back();
-                                                              Get.to(
-                                                                () =>
-                                                                    ImageViewWidget(
-                                                                  imageUrl: chatRoomModel
-                                                                          .isGroup!
-                                                                      ? chatRoomModel
-                                                                              .groupImage ??
-                                                                          'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                                      : userData
-                                                                              .profilePic ??
-                                                                          '',
-                                                                  profileImg:
-                                                                      true,
-                                                                  isFile: false,
-                                                                  text: chatRoomModel
-                                                                          .isGroup!
-                                                                      ? chatRoomModel
-                                                                              .groupName ??
-                                                                          "Group"
-                                                                      : userData
-                                                                          .fullName
-                                                                          .toString(),
-                                                                ),
-                                                              );
-                                                            },
-                                                            child:
-                                                                Image.network(
-                                                              chatRoomModel
-                                                                      .isGroup!
-                                                                  ? chatRoomModel
-                                                                          .groupImage ??
-                                                                      'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-                                                                  : userData
-                                                                          .profilePic ??
-                                                                      '',
-                                                            ),
-                                                          )),
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: NetworkImageWidget(
-                                                  height: 50,
-                                                  width: 50,
-                                                  borderRadius:
-                                                      BorderRadius.circular(50),
-                                                  errorIcon:
-                                                      chatRoomModel.isGroup!
-                                                          ? CupertinoIcons
-                                                              .group_solid
-                                                          : CupertinoIcons
-                                                              .profile_circled,
-                                                  imageUrl: chatRoomModel
-                                                          .isGroup!
-                                                      ? chatRoomModel.groupImage
-                                                      : userData.profilePic ??
-                                                          ''),
-                                            ),
-                                            trailing: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                StreamBuilder<
-                                                    List<MessageModel>>(
-                                                  stream: CommonMethod
-                                                      .unreadMessagesStream(
-                                                          chatRoomModel
-                                                              .chatRoomId!),
-                                                  builder: (context, snapshot) {
-                                                    return snapshot.data !=
-                                                                null &&
-                                                            snapshot.data!
-                                                                .isNotEmpty
-                                                        ? Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(8.0),
-                                                            child: Container(
-                                                              height: 30,
-                                                              width: 30,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                shape: BoxShape
-                                                                    .circle,
-                                                                color:
-                                                                    greenColor, // Choose your preferred badge background color
-                                                              ),
-                                                              child: Center(
-                                                                child: Text(
-                                                                  snapshot.data!
-                                                                      .length
-                                                                      .toString(),
-                                                                  style: AppTextStyle
-                                                                      .normalSemiBold14
-                                                                      .copyWith(
-                                                                          color:
-                                                                              primaryWhite),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          )
-                                                        : SizedBox();
-                                                  },
-                                                ),
-                                                Column(children: [
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 8.0),
-                                                    child: Text(
-                                                      CommonMethod.formatDateTime(
-                                                          chatRoomModel
-                                                                  .lastSeen ??
-                                                              DateTime.now()),
-                                                      style: AppTextStyle
-                                                          .normalRegular12
-                                                          .copyWith(
-                                                              color: greyColor),
-                                                    ),
-                                                  ),
-                                                  height08,
-                                                  if (chatRoomModel.isGroup ==
-                                                      false)
-                                                    Text(
-                                                      userData.status ==
-                                                              'typing'
-                                                          ? "typing..."
-                                                          : userData.status ==
-                                                                  "online"
-                                                              ? "online"
-                                                              : userData.status ==
-                                                                      "offline"
-                                                                  ? "offline"
-                                                                  : '-',
-                                                      style: AppTextStyle
-                                                          .normalRegular12
-                                                          .copyWith(
-                                                              color: userData
-                                                                          .status ==
-                                                                      'offline'
-                                                                  ? redColor
-                                                                  : greenColor),
-                                                    ),
-                                                ]),
-                                              ],
-                                            ),
-                                            title: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                      chatRoomModel.isGroup!
-                                                          ? chatRoomModel
-                                                                  .groupName ??
-                                                              "Group"
-                                                          : userData.fullName
-                                                              .toString(),
-                                                      style: themeController.isDark
-                                                              .value
-                                                          ? AppTextStyle
-                                                              .darkNormalBold16
-                                                          : AppTextStyle
-                                                              .lightNormalBold16),
-                                                ),
-                                              ],
-                                            ),
-                                            subtitle: chatRoomModel
-                                                            .lastMessage ==
-                                                        null &&
-                                                    chatRoomModel.isGroup!
-                                                ? FutureBuilder<String>(
-                                                    future: CommonMethod
-                                                        .getMembersName(
+          child: Column(
+            children: [
+              // ShadowContainerWidget(
+              //   borderColor: themeController.isDark.value
+              //       ? primaryBlack
+              //       : greyBorderColor,
+              //   color:
+              //       themeController.isDark.value ? primaryBlack : primaryWhite,
+              //   shadowColor: themeController.isDark.value
+              //       ? Colors.transparent
+              //       : greyBorderColor.withOpacity(.5),
+              //   padding: 0,
+              //   widget: ListTile(
+              //       tileColor: themeController.isDark.value
+              //           ? primaryBlack
+              //           : primaryWhite,
+              //       onTap: () async {
+              //         log('====ontap');
+              //         Get.to(() => ChatRoomScreen(
+              //             chatRoom: chatRoomModel,
+              //             targetUser:
+              //                 chatRoomModel.isGroup! ? null : userData));
+              //       },
+              //       onLongPress: () {
+              //         MyAlertDialog.showDialogWithOption(
+              //             context, 'continue'.tr, 'cancel'.tr, () {
+              //           log("====Current user id$userId");
+              //           // CommonMethod.deleteChatroom(
+              //           //     chatRoomModel.chatRoomId!);
+              //           //      CommonMethod.deleteChatroomUser(chatRoomModel.chatRoomId!,userId!);
+              //           CommonMethod.deleteChatroomUser3(
+              //               chatRoomModel.chatRoomId!, userId!);
+              //           Get.back();
+              //           log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
+              //         }, () {
+              //           Get.back();
+              //         }, 'delete_desc'.tr);
+              //       },
+              //       leading: GestureDetector(
+              //         onTap: () {
+              //           showDialog(
+              //             context: context,
+              //             builder: (context) {
+              //               return AlertDialog(
+              //                 shape: RoundedRectangleBorder(
+              //                   borderRadius: BorderRadius.circular(10.0),
+              //                 ),
+              //                 backgroundColor: Colors.transparent,
+              //                 content: Hero(
+              //                     transitionOnUserGestures: true,
+              //                     tag: 'userProfile',
+              //                     child: GestureDetector(
+              //                       onTap: () {
+              //                         Get.back();
+              //                         Get.to(
+              //                           () => ImageViewWidget(
+              //                             imageUrl: chatRoomModel.isGroup!
+              //                                 ? chatRoomModel.groupImage ??
+              //                                     'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+              //                                 : userData.profilePic ?? '',
+              //                             profileImg: true,
+              //                             isFile: false,
+              //                             text: chatRoomModel.isGroup!
+              //                                 ? chatRoomModel.groupName ??
+              //                                     "Group"
+              //                                 : userData.fullName.toString(),
+              //                           ),
+              //                         );
+              //                       },
+              //                       child: Image.network(
+              //                         chatRoomModel.isGroup!
+              //                             ? chatRoomModel.groupImage ??
+              //                                 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+              //                             : userData.profilePic ?? '',
+              //                       ),
+              //                     )),
+              //               );
+              //             },
+              //           );
+              //         },
+              //         child: NetworkImageWidget(
+              //             height: 50,
+              //             width: 50,
+              //             borderRadius: BorderRadius.circular(50),
+              //             errorIcon: chatRoomModel.isGroup!
+              //                 ? CupertinoIcons.group_solid
+              //                 : CupertinoIcons.profile_circled,
+              //             imageUrl: chatRoomModel.isGroup!
+              //                 ? chatRoomModel.groupImage
+              //                 : userData.profilePic ?? ''),
+              //       ),
+              //       trailing: Row(
+              //         mainAxisSize: MainAxisSize.min,
+              //         children: [
+              //           StreamBuilder<List<MessageModel>>(
+              //             stream: CommonMethod.unreadMessagesStream(
+              //                 chatRoomModel.chatRoomId!),
+              //             builder: (context, snapshot) {
+              //               return snapshot.data != null &&
+              //                       snapshot.data!.isNotEmpty
+              //                   ? Padding(
+              //                       padding: const EdgeInsets.all(8.0),
+              //                       child: Container(
+              //                         height: 30,
+              //                         width: 30,
+              //                         decoration: BoxDecoration(
+              //                           shape: BoxShape.circle,
+              //                           color:
+              //                               greenColor, // Choose your preferred badge background color
+              //                         ),
+              //                         child: Center(
+              //                           child: Text(
+              //                             snapshot.data!.length.toString(),
+              //                             style: AppTextStyle.normalSemiBold14
+              //                                 .copyWith(color: primaryWhite),
+              //                           ),
+              //                         ),
+              //                       ),
+              //                     )
+              //                   : SizedBox();
+              //             },
+              //           ),
+                      
+              //         ],
+              //       ),
+              //       title: Row(
+              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //         children: [
+              //           Flexible(
+              //             child: Text('Ai ChatBot',
+              //                 style: themeController.isDark.value
+              //                     ? AppTextStyle.darkNormalBold16
+              //                     : AppTextStyle.lightNormalBold16),
+              //           ),
+              //         ],
+              //       ),
+              //       subtitle: Text(
+              //         "Say hi to chatbot",
+              //         style: AppTextStyle.normalRegular12
+              //             .copyWith(color: greyColor),
+              //         maxLines: 1,
+              //         overflow: TextOverflow.ellipsis,
+              //       )),
+              // ),
+           
+           
+              Expanded(
+                child: ListView.builder(
+                  itemCount: controller.chatRooms.length,
+                  itemBuilder: (context, index) {
+                    final chatRoomModel = controller.chatRooms[index];
+                    return chatRoomModel.usersIds == null
+                        ? SizedBox()
+                        : FutureBuilder(
+                            future: CommonMethod.getTargetUserModel(
+                                chatRoomModel.usersIds!),
+                            builder: (context, snapshots) {
+                              UserModel? targetUser;
+                              if (snapshots.data != null) {
+                                targetUser = snapshots.data as UserModel;
+                              }
+                              return targetUser == null
+                                  ? SizedBox()
+                                  : StreamBuilder<DocumentSnapshot>(
+                                      stream: FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(targetUser.uid)
+                                          .snapshots(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.hasError) {
+                                          return SizedBox();
+                                        }
+                                        if (!snapshot.hasData ||
+                                            !snapshot.data!.exists) {
+                                          return SizedBox();
+                                        }
+                                        final userData = UserModel.fromMap(
+                                            snapshot.data!.data()
+                                                as Map<String, dynamic>);
+                                        return Obx(
+                                          () {
+                                            return ShadowContainerWidget(
+                                              borderColor:
+                                                  themeController.isDark.value
+                                                      ? primaryBlack
+                                                      : greyBorderColor,
+                                              color:
+                                                  themeController.isDark.value
+                                                      ? primaryBlack
+                                                      : primaryWhite,
+                                              shadowColor:
+                                                  themeController.isDark.value
+                                                      ? Colors.transparent
+                                                      : greyBorderColor
+                                                          .withOpacity(.5),
+                                              padding: 0,
+                                              widget: ListTile(
+                                                  tileColor: themeController
+                                                          .isDark.value
+                                                      ? primaryBlack
+                                                      : primaryWhite,
+                                                  onTap: () async {
+                                                    log('====ontap');
+                                                    Get.to(() => ChatRoomScreen(
+                                                        chatRoom: chatRoomModel,
+                                                        targetUser:
                                                             chatRoomModel
-                                                                .usersIds!),
-                                                    builder:
-                                                        (context, snapshot) {
-                                                      return snapshot != null &&
-                                                              snapshot.data !=
-                                                                  null
-                                                          ? Text(
-                                                              '${snapshot.data}',
-                                                              style: AppTextStyle
-                                                                  .normalRegular12
-                                                                  .copyWith(
-                                                                      color:
-                                                                          greyColor),
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            )
-                                                          : SizedBox();
+                                                                    .isGroup!
+                                                                ? null
+                                                                : userData));
+                                                  },
+                                                  onLongPress: () {
+                                                    MyAlertDialog
+                                                        .showDialogWithOption(
+                                                            context,
+                                                            'continue'.tr,
+                                                            'cancel'.tr, () {
+                                                      log("====Current user id$userId");
+                                                      // CommonMethod.deleteChatroom(
+                                                      //     chatRoomModel.chatRoomId!);
+                                                      //      CommonMethod.deleteChatroomUser(chatRoomModel.chatRoomId!,userId!);
+                                                      CommonMethod
+                                                          .deleteChatroomUser3(
+                                                              chatRoomModel
+                                                                  .chatRoomId!,
+                                                              userId!);
+                                                      Get.back();
+                                                      log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
+                                                    }, () {
+                                                      Get.back();
+                                                    }, 'delete_desc'.tr);
+                                                  },
+                                                  leading: GestureDetector(
+                                                    onTap: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return AlertDialog(
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10.0),
+                                                            ),
+                                                            backgroundColor:
+                                                                Colors
+                                                                    .transparent,
+                                                            content: Hero(
+                                                                transitionOnUserGestures:
+                                                                    true,
+                                                                tag:
+                                                                    'userProfile',
+                                                                child:
+                                                                    GestureDetector(
+                                                                  onTap: () {
+                                                                    Get.back();
+                                                                    Get.to(
+                                                                      () =>
+                                                                          ImageViewWidget(
+                                                                        imageUrl: chatRoomModel.isGroup!
+                                                                            ? chatRoomModel.groupImage ??
+                                                                                'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                            : userData.profilePic ??
+                                                                                '',
+                                                                        profileImg:
+                                                                            true,
+                                                                        isFile:
+                                                                            false,
+                                                                        text: chatRoomModel.isGroup!
+                                                                            ? chatRoomModel.groupName ??
+                                                                                "Group"
+                                                                            : userData.fullName.toString(),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                  child: Image
+                                                                      .network(
+                                                                    chatRoomModel
+                                                                            .isGroup!
+                                                                        ? chatRoomModel.groupImage ??
+                                                                            'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
+                                                                        : userData.profilePic ??
+                                                                            '',
+                                                                  ),
+                                                                )),
+                                                          );
+                                                        },
+                                                      );
                                                     },
-                                                  )
-                                                : Text(
-                                                    chatRoomModel.lastMessage ??
-                                                        "Say hi to your new friend!",
-                                                    style: AppTextStyle
-                                                        .normalRegular12
-                                                        .copyWith(
-                                                            color: greyColor),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  )),
-                                      );
-                                    },
-                                  );
-                                });
-                      },
-                    );
-            },
+                                                    child: NetworkImageWidget(
+                                                        height: 50,
+                                                        width: 50,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                50),
+                                                        errorIcon: chatRoomModel
+                                                                .isGroup!
+                                                            ? CupertinoIcons
+                                                                .group_solid
+                                                            : CupertinoIcons
+                                                                .profile_circled,
+                                                        imageUrl: chatRoomModel
+                                                                .isGroup!
+                                                            ? chatRoomModel
+                                                                .groupImage
+                                                            : userData
+                                                                    .profilePic ??
+                                                                ''),
+                                                  ),
+                                                  trailing: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      StreamBuilder<
+                                                          List<MessageModel>>(
+                                                        stream: CommonMethod
+                                                            .unreadMessagesStream(
+                                                                chatRoomModel
+                                                                    .chatRoomId!),
+                                                        builder: (context,
+                                                            snapshot) {
+                                                          return snapshot.data !=
+                                                                      null &&
+                                                                  snapshot.data!
+                                                                      .isNotEmpty
+                                                              ? Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          8.0),
+                                                                  child:
+                                                                      Container(
+                                                                    height: 30,
+                                                                    width: 30,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      shape: BoxShape
+                                                                          .circle,
+                                                                      color:
+                                                                          greenColor, // Choose your preferred badge background color
+                                                                    ),
+                                                                    child:
+                                                                        Center(
+                                                                      child:
+                                                                          Text(
+                                                                        snapshot
+                                                                            .data!
+                                                                            .length
+                                                                            .toString(),
+                                                                        style: AppTextStyle
+                                                                            .normalSemiBold14
+                                                                            .copyWith(color: primaryWhite),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                )
+                                                              : SizedBox();
+                                                        },
+                                                      ),
+                                                      Column(children: [
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  top: 8.0),
+                                                          child: Text(
+                                                            CommonMethod.formatDateTime(
+                                                                chatRoomModel
+                                                                        .lastSeen ??
+                                                                    DateTime
+                                                                        .now()),
+                                                            style: AppTextStyle
+                                                                .normalRegular12
+                                                                .copyWith(
+                                                                    color:
+                                                                        greyColor),
+                                                          ),
+                                                        ),
+                                                        height08,
+                                                        if (chatRoomModel
+                                                                .isGroup ==
+                                                            false)
+                                                          Text(
+                                                            userData.status ==
+                                                                    'typing'
+                                                                ? "typing..."
+                                                                : userData.status ==
+                                                                        "online"
+                                                                    ? "online"
+                                                                    : userData.status ==
+                                                                            "offline"
+                                                                        ? "offline"
+                                                                        : '-',
+                                                            style: AppTextStyle
+                                                                .normalRegular12
+                                                                .copyWith(
+                                                                    color: userData.status ==
+                                                                            'offline'
+                                                                        ? redColor
+                                                                        : greenColor),
+                                                          ),
+                                                      ]),
+                                                    ],
+                                                  ),
+                                                  title: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Text(
+                                                            chatRoomModel
+                                                                    .isGroup!
+                                                                ? chatRoomModel
+                                                                        .groupName ??
+                                                                    "Group"
+                                                                : userData
+                                                                    .fullName
+                                                                    .toString(),
+                                                            style: themeController
+                                                                    .isDark
+                                                                    .value
+                                                                ? AppTextStyle
+                                                                    .darkNormalBold16
+                                                                : AppTextStyle
+                                                                    .lightNormalBold16),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  subtitle: chatRoomModel
+                                                                  .lastMessage ==
+                                                              null &&
+                                                          chatRoomModel.isGroup!
+                                                      ? FutureBuilder<String>(
+                                                          future: CommonMethod
+                                                              .getMembersName(
+                                                                  chatRoomModel
+                                                                      .usersIds!),
+                                                          builder: (context,
+                                                              snapshot) {
+                                                            return snapshot !=
+                                                                        null &&
+                                                                    snapshot.data !=
+                                                                        null
+                                                                ? Text(
+                                                                    '${snapshot.data}',
+                                                                    style: AppTextStyle
+                                                                        .normalRegular12
+                                                                        .copyWith(
+                                                                            color:
+                                                                                greyColor),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                  )
+                                                                : SizedBox();
+                                                          },
+                                                        )
+                                                      : Text(
+                                                          chatRoomModel
+                                                                  .lastMessage ??
+                                                              "Say hi to your new friend!",
+                                                          style: AppTextStyle
+                                                              .normalRegular12
+                                                              .copyWith(
+                                                                  color:
+                                                                      greyColor),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        )),
+                                            );
+                                          },
+                                        );
+                                      });
+                            },
+                          );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
         floatingActionButton: FloatingActionButton(

@@ -15,10 +15,11 @@ class LocaleString extends Translations{
       'logOut':'Log Out',
       'logout_desc':'Would you like to continue to logout?',
       'delete_desc':'Would you like to continue to delete this chat ?',
+      'message':'Would you like to continue to delete this msg from chat ?',
       'continue':'Continue',
       'cancel':'Cancel',
       'search': 'Search name or number...',
-      'phone':'Phone Number',
+     'phone':'Phone Number',
       'chooseLang':'Choose Your Language'
     },
     //HINDI LANGUAGE
@@ -32,6 +33,7 @@ class LocaleString extends Translations{
       'logOut':'लॉग आउट',
       'logout_desc':'क्या आप लॉगआउट जारी रखना चाहेंगे?',
       'delete_desc':'क्या आप इस चैट को हटाना जारी रखना चाहेंगे?',
+      'message':'क्या आप इस संदेश को चैट से हटाना जारी रखना चाहेंगे?',
       'continue' :'जारी रखना',
       'cancel':'रद्द करना',
       'search':'खोज',
@@ -50,6 +52,7 @@ class LocaleString extends Translations{
       'logOut':'લોગ આઉટ',
       'logout_desc':'શું તમે લોગઆઉટ કરવાનું ચાલુ રાખવા માંગો છો?',
       'delete_desc':'શું તમે આ ચેટ કાઢી નાખવાનું ચાલુ રાખવા માંગો છો?',
+      'message':'શું તમે આ સંદેશને ચેટમાંથી કાઢી નાખવાનું ચાલુ રાખવા માંગો છો?',
      'continue':'ચાલુ રાખો',
       'cancel':'રદ કરો',
       'search':'શોધો',

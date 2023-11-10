@@ -1,5 +1,3 @@
-import 'dart:developer';
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:chatapp/componet/video_view_widget.dart';
@@ -10,10 +8,9 @@ import 'package:chatapp/utils/static_decoration.dart';
 import 'package:chatapp/view/video_conference_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
-
+import 'package:share_plus/share_plus.dart';
 import '../componet/app_text_style.dart';
 import '../componet/image_view_widget.dart';
 import '../models/chat_room_model.dart';
@@ -76,6 +73,14 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
         ],
       );
     }
+    void shareContact(String name, String phoneNumber) {
+      final contactInfo = '''
+    Contact Name: $name
+    Phone Number: $phoneNumber
+  ''';
+
+      Share.share(contactInfo);
+    }
 
     return Scaffold(
       backgroundColor: themeController.isDark.value
@@ -107,13 +112,18 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 40.0),
-                      child: SizedBox(
-                        width: 130,
-                        height: 130,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: PhotoView(
-                            imageProvider: NetworkImage(widget.img),
+                      child: GestureDetector(
+                        onTap: (){
+                         Get.to(()=>ImageViewWidget(imageUrl:widget.img  , isFile: false,profileImg: true,text: widget.name,));
+                        },
+                        child: SizedBox(
+                          width: 130,
+                          height: 130,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: PhotoView(
+                              imageProvider: NetworkImage(widget.img),
+                            ),
                           ),
                         ),
                       ),
@@ -150,9 +160,9 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
                           Get.back();
                         }, 'Text'),
                         width30,
-                        buildIconButton(Icons.mic, 28, () {
-                          Get.back();
-                        }, 'Audio'),
+                        buildIconButton(Icons.share, 26, () {
+                         shareContact(widget.name,widget.phone);
+                        }, 'Share'),
                       ],
                     ),
                     height20
@@ -187,7 +197,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Container(
                 color: themeController.isDark.value
                     ? blackThemeColor.withOpacity(0.5)

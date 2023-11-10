@@ -183,7 +183,7 @@ Future<void> showOrUpdateGroupedMessageNotification({
     );
   } else {
     final notificationId = notificationIdMap.length;
-    notificationIdMap[roomID] = notificationId;
+    notificationIdMap[roomID] = notificationId; 
     await flutterLocalNotificationsPlugin.show(
       notificationId,
       groupTitle,
