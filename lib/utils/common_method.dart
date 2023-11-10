@@ -330,16 +330,14 @@ class CommonMethod {
     }
   }
 
-  static Future<UserModel?> getUserModelById(String uid) async {
-    UserModel? userModel;
+
+static Future<UserModel> getUserModelById(String uid) async {
     DocumentSnapshot docSnap =
         await FirebaseFirestore.instance.collection("users").doc(uid).get();
-    if (docSnap.data() != null) {
-      userModel = UserModel.fromMap(docSnap.data() as Map<String, dynamic>);
-    }
-    return userModel;
+    // Ensure docSnap.data() is not null before creating the UserModel
+    assert(docSnap.data() != null, "User data for uid $uid is null");
+    return UserModel.fromMap(docSnap.data() as Map<String, dynamic>);
   }
-
   static Future<ChatRoomModel?> getChatRoomModelById(String roomId) async {
     ChatRoomModel? chatRoomModel;
     DocumentSnapshot docSnap = await FirebaseFirestore.instance
@@ -352,6 +350,23 @@ class CommonMethod {
     }
     return chatRoomModel;
   }
+
+  static Future<MessageModel?> getMessageModelById(
+      {required String roomId, required String messageId}) async {
+    MessageModel? messageModel;
+    DocumentSnapshot docSnap = await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(roomId)
+        .collection('messages')
+        .doc(messageId)
+        .get();
+    if (docSnap.data() != null) {
+      messageModel =
+          MessageModel.fromMap(docSnap.data() as Map<String, dynamic>);
+    }
+    return messageModel;
+  }
+
 
   static Future<List<String>> retrieveMessagesWithSeenStatusFalse(
     String chatRoomId,
@@ -547,7 +562,7 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
     UploadTask uploadTask = FirebaseStorage.instance
         .ref("media")
         .child(uuid.v1())
-        .putFile(selectedFile!);
+        .putFile(selectedFile);
     TaskSnapshot snapshot = await uploadTask;
     imageUrl = await snapshot.ref.getDownloadURL();
     Get.back();

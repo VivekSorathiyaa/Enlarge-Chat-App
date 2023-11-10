@@ -111,7 +111,11 @@ class TextFormFieldWidget extends StatelessWidget {
             onChanged: onChanged,
             textStyle:themeController.isDark.value? TextStyle(color: primaryWhite):
             TextStyle(color: primaryBlack),
-            borderColor:themeController.isDark.value?blackThemeColor:Colors.grey,
+          borderColor: borderColor != null
+              ? borderColor
+              : themeController.isDark.value
+                  ? blackThemeColor
+                  : Colors.grey,
             filledColor: themeController.isDark.value ?blackThemeColor:primaryWhite,
             // hintStyle: hintStyle ?? TextStyle(color: primaryBlack),
             hintStyle:themeController.isDark.value? TextStyle(color: primaryWhite.withOpacity(0.8)):

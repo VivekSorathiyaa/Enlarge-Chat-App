@@ -63,7 +63,7 @@ class _VideoConferenceScreenState extends State<VideoConferenceScreen> {
         seen: false,
         chatRoomId: widget.chatRoomId,
         createdAt: DateTime.now(),
-        messageId: uuid.v1());
+        messageId: uuid.v1(), replyMessage: null);
     await CommonMethod.addMessage(newMessage);
   }
 

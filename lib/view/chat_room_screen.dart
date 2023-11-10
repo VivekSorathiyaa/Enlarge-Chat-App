@@ -34,6 +34,7 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:swipe_to/swipe_to.dart';
 import 'package:translator/translator.dart';
 
 import '../controller/image_picker_controller.dart';
@@ -69,7 +70,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   RxInt selectedIndex = 0.obs;
   var controller = Get.put(ChatController());
   final ScrollController _scrollController = ScrollController();
-StreamSubscription<QuerySnapshot>? _messageSubscription;
+  StreamSubscription<QuerySnapshot>? _messageSubscription;
 
   @override
   void initState() {
@@ -91,12 +92,12 @@ StreamSubscription<QuerySnapshot>? _messageSubscription;
     super.initState();
   }
 
-Future refreshPage() async {
+  Future refreshPage() async {
     CommonMethod.updateChatActiveStatus(widget.chatRoom.chatRoomId!);
     List<String> messageIdsWithSeenStatusFalse =
-          await CommonMethod.retrieveMessagesWithSeenStatusFalse(
+        await CommonMethod.retrieveMessagesWithSeenStatusFalse(
       widget.chatRoom.chatRoomId!,
-    );                                                                                                                                                                                                                   
+    );
     await CommonMethod.updateMessagesToSeenStatusTrue(
         widget.chatRoom.chatRoomId!,
         messageIdsWithSeenStatusFalse,
@@ -105,10 +106,9 @@ Future refreshPage() async {
 
   Future<void> initializeChatRoom() async {
     await refreshPage();
-      CommonMethod.setOnlineStatus();
-      checkMicrophoneAvailability();
-
-  }                                                                            
+    CommonMethod.setOnlineStatus();
+    checkMicrophoneAvailability();
+  }
 
   void checkMicrophoneAvailability() async {
     bool available = await speechToText.initialize();
@@ -182,6 +182,7 @@ Future refreshPage() async {
   Future<UserModel> getTargetUser() async {
     return widget.targetUser!;
   }
+
   var imagePickerController = Get.put(ImagePickerController());
   @override
   void dispose() {
@@ -198,15 +199,14 @@ Future refreshPage() async {
 
   @override
   Widget build(BuildContext context) {
-    // int unreadCount = unreadMessageCounts[widget.chatRoom.chatRoomId] ?? 0;
-
     Rx<UserModel> targetUser = UserModel(
             uid: null,
             fullName: null,
             phone: null,
             profilePic: null,
             fcmToken: null,
-            openRoomId: null, deviceToken: null)
+            openRoomId: null,
+            deviceToken: null)
         .obs;
     if (widget.targetUser != null) {
       targetUser = widget.targetUser!.obs;
@@ -225,11 +225,10 @@ Future refreshPage() async {
       });
     }
 
-
     return Obx(() {
       return Scaffold(
         backgroundColor:
-            themeController.isDark.value ? primaryBlack : primaryWhite,
+            themeController.isDark.value ? primaryBlack : appBackgroundColor,
         appBar: AppBar(
           titleSpacing: 0,
           leading: IconButton(
@@ -241,18 +240,20 @@ Future refreshPage() async {
               Get.back();
             },
           ),
-          title: GestureDetector( 
+          title: GestureDetector(
             onTap: () {
               if (widget.chatRoom.isGroup!) {
                 Get.to(() => GroupInfoScreen(
                       chatRoomId: widget.chatRoom.chatRoomId!,
                     ));
-              }
-              else{
+              } else {
                 Get.to(() => ProfileInfoScreen(
-                  name:  targetUser.value.fullName.toString(), img: targetUser.value.profilePic.toString(), phone: targetUser.value.phone.toString(),
-                  chatRoomModel: widget.chatRoom,chatRoomId: widget.chatRoom.chatRoomId,
-                ));
+                      name: targetUser.value.fullName.toString(),
+                      img: targetUser.value.profilePic.toString(),
+                      phone: targetUser.value.phone.toString(),
+                      chatRoomModel: widget.chatRoom,
+                      chatRoomId: widget.chatRoom.chatRoomId,
+                    ));
               }
             },
             child: Row(
@@ -331,7 +332,6 @@ Future refreshPage() async {
               ],
             ),
           ),
-        
           actions: [
             IconButton(
               onPressed: () {
@@ -407,247 +407,92 @@ Future refreshPage() async {
                   final isCurrentUser = currentMessage.sender == null
                       ? false
                       : currentMessage.sender == AppPreferences.getUiId();
-                  return currentMessage.sender == null
-                      ? Center(
-                          child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ShadowContainerWidget(
-                            shadowColor: themeController.isDark.value
-                                ? primaryWhite.withOpacity(.1)
-                                : primaryColor.withOpacity(.1),
-                            borderColor: themeController.isDark.value
-                                ? primaryWhite.withOpacity(.1)
-                                : primaryBlack.withOpacity(.1),
-                            padding: 0,
-                            radius: 10,
-                            widget: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              child: Text(
-                                currentMessage.text.toString(),
-                                style: AppTextStyle.normalRegular10.copyWith(
-                                    color: themeController.isDark.value
-                                        ? primaryWhite.withOpacity(.5)
-                                        : primaryBlack),
-                              ),
-                            ),
+                  if (currentMessage.sender == null) {
+                    return Center(
+                        child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ShadowContainerWidget(
+                        shadowColor: themeController.isDark.value
+                            ? primaryWhite.withOpacity(.1)
+                            : primaryColor.withOpacity(.1),
+                        borderColor: themeController.isDark.value
+                            ? primaryWhite.withOpacity(.1)
+                            : primaryBlack.withOpacity(.1),
+                        padding: 0,
+                        radius: 10,
+                        widget: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Text(
+                            currentMessage.text.toString(),
+                            style: AppTextStyle.normalRegular10.copyWith(
+                                color: themeController.isDark.value
+                                    ? primaryWhite.withOpacity(.5)
+                                    : primaryBlack),
                           ),
-                        ))
-                      : InkWell(
-                          onTap: () {
-                            selectedIndex.value = index;
-                            print(
-                                "-----currentMessage.messageType----${currentMessage.messageType}");
-                            if (currentMessage.messageType == 3) {
-                              CustomDialog.showSimpleDialog(
-                                  child: AudioPlayerWidget(
-                                    audioUrl: currentMessage.media.toString(),
-                                  ),
-                                  context: context);
+                        ),
+                      ),
+                    ));
+                  } else {
+                    return SwipeTo(
+                      onLeftSwipe: () {
+                        controller.replyMessageModel.value = currentMessage;
+                        print('------Callback from Swipe To Left');
+                      },
+                      onRightSwipe: () {
+                        controller.replyMessageModel.value = currentMessage;
+                        print('----------Callback from Swipe To Right');
+                      },
+                      child: InkWell(
+                        onTap: () {
+                          selectedIndex.value = index;
+                          print(
+                              "-----currentMessage.messageType----${currentMessage.messageType}");
+                          if (currentMessage.messageType == 3) {
+                            CustomDialog.showSimpleDialog(
+                                child: AudioPlayerWidget(
+                                  audioUrl: currentMessage.media.toString(),
+                                ),
+                                context: context);
+                          }
+                          if (currentMessage.messageType == 0 &&
+                              currentMessage.text != null &&
+                              currentMessage.text!.isNotEmpty) {
+                            if (locale!.languageCode == 'gu') {
+                              speakGujaratiText(currentMessage.text ?? "");
+                            } else if (locale!.languageCode == 'hi') {
+                              speakHindiText(currentMessage.text ?? "");
+                            } else {
+                              speakEnglishText(currentMessage.text ?? "");
                             }
-                            if (currentMessage.messageType == 0 &&
-                                currentMessage.text != null &&
-                                currentMessage.text!.isNotEmpty) {
-                              if (locale!.languageCode == 'gu') {
-                                speakGujaratiText(currentMessage.text ?? "");
-                              } else if (locale!.languageCode == 'hi') {
-                                speakHindiText(currentMessage.text ?? "");
-                              } else {
-                                speakEnglishText(currentMessage.text ?? "");
-                              }
-                            }
-                          },
-                          child: Container(
-                              margin: EdgeInsets.symmetric(
-                                  vertical: 5.0, horizontal: 10),
-                              alignment: isCurrentUser
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: FutureBuilder<UserModel?>(
-                                future: isCurrentUser
-                                    ? null
-                                    : widget.targetUser != null
-                                        ? getTargetUser()
-                                        : CommonMethod.getUserModelById(
-                                            currentMessage
-                                                .sender!), // The future to wait for.
-                                builder: (BuildContext context,
-                                    AsyncSnapshot<UserModel?> snapshot) {
-                                  return Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                      if (!isCurrentUser &&
-                                          widget.chatRoom.isGroup!)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 8.0),
-                                                child: NetworkImageWidget(
-                                                  width: 30,
-                                                  height: 30,
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
-                                                  imageUrl:
-                                                      snapshot.data != null
-                                                ? snapshot.data!.profilePic
-                                                    .toString()
-                                                : "",
-                                                ),
-                                              ),
-                                            Obx(() => currentSpeaking.value &&
-                                                    selectedIndex.value == index
-                                                ? IconButton(
-                                                    icon: Icon(
-                                                        CupertinoIcons.waveform,
-                                                        color: themeController
-                                                                .isDark.value
-                                                            ? Colors
-                                                                .blueGrey[200]
-                                                            : primaryColor),
-                                                    onPressed: () {},
-                                                  )
-                                                : SizedBox()),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: isCurrentUser
-                                                        ? themeController
-                                                                .isDark.value
-                                                            ? Color(0xFF3B444B)
-                                                            : primaryBlack
-                                                        : greenColor),
-                                                color: isCurrentUser
-                                                    ? themeController
-                                                            .isDark.value
-                                                        ? Color(0xFF3B444B)
-                                                        : primaryBlack
-                                                    : greenColor,
-                                                borderRadius: BorderRadius.only(
-                                                    topLeft: isCurrentUser
-                                                        ? Radius.circular(10)
-                                                        : Radius.circular(0),
-                                                    bottomLeft:
-                                                        Radius.circular(10),
-                                                    topRight: isCurrentUser
-                                                        ? Radius.circular(0)
-                                                        : Radius.circular(10),
-                                                    bottomRight:
-                                                        Radius.circular(10)),
-                                              ),
-                                              constraints: BoxConstraints(
-                                                maxWidth: Get.width * 0.7,
-                                              ),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                crossAxisAlignment:
-                                                    isCurrentUser
-                                                        ? CrossAxisAlignment.end
-                                                        : CrossAxisAlignment
-                                                            .start,
-                                                children: [
-                                            if (!isCurrentUser &&
-                                                widget.chatRoom.isGroup!)
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 10,
-                                                              right: 10,
-                                                              top: 10),
-                                                      child: Text(
-                                                  snapshot.data != null
-                                                      ? snapshot.data!.fullName
-                                                          .toString()
-                                                      : "Unknown",
-                                                        style: AppTextStyle
-                                                            .regularBold
-                                                            .copyWith(
-                                                          color: primaryWhite,
-                                                          shadows: [
-                                                            Shadow(
-                                                              offset:
-                                                                  Offset(1, 1),
-                                                              color: primaryBlack
-                                                                  .withOpacity(
-                                                                      .2), // Shadow color
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  if (currentMessage.media !=
-                                                      null)
-                                                    Column(
-                                                      children: [
-                                                        if (currentMessage
-                                                                .messageType ==
-                                                            3)
-                                                          audioTypeMessageWidget(
-                                                              currentMessage,
-                                                              isCurrentUser),
-                                                        if (currentMessage
-                                                                .messageType ==
-                                                            2)
-                                                          videoTypeMessageWidget(
-                                                              currentMessage,
-                                                              isCurrentUser),
-                                                        if (currentMessage
-                                                                .messageType ==
-                                                            1)
-                                                          imageTypeMessageWidget(
-                                                              currentMessage,
-                                                              isCurrentUser)
-
-
-                                                      ],
-                                                    ),
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            10),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .end,
-
-                                                      children: [
-                                                        if (currentMessage
-                                                            .text!.isNotEmpty)
-                                                          textTypeMessageWidget(
-                                                              currentMessage),
-                                                  messageTimeWidget(
-                                                      currentMessage)
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-
-
-                                            // currentMessage.sender == AppPreferences.getUiId()
-                                            //     ? Row(
-                                            //   children: [
-                                            //     Icon(
-                                            //       Icons.done_all,
-                                            //       color:(color: currentMessage.seen ? Colors.blue : Colors.grey,)? Colors.blue : Colors.grey,
-                                            //     ),
-                                            //     if (controller.isChatActive)
-                                            //       Icon(Icons.check, color: Colors.blue), // Add checkmark when chat is active
-                                            // //   ],
-                                            // // )
-                                            // //     : SizedBox(),
-                                          ],
-                                        );
-                                },
-                              )),
-                        );
+                          }
+                        },
+                        child: Container(
+                            margin: EdgeInsets.symmetric(
+                                vertical: 5.0, horizontal: 10),
+                            alignment: isCurrentUser
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: FutureBuilder<UserModel?>(
+                              future: isCurrentUser
+                                  ? null
+                                  : widget.targetUser != null
+                                      ? getTargetUser()
+                                      : CommonMethod.getUserModelById(
+                                          currentMessage
+                                              .sender!), // The future to wait for.
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<UserModel?> snapshot) {
+                                return messageWidget(
+                                    isCurrentUser: isCurrentUser,
+                                    userData: snapshot.data,
+                                    index: index,
+                                    currentMessage: currentMessage);
+                              },
+                            )),
+                      ),
+                    );
+                  }
                 },
               ),
             )),
@@ -678,125 +523,169 @@ Future refreshPage() async {
               ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextFormFieldWidget(
-                      controller: controller.messageController,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 5,
-                      onChanged: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          CommonMethod.setTypingStatus();
-                        } else {
-                          CommonMethod.setOnlineStatus();
-                        }
-                      },
-                      hintText: "Enter message",
-                      suffixIcon: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          FadeIn(
-                            child: GestureDetector(
-                              onTap: () async {
-                                if (!isListening) {
-                                  var available =
-                                      await speechToText.initialize();
-                                  if (available) {
-                                    setState(() {
-                                      isListening = true;
-                                    });
-                                    speechToText.listen(
-                                      listenFor: const Duration(days: 1),
-                                      onResult: (result) {
-                                        setState(() {
-                                          controller.messageController.text =
-                                              result.recognizedWords;
-                                          if (result.finalResult) {
-                                            // Recognition is complete
-                                            setState(() {
-                                              isListening = false;
-                                            });
-                                          }
-                                        });
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Obx(
+                              () => controller.replyMessageModel.value != null
+                                  ? FutureBuilder<UserModel?>(
+                                      future: CommonMethod.getUserModelById(
+                                          controller.replyMessageModel.value!
+                                              .sender!), // The future to wait for.
+                                      builder: (BuildContext context,
+                                          AsyncSnapshot<UserModel?> snapshot) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10),
+                                          child: replyMessageWidget(
+                                              isCurrentUser: true,
+                                              userData: snapshot.data,
+                                              index: controller.messages.value
+                                                  .indexOf(controller
+                                                      .replyMessageModel
+                                                      .value!),
+                                              currentMessage: controller
+                                                  .replyMessageModel.value!),
+                                        );
                                       },
-                                    );
-                                  }
+                                    )
+                                  : SizedBox(),
+                            ),
+                            TextFormFieldWidget(
+                              controller: controller.messageController,
+                              keyboardType: TextInputType.multiline,
+                              maxLines: 5,
+                              onChanged: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  CommonMethod.setTypingStatus();
                                 } else {
-                                  setState(() {
-                                    isListening = false;
-                                  });
-                                  speechToText.stop();
+                                  CommonMethod.setOnlineStatus();
                                 }
                               },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isListening
-                                      ? greenColor
-                                      : Colors.transparent,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Icon(
-                                    isListening ? Icons.mic : Icons.mic_none,
-                                    color: themeController.isDark.value
-                                        ? isListening
-                                            ? primaryWhite
-                                            : primaryWhite
-                                        : isListening
-                                            ? primaryWhite
-                                            : primaryBlack,
-                                    // glowColor: isListening ? primaryWhite : Colors.transparent,
-                                    // blurRadius: isListening ? 10 : 5,
-                                    size: isListening ? 24 : 23,
+                              hintText: "Enter message",
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FadeIn(
+                                    child: GestureDetector(
+                                      onTap: () async {
+                                        if (!isListening) {
+                                          var available =
+                                              await speechToText.initialize();
+                                          if (available) {
+                                            setState(() {
+                                              isListening = true;
+                                            });
+                                            speechToText.listen(
+                                              listenFor:
+                                                  const Duration(days: 1),
+                                              onResult: (result) {
+                                                setState(() {
+                                                  controller.messageController
+                                                          .text =
+                                                      result.recognizedWords;
+                                                  if (result.finalResult) {
+                                                    // Recognition is complete
+                                                    setState(() {
+                                                      isListening = false;
+                                                    });
+                                                  }
+                                                });
+                                              },
+                                            );
+                                          }
+                                        } else {
+                                          setState(() {
+                                            isListening = false;
+                                          });
+                                          speechToText.stop();
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isListening
+                                              ? greenColor
+                                              : Colors.transparent,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Icon(
+                                            isListening
+                                                ? Icons.mic
+                                                : Icons.mic_none,
+                                            color: themeController.isDark.value
+                                                ? isListening
+                                                    ? primaryWhite
+                                                    : primaryWhite
+                                                : isListening
+                                                    ? primaryWhite
+                                                    : primaryBlack,
+                                            // glowColor: isListening ? primaryWhite : Colors.transparent,
+                                            // blurRadius: isListening ? 10 : 5,
+                                            size: isListening ? 24 : 23,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.attach_file,
+                                      color: themeController.isDark.value
+                                          ? primaryWhite
+                                          : primaryBlack,
+                                    ),
+                                    onPressed: () async {
+                                      controller.selectedFile =
+                                          await CommonMethod.pickFile();
+                                      if (controller.selectedFile != null) {
+                                        String? path =
+                                            await CommonMethod.uploadFile(
+                                                context,
+                                                controller.selectedFile!);
+                                        if (path != null) {
+                                          controller.mediaUrl = path;
+
+                                          controller.sendMessage(
+                                              chatRoom: widget.chatRoom,
+                                              replyMessage: controller
+                                                  .replyMessageModel.value);
+                                        }
+                                      }
+                                    },
+                                  )
+                                ],
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      width10,
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: themeController.isDark.value
+                            ? blackThemeColor
+                            : primaryBlack,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.send,
+                            color: primaryWhite,
                           ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.attach_file,
-                              color: themeController.isDark.value
-                                  ? primaryWhite
-                                  : primaryBlack,
-                            ),
-                            onPressed: () async {
-                              controller.selectedFile =
-                                  await CommonMethod.pickFile();
-                              if (controller.selectedFile != null) {
-
-                                String? path = await CommonMethod.uploadFile(
-                                    context, controller.selectedFile!);
-                                if (path != null) {
-                                  controller.mediaUrl = path;
-                                  controller.sendMessage(
-                                      chatRoom: widget.chatRoom);
-                                }
-                              }
-                            },
-                          )
-                        ],
+                          onPressed: () {
+                            controller.sendMessage(
+                                chatRoom: widget.chatRoom,
+                                replyMessage:
+                                    controller.replyMessageModel.value);
+                          },
+                        ),
                       ),
-                    ),
-                  ),
-                  width10,
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: themeController.isDark.value
-                        ? blackThemeColor
-                        : primaryBlack,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        color: primaryWhite,
-                      ),
-                      onPressed: () {
-                        controller.sendMessage(chatRoom: widget.chatRoom);
-                      },
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -808,19 +697,26 @@ Future refreshPage() async {
     });
   }
 
-  Widget messageTimeWidget(MessageModel currentMessage) {
+  Widget messageTimeWidget(
+      {required MessageModel? currentMessage, bool? isReply}) {
     return Padding(
       padding: const EdgeInsets.only(left: 15),
       child: Row(
         children: [
-          Text(
-            CommonMethod.formatDateToTime(
-                currentMessage.createdAt ?? DateTime.now()),
-            style: AppTextStyle.normalRegular10
-                .copyWith(height: 0, color: primaryWhite.withOpacity(.7)),
-          ),
+          if (currentMessage != null)
+            Text(
+              CommonMethod.formatDateToTime(
+                  currentMessage.createdAt ?? DateTime.now()),
+              style: AppTextStyle.normalRegular10.copyWith(
+                  height: 0,
+                  color: isReply != null && isReply
+                      ? primaryBlack
+                      : primaryWhite.withOpacity(.7)),
+            ),
           width05,
-          currentMessage.sender == AppPreferences.getUiId()
+          currentMessage != null &&
+                  currentMessage.sender == AppPreferences.getUiId() &&
+                  isReply != true
               ? Icon(
                   Icons.done_all,
                   size: 18,
@@ -833,6 +729,7 @@ Future refreshPage() async {
       ),
     );
   }
+
   Future<File?> cropImage(String imagePath) async {
     ImageCropper imageCropper = ImageCropper();
     final croppedFile = await imageCropper.cropImage(
@@ -847,34 +744,265 @@ Future refreshPage() async {
 
     return null;
   }
-  Widget textTypeMessageWidget(MessageModel currentMessage) {
+
+  Widget replyMessageWidget(
+      {required bool isCurrentUser,
+      required UserModel? userData,
+      required int index,
+      required MessageModel? currentMessage}) {
+    return Container(
+      decoration: BoxDecoration(
+          color: currentMessage != null &&
+                  currentMessage.sender == AppPreferences.getUiId()
+              ? greyColor
+              : greenColor,
+          borderRadius: BorderRadius.circular(8)),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8.0),
+        child: ShadowContainerWidget(
+          padding: 6,
+          color: greyBorderColor,
+          blurRadius: 0,
+          widget: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      userData != null
+                          ? userData.uid == AppPreferences.getUiId()
+                              ? "You"
+                              : userData.fullName.toString()
+                          : "Unknown",
+                      style: AppTextStyle.regularBold.copyWith(
+                        color: primaryBlack,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            color: primaryBlack.withOpacity(.2), // Shadow color
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isCurrentUser)
+                    GestureDetector(
+                      onTap: () {
+                        controller.replyMessageModel.value = null;
+                      },
+                      child: Icon(
+                        Icons.close,
+                        color: primaryBlack,
+                      ),
+                    )
+                ],
+              ),
+              if (currentMessage != null && currentMessage.media != null)
+                Column(
+                  children: [
+                    if (currentMessage.messageType == 3)
+                      audioTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser,
+                          isReply: true),
+                    if (currentMessage.messageType == 2)
+                      videoTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser,
+                          isReply: true),
+                    if (currentMessage.messageType == 1)
+                      imageTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser,
+                          isReply: true)
+                  ],
+                ),
+              Row(
+                // mainAxisSize: MainAxisSize.min,
+                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (currentMessage != null && currentMessage.text!.isNotEmpty)
+                    textTypeMessageWidget(
+                        currentMessage: currentMessage, isReply: true),
+                  messageTimeWidget(
+                      currentMessage: currentMessage, isReply: true)
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget messageWidget(
+      {required bool isCurrentUser,
+      required UserModel? userData,
+      required int index,
+      required MessageModel currentMessage}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!isCurrentUser && widget.chatRoom.isGroup!)
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: NetworkImageWidget(
+              width: 30,
+              height: 30,
+              borderRadius: BorderRadius.circular(30),
+              imageUrl: userData != null ? userData.profilePic.toString() : "",
+            ),
+          ),
+        Obx(() => currentSpeaking.value && selectedIndex.value == index
+            ? IconButton(
+                icon: Icon(CupertinoIcons.waveform,
+                    color: themeController.isDark.value
+                        ? Colors.blueGrey[200]
+                        : primaryColor),
+                onPressed: () {},
+              )
+            : SizedBox()),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+                color: isCurrentUser
+                    ? themeController.isDark.value
+                        ? Color(0xFF3B444B)
+                        : primaryBlack
+                    : greenColor),
+            color: isCurrentUser
+                ? themeController.isDark.value
+                    ? Color(0xFF3B444B)
+                    : primaryBlack
+                : greenColor,
+            borderRadius: BorderRadius.only(
+                topLeft:
+                    isCurrentUser ? Radius.circular(10) : Radius.circular(0),
+                bottomLeft: Radius.circular(10),
+                topRight:
+                    isCurrentUser ? Radius.circular(0) : Radius.circular(10),
+                bottomRight: Radius.circular(10)),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: Get.width * 0.7,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: isCurrentUser
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
+            children: [
+              currentMessage.replyMessage != null
+                  ? FutureBuilder<UserModel?>(
+                      future: CommonMethod.getUserModelById(
+                          currentMessage.replyMessage!.sender.toString()),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<UserModel?> userSnapshot) {
+                        return userSnapshot.hasData
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: replyMessageWidget(
+                                  isCurrentUser: false,
+                                  userData: userSnapshot.data,
+                                  index: index,
+                                  currentMessage: currentMessage.replyMessage,
+                                ),
+                              )
+                            : SizedBox();
+                      },
+                    )
+                  : SizedBox(),
+              if (!isCurrentUser && widget.chatRoom.isGroup!)
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+                  child: Text(
+                    userData != null ? userData.fullName.toString() : "Unknown",
+                    style: AppTextStyle.regularBold.copyWith(
+                      color: primaryWhite,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          color: primaryBlack.withOpacity(.2), // Shadow color
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (currentMessage.media != null)
+                Column(
+                  children: [
+                    if (currentMessage.messageType == 3)
+                      audioTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser),
+                    if (currentMessage.messageType == 2)
+                      videoTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser),
+                    if (currentMessage.messageType == 1)
+                      imageTypeMessageWidget(
+                          currentMessage: currentMessage,
+                          isCurrentUser: isCurrentUser)
+                  ],
+                ),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (currentMessage.text!.isNotEmpty)
+                      textTypeMessageWidget(currentMessage: currentMessage),
+                    messageTimeWidget(currentMessage: currentMessage)
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget textTypeMessageWidget(
+      {required MessageModel currentMessage, bool? isReply}) {
     return Flexible(
       child: Text(
         currentMessage.text.toString(),
-        style: AppTextStyle.normalRegular14.copyWith(color: primaryWhite),
+        style: AppTextStyle.normalRegular14.copyWith(
+            color: isReply != null && isReply ? primaryBlack : primaryWhite),
       ),
     );
   }
 
   Widget imageTypeMessageWidget(
-      MessageModel currentMessage, bool isCurrentUser) {
+      {required MessageModel currentMessage,
+      required bool isCurrentUser,
+      bool? isReply}) {
     return GestureDetector(
-      onTap: () async{
-
+      onTap: () async {
         Get.to(() => ImageViewWidget(
               imageUrl: currentMessage.media!,
               isFile: false,
             ));
       },
       child: NetworkImageWidget(
-        width: (Get.width / 2),
-        height: (Get.width / 2),
-        borderRadius: BorderRadius.only(
-            topLeft: isCurrentUser ? Radius.circular(10) : Radius.circular(0),
-            bottomLeft: Radius.circular(10),
-            topRight: isCurrentUser ? Radius.circular(0) : Radius.circular(10),
-            bottomRight: Radius.circular(10)),
-       imageUrl: currentMessage.media,
+        width: isReply != null && isReply ? 100 : (Get.width / 2),
+        height: isReply != null && isReply ? 100 : (Get.width / 2),
+        borderRadius: isReply != null && isReply
+            ? BorderRadius.circular(10)
+            : BorderRadius.only(
+                topLeft:
+                    isCurrentUser ? Radius.circular(10) : Radius.circular(0),
+                bottomLeft: Radius.circular(10),
+                topRight:
+                    isCurrentUser ? Radius.circular(0) : Radius.circular(10),
+                bottomRight: Radius.circular(10)),
+        imageUrl: currentMessage.media,
       ),
     );
   }
@@ -903,10 +1031,10 @@ Future refreshPage() async {
   //   );
   // }
 
-
-
   Widget audioTypeMessageWidget(
-      MessageModel currentMessage, bool isCurrentUser) {
+      {required MessageModel currentMessage,
+      required bool isCurrentUser,
+      bool? isReply}) {
     return GestureDetector(
         onTap: () {
           log("---currentMessage.media---${currentMessage.media}");
@@ -931,7 +1059,9 @@ Future refreshPage() async {
   }
 
   Widget videoTypeMessageWidget(
-      MessageModel currentMessage, bool isCurrentUser) {
+      {required MessageModel currentMessage,
+      required bool isCurrentUser,
+      bool? isReply}) {
     return FutureBuilder<String>(
       future: CommonMethod.generateThumbnail(currentMessage.media!),
       builder: (context, snapshot) {
@@ -983,8 +1113,7 @@ class CropImageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     body: Image.network(img as String),
+      body: Image.network(img as String),
     );
   }
 }
-

@@ -20,6 +20,8 @@ class ChatController extends GetxController {
     RxInt unreadMessageCount=0.obs;
   final List<ChatRoomModel> chatRooms = [];
   final List<int> chatRoomUnreadMessageCounts = [];
+  Rx<MessageModel?> replyMessageModel = Rx<MessageModel?>(null);
+
   // bool isChatActive = true;
   final RxList<MessageModel> messages = <MessageModel>[].obs;
   Future updateMessages(List<MessageModel> newMessages, ChatRoomModel chatRoom) async {
@@ -48,11 +50,13 @@ class ChatController extends GetxController {
   }
 
 
-  Future sendMessage({required ChatRoomModel chatRoom}) async {
+  Future sendMessage(
+      {required ChatRoomModel chatRoom,
+      required MessageModel? replyMessage}) async {
     CommonMethod.setOnlineStatus();
     String msg = messageController.text.trim();
     messageController.clear();
-
+replyMessageModel.value = null;
     if (msg != "" || mediaUrl != null) {
       MessageModel newMessage = MessageModel(
         sender: AppPreferences.getUiId(),
@@ -71,6 +75,7 @@ class ChatController extends GetxController {
         chatRoomId: chatRoom.chatRoomId,
         createdAt: DateTime.now(),
         messageId: uuid.v1(),
+        replyMessage: replyMessage != null ? replyMessage : null,
       );
       await CommonMethod.addMessage(newMessage);
       playMessageSentSound();
