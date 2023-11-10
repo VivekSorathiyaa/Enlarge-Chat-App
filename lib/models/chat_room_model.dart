@@ -10,6 +10,7 @@ class ChatRoomModel {
   bool? isGroup;
   DateTime? lastSeen;
   List<String>? usersIds;
+  bool? isDeletedByCurrentUser;
 
   ChatRoomModel({
     required this.chatRoomId,

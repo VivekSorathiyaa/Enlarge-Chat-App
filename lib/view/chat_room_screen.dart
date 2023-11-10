@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:animate_do/animate_do.dart';
 import 'package:chatapp/componet/app_text_style.dart';
 import 'package:chatapp/componet/audio_player_widget.dart';
+import 'package:chatapp/componet/common_showAlert.dart';
 import 'package:chatapp/componet/custom_dialog.dart';
 
 import 'package:chatapp/componet/network_image_widget.dart';
@@ -224,6 +225,15 @@ Future refreshPage() async {
         }
       });
     }
+    // void deleteMessageByMessageId(String messageId) {
+    //   // Find the index of the message with the given messageId
+    //   int index = controller.messages.indexWhere((message) => message.messageId == messageId);
+    //
+    //   if (index != -1) {
+    //     // Message found, remove it from the list
+    //     controller.messages.removeAt(index);
+    //   }
+    // }
 
 
     return Obx(() {
@@ -434,6 +444,23 @@ Future refreshPage() async {
                           ),
                         ))
                       : InkWell(
+
+
+                      onLongPress: () {
+                        MyAlertDialog
+                            .showDialogWithOption(
+                            context,
+                            'continue'.tr,
+                            'cancel'.tr, () {
+
+CommonMethod.deleteMessage(widget.chatRoom.chatRoomId!, currentMessage.messageId!);
+
+                          Get.back();
+
+                        }, () {
+                          Get.back();
+                        }, 'delete_desc'.tr);
+                      },
                           onTap: () {
                             selectedIndex.value = index;
                             print(

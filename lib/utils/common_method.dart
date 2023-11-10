@@ -399,49 +399,51 @@ class CommonMethod {
     }
   }
 
-static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
-  final querySnapshot = await FirebaseFirestore.instance
-      .collection("chatrooms")
-      .doc(roomID)
-      .collection("messages")
-      .orderBy("createdAt", descending: true)
-      .get(); // Use get() instead of snapshots() to wait for the query to complete
-  final newMessages = querySnapshot.docs.map((doc) {
-    return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
-  }).toList();
-  final messages = <MessageModel>[];
-  for (final message in newMessages) {
-    if (message.chatRoomId == roomID &&
-          message.sender != await AppPreferences.getUiId() &&
-        message.seen == false) {
-      messages.add(message);
-    }
-  }
-  return messages;
-}
-
-static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
-  final querySnapshot = await FirebaseFirestore.instance
-      .collection("chatrooms")
-      .doc(roomID)
-      .collection("messages")
-      .orderBy("createdAt", descending: true)
-      .snapshots();
-
-  await for (QuerySnapshot snapshot in querySnapshot) {
-    final newMessages = snapshot.docs.map((doc) {
+  static Future<List<MessageModel>> fetchUnreadMessages(String roomID) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(roomID)
+        .collection("messages")
+        .orderBy("createdAt", descending: true)
+        .get(); // Use get() instead of snapshots() to wait for the query to complete
+    final newMessages = querySnapshot.docs.map((doc) {
       return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
     }).toList();
-    
-    final uiId = await AppPreferences.getUiId();
-    final messages = newMessages.where((message) =>
-        message.chatRoomId == roomID &&
-        message.sender != uiId &&
-        message.seen ==false).toList();
-
-    yield messages;
+    final messages = <MessageModel>[];
+    for (final message in newMessages) {
+      if (message.chatRoomId == roomID &&
+          message.sender != await AppPreferences.getUiId() &&
+          message.seen == false) {
+        messages.add(message);
+      }
+    }
+    return messages;
   }
-}
+
+  static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(roomID)
+        .collection("messages")
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+
+    await for (QuerySnapshot snapshot in querySnapshot) {
+      final newMessages = snapshot.docs.map((doc) {
+        return MessageModel.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
+
+      final uiId = await AppPreferences.getUiId();
+      final messages = newMessages
+          .where((message) =>
+              message.chatRoomId == roomID &&
+              message.sender != uiId &&
+              message.seen == false)
+          .toList();
+
+      yield messages;
+    }
+  }
 
 // static StreamController<List<MessageModel>> unreadMessagesStreamController =
 //       StreamController<List<MessageModel>>.broadcast();
@@ -474,8 +476,6 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 //     unreadMessagesStreamController.add(messages);
 //     return messages;
 //   }
-
-
 
   static Future<List<String>> getMessageLines(
       {required List<MessageModel> unReadMessages,
@@ -570,7 +570,8 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
       return 'audio';
     } else if (fileExtension == 'jpg' ||
         fileExtension == 'png' ||
-        fileExtension == 'gif'||fileExtension == 'jpeg') {
+        fileExtension == 'gif' ||
+        fileExtension == 'jpeg') {
       return 'image';
     } else if (fileExtension == 'pdf') {
       return 'pdf';
@@ -780,35 +781,16 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 
     return deviceToken;
   }
-
-
- static Future<void> deleteChatRoom(String chatRoomId) async {
-    try {
-      print('chatroom id:$chatRoomId');
-      await FirebaseFirestore.instance
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .delete();
-
-      await FirebaseFirestore.instance
-          .collection('chatMessages')
-          .where('chatRoomId', isEqualTo: chatRoomId)
-          .get()
-          .then((value) {
-        value.docs.forEach((element) {
-          element.reference.delete();
-        });
-      });
-
-
-    } catch (e) {
-      print('========================Error deleting chat room: $e');
-      // Handle any error that occurs during deletion.
-    }
+  static Future<void> deleteMessage(String chatRoomId, String messageId) async {
+    await FirebaseFirestore.instance
+        .collection("chatrooms")
+        .doc(chatRoomId)
+        .collection("messages")
+        .doc(messageId)
+        .delete()
+        .then((value) => print("Message deleted"));
   }
-
-
- static Future  <void> deleteChatroom(String chatroomId) async {
+  static Future<void> deleteChatroom(String chatroomId) async {
     // Initialize Firebase if not already initialized
     await Firebase.initializeApp();
 
@@ -817,7 +799,8 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
 
     try {
       // Reference to the chatroom document you want to delete
-      DocumentReference chatroomRef = firestore.collection('chatrooms').doc(chatroomId);
+      DocumentReference chatroomRef =
+          firestore.collection('chatrooms').doc(chatroomId);
 
       // Delete the chatroom document
       await chatroomRef.delete();
@@ -833,6 +816,186 @@ static Stream<List<MessageModel>> unreadMessagesStream(String roomID) async* {
       });
 
       print('Chatroom with ID $chatroomId deleted successfully.');
+    } catch (e) {
+      print('Error deleting chatroom: $e');
+    }
+  }
+
+  // static Future<void> deleteChatroomUser(String chatroomId, String currentUserId) async {
+  //   try {
+  //     // Reference to the chatroom document
+  //     DocumentReference chatroomRef = FirebaseFirestore.instance.collection('chatrooms').doc(chatroomId);
+  //
+  //     // Get the chatroom document data
+  //     DocumentSnapshot chatroomSnapshot = await chatroomRef.get();
+  //
+  //     if (chatroomSnapshot.exists) {
+  //       List<String> userIds = List<String>.from((chatroomSnapshot.data()as Map<String, dynamic>)['usersIds'] ?? []);
+  //
+  //       if (userIds.contains(currentUserId)) {
+  //         // The current user is a participant, so delete the chatroom for them
+  //         await chatroomRef.delete();
+  //
+  //         // You may also want to delete chat messages related to this chat room
+  //         await FirebaseFirestore.instance
+  //             .collection('chatMessages')
+  //             .where('chatRoomId', isEqualTo: chatroomId)
+  //             .get()
+  //             .then((value) {
+  //           value.docs.forEach((element) {
+  //             element.reference.delete();
+  //           });
+  //         });
+  //
+  //         print('Chatroom with ID $chatroomId deleted for the current user.');
+  //       } else {
+  //         print('The current user is not a participant in this chat room.');
+  //       }
+  //     } else {
+  //       print('Chatroom with ID $chatroomId not found.');
+  //     }
+  //   } catch (e) {
+  //     print('Error deleting chatroom: $e');
+  //   }
+  // }
+
+  // static Future<void> deleteChatroomUser(String chatroomId, String currentUserId) async {
+  //   try {
+  //     // Reference to the chatroom document
+  //     DocumentReference chatroomRef = FirebaseFirestore.instance.collection('chatrooms').doc(chatroomId);
+  //
+  //     // Get the chatroom document data
+  //     DocumentSnapshot chatroomSnapshot = await chatroomRef.get();
+  //
+  //     if (chatroomSnapshot.exists) {
+  //       List<String> userIds = List<String>.from((chatroomSnapshot.data() as Map<String, dynamic>)['usersIds'] ?? []);
+  //
+  //       if (userIds.contains(currentUserId)) {
+  //         // The current user is a participant, so remove them from the chatroom
+  //         userIds.remove(currentUserId);
+  //
+  //         // Update the chatroom with the modified list of user IDs
+  //         await chatroomRef.update({'usersIds': userIds});
+  //
+  //         // You may also want to delete chat messages related to this chat room for the current user
+  //         await FirebaseFirestore.instance
+  //             .collection('chatMessages')
+  //             .where('chatRoomId', isEqualTo: chatroomId)
+  //             .where('userId', isEqualTo: currentUserId)
+  //             .get()
+  //             .then((value) {
+  //           value.docs.forEach((element) {
+  //             element.reference.delete();
+  //           });
+  //         });
+  //
+  //         print('Chatroom with ID $chatroomId deleted for the current user.');
+  //       } else {
+  //         print('The current user is not a participant in this chat room.');
+  //       }
+  //     } else {
+  //       print('Chatroom with ID $chatroomId not found.');
+  //     }
+  //   } catch (e) {
+  //     print('Error deleting chatroom: $e');
+  //   }
+  // }
+
+  static Future<void> deleteChatroomUser(
+      String chatroomId, String currentUserId) async {
+    // Initialize Firebase if not already initialized
+    await Firebase.initializeApp();
+
+    // Get a reference to the Firestore instance
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Reference to the chatroom document you want to delete
+      DocumentReference chatroomRef =
+          firestore.collection('chatrooms').doc(chatroomId);
+
+      // Get the chatroom document data
+      DocumentSnapshot chatroomSnapshot = await chatroomRef.get();
+
+      if (chatroomSnapshot.exists) {
+        List<String> userIds = List<String>.from(
+            (chatroomSnapshot.data() as Map<String, dynamic>)['usersIds'] ??
+                []);
+
+        if (userIds.contains(currentUserId)) {
+          // The current user is a participant, so delete the chatroom for them
+          await chatroomRef.delete();
+
+          // You may also want to delete chat messages related to this chat room for the current user
+          await FirebaseFirestore.instance
+              .collection('chatMessages')
+              .where('chatRoomId', isEqualTo: chatroomId)
+              .where('userId', isEqualTo: currentUserId)
+              .get()
+              .then((value) {
+            value.docs.forEach((element) {
+              element.reference.delete();
+            });
+          });
+
+          print('Chatroom with ID $chatroomId deleted for the current user.');
+        } else {
+          print('The current user is not a participant in this chat room.');
+        }
+      } else {
+        print('Chatroom with ID $chatroomId not found.');
+      }
+    } catch (e) {
+      print('Error deleting chatroom: $e');
+    }
+  }
+
+  static Future<void> deleteChatroomUser3(String chatroomId, String currentUserId) async {
+    // Initialize Firebase if not already initialized
+    await Firebase.initializeApp();
+
+    // Get a reference to the Firestore instance
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Reference to the chatroom document you want to delete
+      DocumentReference chatroomRef = firestore.collection('chatrooms').doc(chatroomId);
+
+      // Get the chatroom document data
+      DocumentSnapshot chatroomSnapshot = await chatroomRef.get();
+
+      if (chatroomSnapshot.exists) {
+        List<String> userIds = List<String>.from((chatroomSnapshot.data() as Map<String, dynamic>)['usersIds'] ?? []);
+
+        if (userIds.contains(currentUserId)) {
+          // The current user is a participant, so delete the chatroom for them
+          await chatroomRef.delete();
+
+          print('Chatroom with ID $chatroomId deleted for the current user.');
+
+          // Update the chat room to remove the current user
+          userIds.remove(currentUserId);
+          await chatroomRef.update({'usersIds': userIds});
+
+          // Optionally, delete chat messages related to this chat room for the current user
+          await FirebaseFirestore.instance
+              .collection('chatMessages')
+              .where('chatRoomId', isEqualTo: chatroomId)
+              .where('userId', isEqualTo: currentUserId)
+              .get()
+              .then((value) {
+            value.docs.forEach((element) {
+              element.reference.delete();
+            });
+          });
+
+          print('Chatroom with ID $chatroomId deleted for the current user.');
+        } else {
+          print('The current user is not a participant in this chat room.');
+        }
+      } else {
+        print('Chatroom with ID $chatroomId not found.');
+      }
     } catch (e) {
       print('Error deleting chatroom: $e');
     }

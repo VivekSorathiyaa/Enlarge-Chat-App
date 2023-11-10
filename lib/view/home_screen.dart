@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
   StreamController<List<MessageModel>> _unreadMessagesStreamController =
       StreamController<List<MessageModel>>.broadcast();
+  String? userId=AppPreferences.getUiId();
 
   Stream<List<MessageModel>> get unreadMessagesStream =>
       _unreadMessagesStreamController.stream;
@@ -187,8 +188,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       context,
                                                       'continue'.tr,
                                                       'cancel'.tr, () {
-                                                CommonMethod.deleteChatroom(
-                                                    chatRoomModel.chatRoomId!);
+                                                        log("====Current user id$userId");
+                                                // CommonMethod.deleteChatroom(
+                                                //     chatRoomModel.chatRoomId!);
+                                          //      CommonMethod.deleteChatroomUser(chatRoomModel.chatRoomId!,userId!);
+                                                        CommonMethod.deleteChatroomUser3(chatRoomModel.chatRoomId!, userId!);
+                                                Get.back();
                                                 log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
                                               }, () {
                                                 Get.back();

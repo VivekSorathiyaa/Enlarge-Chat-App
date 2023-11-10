@@ -38,7 +38,7 @@ class ImageViewWidget extends StatelessWidget {
                 ),
           SafeArea(
             child: Row(
-              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //  mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
                   onPressed: () {
