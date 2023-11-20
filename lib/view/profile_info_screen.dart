@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:chatapp/componet/video_view_widget.dart';
@@ -6,6 +7,7 @@ import 'package:chatapp/controller/theme_controller.dart';
 import 'package:chatapp/models/message_model.dart';
 import 'package:chatapp/utils/static_decoration.dart';
 import 'package:chatapp/view/video_conference_screen.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +18,7 @@ import '../componet/image_view_widget.dart';
 import '../models/chat_room_model.dart';
 import '../utils/colors.dart';
 import '../utils/common_method.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 class ProfileInfoScreen extends StatefulWidget {
   ProfileInfoScreen(
@@ -43,6 +46,7 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
 
     List<MessageModel> allMessages = [];
 
+
     chatController.messages.forEach((message) {
       if (message.messageType == 1) {
         allMessages.add(message);
@@ -51,6 +55,14 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
       }
     });
 
+
+
+    @override
+    void initState() {
+      // TODO: implement initState
+      super.initState();
+
+    }
     Widget buildIconButton(
         IconData icon, double iconSize, void Function()? onTap, String title) {
       return Column(
@@ -73,7 +85,8 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
         ],
       );
     }
-    void shareContact(String name, String phoneNumber) {
+    Future<void> shareContact(String name, String phoneNumber) async {
+
       final contactInfo = '''
     Contact Name: $name
     Phone Number: $phoneNumber
@@ -81,6 +94,43 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen> {
 
       Share.share(contactInfo);
     }
+
+    // void shareContact(String name,String phone) async {
+    //
+    //     String name = widget.name; // Replace with actual name
+    //     String phone = widget.phone; // Replace with actual phone number
+    //
+    //  //   Uri dynamicUrl = await generateDynamicLink(name, phone);
+    //     try {
+    //       Uri dynamicUrl = await generateDynamicLink(name, phone);
+    //       Share.share('Check out my contact on Your App Title: $dynamicUrl');
+    //       // Continue with sharing logic...
+    //     } catch (e) {
+    //       print("Error generating dynamic link: $e");
+    //       // Handle the error or provide additional information for debugging.
+    //     }
+    //
+    //     // Check if dynamicUrl is not null before attempting to share
+    //     // if (dynamicUrl != null) {
+    //     //   // Use dynamicUrl to share the contact
+    //     //   // Example: You might use the share package to share the dynamic link
+    //     //   // Replace 'Your App Title' with your app's title
+    //     //   Share.share('Check out my contact on Your App Title: $dynamicUrl');
+    //     // } else {
+    //     //   // Handle the case where dynamicUrl is null
+    //     //   print("Failed to generate dynamic link");
+    //     //   // You can show an error message to the user or take appropriate action
+    //     // }
+    //   // } catch (e) {
+    //   //   // Handle any other exceptions that might occur during sharing
+    //   //   print("Error sharing contact: $e");
+    //   //   // You can show an error message to the user or take appropriate action
+    //   // }
+    // }
+
+
+
+
 
     return Scaffold(
       backgroundColor: themeController.isDark.value
