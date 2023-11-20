@@ -13,6 +13,10 @@ class AppConstants {
       'f4dc22c24b04327f6c1e62b061448b3986bdbb10461def8b39defbce67a48b13';
   static const String firebaseServerKey =
       'AAAAJj823eM:APA91bGYdfLlg9MJSVrJdk7gVPCtCxvCdT6-_qfa-Qb2sLbbb0tjaBKHs5wSgNq13QyWBUlsjIx4d6uXdR90jgCECZ6-3Mud8kemX2VRq9Jt14h32Iv3jwo9sAnWJq6yP_V9i8PcQw1N'; // Replace w
+  
+  String openAiBaseUrl = "https://api.openai.com/v1";
+// String API_KEY = "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";
+String openAiApiKey = "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";
   // Customer
   static const String customerUserLogin = 'customer-login';
   static const String customerLogout = 'customer-logout';

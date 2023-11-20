@@ -455,20 +455,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       },
                       child: InkWell(
                         onLongPress: () {
-                        MyAlertDialog
-                            .showDialogWithOption(
-                            context,
-                            'continue'.tr,
-                            'cancel'.tr, () {
+                          MyAlertDialog.showDialogWithOption(
+                              context, 'continue'.tr, 'cancel'.tr, () {
+                            CommonMethod.deleteMessage(
+                                widget.chatRoom.chatRoomId!,
+                                currentMessage.messageId!);
 
-CommonMethod.deleteMessage(widget.chatRoom.chatRoomId!, currentMessage.messageId!);
-
-                          Get.back();
-
-                        }, () {
-                          Get.back();
-                        }, 'delete_desc'.tr);
-                      },
+                            Get.back();
+                          }, () {
+                            Get.back();
+                          }, 'delete_desc'.tr);
+                        },
                         onTap: () {
                           selectedIndex.value = index;
                           print(
@@ -492,7 +489,6 @@ CommonMethod.deleteMessage(widget.chatRoom.chatRoomId!, currentMessage.messageId
                             }
                           }
                         },
-                  
                         child: Container(
                             margin: EdgeInsets.symmetric(
                                 vertical: 5.0, horizontal: 10),

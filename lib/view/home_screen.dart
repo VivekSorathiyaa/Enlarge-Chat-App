@@ -5,6 +5,7 @@ import 'package:chatapp/componet/common_app_bar.dart';
 import 'package:chatapp/componet/image_view_widget.dart';
 import 'package:chatapp/controller/auth_controller.dart';
 import 'package:chatapp/utils/common_method.dart';
+import 'package:chatapp/view/chat_bot_screen.dart';
 import 'package:chatapp/view/edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Locale? selectedLocale = AppPreferences().getLocaleFromPreferences();
   StreamController<List<MessageModel>> _unreadMessagesStreamController =
       StreamController<List<MessageModel>>.broadcast();
-  String? userId=AppPreferences.getUiId();
+  String? userId = AppPreferences.getUiId();
 
   Stream<List<MessageModel>> get unreadMessagesStream =>
       _unreadMessagesStreamController.stream;
@@ -122,151 +123,103 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         body: SafeArea(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ShadowContainerWidget(
-              //   borderColor: themeController.isDark.value
-              //       ? primaryBlack
-              //       : greyBorderColor,
-              //   color:
-              //       themeController.isDark.value ? primaryBlack : primaryWhite,
-              //   shadowColor: themeController.isDark.value
-              //       ? Colors.transparent
-              //       : greyBorderColor.withOpacity(.5),
-              //   padding: 0,
-              //   widget: ListTile(
-              //       tileColor: themeController.isDark.value
-              //           ? primaryBlack
-              //           : primaryWhite,
-              //       onTap: () async {
-              //         log('====ontap');
-              //         Get.to(() => ChatRoomScreen(
-              //             chatRoom: chatRoomModel,
-              //             targetUser:
-              //                 chatRoomModel.isGroup! ? null : userData));
-              //       },
-              //       onLongPress: () {
-              //         MyAlertDialog.showDialogWithOption(
-              //             context, 'continue'.tr, 'cancel'.tr, () {
-              //           log("====Current user id$userId");
-              //           // CommonMethod.deleteChatroom(
-              //           //     chatRoomModel.chatRoomId!);
-              //           //      CommonMethod.deleteChatroomUser(chatRoomModel.chatRoomId!,userId!);
-              //           CommonMethod.deleteChatroomUser3(
-              //               chatRoomModel.chatRoomId!, userId!);
-              //           Get.back();
-              //           log('====Delete Successfully ${chatRoomModel.chatRoomId!}');
-              //         }, () {
-              //           Get.back();
-              //         }, 'delete_desc'.tr);
-              //       },
-              //       leading: GestureDetector(
-              //         onTap: () {
-              //           showDialog(
-              //             context: context,
-              //             builder: (context) {
-              //               return AlertDialog(
-              //                 shape: RoundedRectangleBorder(
-              //                   borderRadius: BorderRadius.circular(10.0),
-              //                 ),
-              //                 backgroundColor: Colors.transparent,
-              //                 content: Hero(
-              //                     transitionOnUserGestures: true,
-              //                     tag: 'userProfile',
-              //                     child: GestureDetector(
-              //                       onTap: () {
-              //                         Get.back();
-              //                         Get.to(
-              //                           () => ImageViewWidget(
-              //                             imageUrl: chatRoomModel.isGroup!
-              //                                 ? chatRoomModel.groupImage ??
-              //                                     'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-              //                                 : userData.profilePic ?? '',
-              //                             profileImg: true,
-              //                             isFile: false,
-              //                             text: chatRoomModel.isGroup!
-              //                                 ? chatRoomModel.groupName ??
-              //                                     "Group"
-              //                                 : userData.fullName.toString(),
-              //                           ),
-              //                         );
-              //                       },
-              //                       child: Image.network(
-              //                         chatRoomModel.isGroup!
-              //                             ? chatRoomModel.groupImage ??
-              //                                 'https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSSvQXJzciKs02q4YcgDAebrBW9nFa6wMnjWzeCkNPGopgObID3'
-              //                             : userData.profilePic ?? '',
-              //                       ),
-              //                     )),
-              //               );
-              //             },
-              //           );
-              //         },
-              //         child: NetworkImageWidget(
-              //             height: 50,
-              //             width: 50,
-              //             borderRadius: BorderRadius.circular(50),
-              //             errorIcon: chatRoomModel.isGroup!
-              //                 ? CupertinoIcons.group_solid
-              //                 : CupertinoIcons.profile_circled,
-              //             imageUrl: chatRoomModel.isGroup!
-              //                 ? chatRoomModel.groupImage
-              //                 : userData.profilePic ?? ''),
-              //       ),
-              //       trailing: Row(
-              //         mainAxisSize: MainAxisSize.min,
-              //         children: [
-              //           StreamBuilder<List<MessageModel>>(
-              //             stream: CommonMethod.unreadMessagesStream(
-              //                 chatRoomModel.chatRoomId!),
-              //             builder: (context, snapshot) {
-              //               return snapshot.data != null &&
-              //                       snapshot.data!.isNotEmpty
-              //                   ? Padding(
-              //                       padding: const EdgeInsets.all(8.0),
-              //                       child: Container(
-              //                         height: 30,
-              //                         width: 30,
-              //                         decoration: BoxDecoration(
-              //                           shape: BoxShape.circle,
-              //                           color:
-              //                               greenColor, // Choose your preferred badge background color
-              //                         ),
-              //                         child: Center(
-              //                           child: Text(
-              //                             snapshot.data!.length.toString(),
-              //                             style: AppTextStyle.normalSemiBold14
-              //                                 .copyWith(color: primaryWhite),
-              //                           ),
-              //                         ),
-              //                       ),
-              //                     )
-              //                   : SizedBox();
-              //             },
-              //           ),
-                      
-              //         ],
-              //       ),
-              //       title: Row(
-              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //         children: [
-              //           Flexible(
-              //             child: Text('Ai ChatBot',
-              //                 style: themeController.isDark.value
-              //                     ? AppTextStyle.darkNormalBold16
-              //                     : AppTextStyle.lightNormalBold16),
-              //           ),
-              //         ],
-              //       ),
-              //       subtitle: Text(
-              //         "Say hi to chatbot",
-              //         style: AppTextStyle.normalRegular12
-              //             .copyWith(color: greyColor),
-              //         maxLines: 1,
-              //         overflow: TextOverflow.ellipsis,
-              //       )),
-              // ),
-           
-           
+              ShadowContainerWidget(
+                borderColor: themeController.isDark.value
+                    ? primaryBlack
+                    : greyBorderColor,
+                color: themeController.isDark.value
+                    ? primaryBlack
+                    : primaryWhite,
+                shadowColor: themeController.isDark.value
+                    ? Colors.transparent
+                    : greyBorderColor.withOpacity(.5),
+                padding: 0,
+                widget: ListTile(
+                    tileColor: themeController.isDark.value
+                        ? primaryBlack
+                        : primaryWhite,
+                    onTap: () async {
+                                        Get.to(() => ChatBotScreen());
+
+                    },
+                    leading: GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              backgroundColor: Colors.transparent,
+                              content: Hero(
+                                  transitionOnUserGestures: true,
+                                  tag: 'userProfile',
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Get.back();
+                                      Get.to(
+                                        () => ImageViewWidget(
+                                          imageUrl:
+                                              'https://images.unsplash.com/photo-1684493735679-359868df0e18?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                                          profileImg: true,
+                                          isFile: false,
+                                          text: "Ai ChatBot",
+                                        ),
+                                      );
+                                    },
+                                    child: Image.network(
+                                        'https://images.unsplash.com/photo-1684493735679-359868df0e18?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
+                                  )),
+                            );
+                          },
+                        );
+                      },
+                      child: NetworkImageWidget(
+                          height: 50,
+                          width: 50,
+                          borderRadius: BorderRadius.circular(50),
+                          errorIcon: CupertinoIcons.profile_circled,
+                          imageUrl:
+                              'https://images.unsplash.com/photo-1684493735679-359868df0e18?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [],
+                    ),
+                    title: Row(
+                      children: [
+                        Text('Ai ChatBot',
+                            style: themeController.isDark.value
+                                ? AppTextStyle.darkNormalBold16
+                                : AppTextStyle.lightNormalBold16),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 5.0),
+                          child: Icon(
+                            Icons.verified_rounded,
+                            color: greenColor,
+                          ),
+                        )
+                      ],
+                    ),
+                    subtitle: Text(
+                      "Say hi to chatbot",
+                      style: AppTextStyle.normalRegular12
+                          .copyWith(color: greyColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Recent chats",
+                  style: AppTextStyle.normalBold14.copyWith(color: greyColor),
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   itemCount: controller.chatRooms.length,
