@@ -417,6 +417,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   final isCurrentUser = currentMessage.sender == null
                       ? false
                       : currentMessage.sender == AppPreferences.getUiId();
+
+                  bool? isUnread = !currentMessage.seen!;
+
+                  if(isUnread){
+                    if (currentMessage.messageType == 0 &&
+                        currentMessage.text != null &&
+                        currentMessage.text!.isNotEmpty) {
+                      if (locale!.languageCode == 'gu') {
+                        speakGujaratiText(currentMessage.text ?? "");
+                      } else if (locale!.languageCode == 'hi') {
+                        speakHindiText(currentMessage.text ?? "");
+                      } else {
+                        speakEnglishText(currentMessage.text ?? "");
+                      }
+                    }
+                  }
+
                   if (currentMessage.sender == null) {
                     return Center(
                         child: Padding(
@@ -476,7 +493,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                   audioUrl: currentMessage.media.toString(),
                                 ),
                                 context: context);
-                          }
+
+                            // if(currentMessage.seen==false){
+                            //   if (currentMessage.messageType == 0 &&
+                            //       currentMessage.text != null &&
+                            //       currentMessage.text!.isNotEmpty) {
+                            //     if (locale!.languageCode == 'gu') {
+                            //       speakGujaratiText(currentMessage.text ?? "");
+                            //     } else if (locale!.languageCode == 'hi') {
+                            //       speakHindiText(currentMessage.text ?? "");
+                            //     } else {
+                            //       speakEnglishText(currentMessage.text ?? "");
+                            //     }
+                            //   }
+                            // }
+      }
                           if (currentMessage.messageType == 0 &&
                               currentMessage.text != null &&
                               currentMessage.text!.isNotEmpty) {
@@ -518,6 +549,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 },
               ),
             )),
+
             if (widget.targetUser != null)
               Obx(
                 () => targetUser.value.status == 'typing' &&
